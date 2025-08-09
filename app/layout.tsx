@@ -1,9 +1,6 @@
 import './globals.css'
 import Link from 'next/link'
-import { GoGitBranch } from "react-icons/go"
-import { MdEmail } from "react-icons/md"
-import { AiFillInstagram } from "react-icons/ai"
-import { FaLinkedin } from "react-icons/fa"
+import { MailIcon, GithubIcon, InstagramIcon, LinkedinIcon} from '@/components/icons'
 
 export const metadata = {
   title: 'Junho Choi - Portfolio',
@@ -55,7 +52,7 @@ export default function RootLayout({
               target="_blank" 
               rel="noopener noreferrer"
             >
-              <MdEmail className="h-7 w-7"/>
+              <MailIcon className="h-7 w-7"/>
             </a>
             <a 
               href='https://github.com/choiboy92' 
@@ -63,7 +60,7 @@ export default function RootLayout({
               target="_blank" 
               rel="noopener noreferrer"
             >
-              <GoGitBranch className="h-7 w-7"/>
+              <GithubIcon className="h-7 w-7"/>
             </a>
             <a 
               href='https://www.linkedin.com/in/junho-c-b2461bb2/' 
@@ -71,7 +68,7 @@ export default function RootLayout({
               target="_blank" 
               rel="noopener noreferrer"
             >
-              <FaLinkedin className="h-7 w-7"/>
+              <LinkedinIcon className="h-7 w-7"/>
             </a>
             <a 
               href='https://www.instagram.com/junho.what/' 
@@ -79,7 +76,7 @@ export default function RootLayout({
               target="_blank" 
               rel="noopener noreferrer"
             >
-              <AiFillInstagram className="h-7 w-7"/>
+              <InstagramIcon className="h-7 w-7"/>
             </a>
           </footer>
         </div>

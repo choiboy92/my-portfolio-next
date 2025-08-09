@@ -1,5 +1,5 @@
 // components/sections/HeroSection.tsx
-import { Github, Linkedin, Mail } from 'lucide-react'
+import { GithubIcon, LinkedinIcon, MailIcon } from '@/components/icons'
 
 export function HeroSection() {
   return (
@@ -56,7 +56,7 @@ export function HeroSection() {
               rel="noopener noreferrer"
               className="p-3 text-gray-600 hover:text-blue-600 transition-colors duration-200 hover:scale-110 transform"
             >
-              <Github size={24} />
+              <GithubIcon size={24} />
             </a>
             <a 
               href="https://linkedin.com/in/choiboy92" 
@@ -64,13 +64,13 @@ export function HeroSection() {
               rel="noopener noreferrer"
               className="p-3 text-gray-600 hover:text-blue-600 transition-colors duration-200 hover:scale-110 transform"
             >
-              <Linkedin size={24} />
+              <LinkedinIcon size={24} />
             </a>
             <a 
               href="mailto:your.email@example.com"
               className="p-3 text-gray-600 hover:text-blue-600 transition-colors duration-200 hover:scale-110 transform"
             >
-              <Mail size={24} />
+              <MailIcon size={24} />
             </a>
           </div>
         </div>
