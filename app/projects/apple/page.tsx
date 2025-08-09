@@ -26,7 +26,7 @@ export default function ApplePage() {
             For a company renowned for its design, counterfeiting is a huge problem. Fake Airpods alone have cost Apple a reported 
             <span className="text-red-400 font-semibold"> $3.2 billion USD</span> in the last 9 months alone according to a US customs report.
           </p>
-          <p className="text-gray-300 leading-relaxed">
+          <p className="text-gray-300 leading-relaxed text-lg">
             Counterfeit products also pose a safety risk when considering products like chargers, and consequently the experience 
             that users have with the products they should love.
           </p>
@@ -67,7 +67,7 @@ export default function ApplePage() {
             </CardContent>
           </Card>
           
-          <div className="space-y-4">
+          <div className="space-y-6">
             <p className="text-gray-300 leading-relaxed">
               Given the open-ended brief and the time limitation, it was important to hone in on what specific aspect I would be looking to solve. 
               This required me to understand the scope of the issue through research and networking.
