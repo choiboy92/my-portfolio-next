@@ -25,7 +25,7 @@ export default function RootLayout({
                 </span>
               </h1>
             </Link>
-            <Link href="/currentwork" className="flex justify-center text-white no-underline flex-none w-[300px] text-sm hover:text-green-400 transition-colors">
+            <Link href="/work" className="flex justify-center text-white no-underline flex-none w-[300px] text-sm hover:text-green-400 transition-colors">
               <h1 className="font-light text-xl">ongoing work</h1>
             </Link>
             <Link href="/hobbies" className="flex justify-center text-white no-underline flex-none w-[300px] text-sm hover:text-green-400 transition-colors">
