@@ -109,14 +109,14 @@ export function BasketForm() {
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
             <h2 className="text-2xl font-bold text-portfolio-text mb-4">Order Submitted Successfully!</h2>
             <p className="text-portfolio-muted mb-6">
-              Thank you for your EPP order request. We've received your order and sent you a confirmation email.
+              Thank you for your EPP order request. We&apos;ve received your order and sent you a confirmation email.
             </p>
             <div className="bg-portfolio-dark border border-portfolio-border rounded-lg p-4 mb-6">
               <p className="text-sm text-portfolio-muted mb-2">What happens next:</p>
               <ul className="text-sm text-left space-y-1">
                 <li>• Your order will be reviewed by our team</li>
-                <li>• We'll confirm availability and final pricing</li>
-                <li>• You'll be contacted within 1-2 business days</li>
+                <li>• We&apos;ll confirm availability and final pricing</li>
+                <li>• You&apos;ll be contacted within 1-2 business days</li>
                 <li>• Payment and delivery will be arranged once confirmed</li>
               </ul>
             </div>

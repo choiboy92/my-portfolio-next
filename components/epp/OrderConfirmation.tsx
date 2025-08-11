@@ -203,7 +203,7 @@ export function OrderConfirmation({
               <ul className="space-y-1 text-xs">
                 <li>• Orders are processed manually</li>
                 <li>• Processing time: 1-2 business days</li>
-                <li>• You'll receive email confirmation</li>
+                <li>• You&apos;ll receive email confirmation</li>
                 <li>• Final pricing will be confirmed</li>
               </ul>
             </div>
