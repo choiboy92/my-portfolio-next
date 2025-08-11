@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Controller, Control, FieldErrors, UseFormWatch } from 'react-hook-form'
+import { Controller, Control, FieldErrors, UseFormWatch, UseFormSetValue, UseFormTrigger } from 'react-hook-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,9 +14,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 interface DeliveryOptionsProps {
   control: Control<DeliveryFormData>
   errors: FieldErrors<DeliveryFormData>
-  onSubmit: () => void
+  onSubmit: (data: DeliveryFormData) => Promise<void>
   onBack: () => void
   watch: UseFormWatch<DeliveryFormData>
+  setValue: UseFormSetValue<DeliveryFormData>
+  trigger: UseFormTrigger<DeliveryFormData>
 }
 
 const DELIVERY_TYPES = [
@@ -43,10 +45,55 @@ const TITLES = [
 ]
 
 
-export function DeliveryOptions({ control, errors, onSubmit, onBack, watch }: DeliveryOptionsProps) {
-//   const deliveryMethod = watch('method')
-  const [deliveryMethod, setDeliveryMethod] = useState('delivery')
-  return (
+export function DeliveryOptions({ control, errors, onSubmit, onBack, watch, setValue, trigger }: DeliveryOptionsProps) {
+    const [deliveryMethod, setDeliveryMethod] = useState('delivery')
+    // Watch form values for validation
+    const formValues = watch()
+    
+    // Update method in form when tab changes
+    useEffect(() => {
+        setValue('method', deliveryMethod as 'delivery' | 'pickup')
+        // Clear method-specific fields when switching
+        if (deliveryMethod === 'pickup') {
+            setValue('deliveryType', undefined)
+            setValue('address', undefined)
+        } else {
+            setValue('storeLocation', undefined)
+        }
+    }, [deliveryMethod, setValue])
+
+    // Check if form is valid for submission
+    const isFormValid = () => {
+        const hasContact = formValues.contact?.email && formValues.contact?.phone
+        
+        if (deliveryMethod === 'delivery') {
+        return hasContact &&
+                formValues.deliveryType &&
+                formValues.address?.title &&
+                formValues.address?.firstName &&
+                formValues.address?.surname &&
+                formValues.address?.line1 &&
+                formValues.address?.city &&
+                formValues.address?.postcode
+        } else {
+            return hasContact && formValues.storeLocation
+        }
+    }
+
+    const handleSubmit = async () => {
+        const isValid = await trigger()
+        console.log('Form validation result:', isValid)
+        console.log('Current form values:', formValues)
+        console.log('Form errors:', errors)
+        
+        if (isValid) {
+            onSubmit(formValues)
+        } else {
+            console.log('Form validation failed')
+        }
+    }
+
+    return (
     <div className="space-y-6">
       {/* Delivery Method Selection */}
       <Card className="bg-portfolio-card border-portfolio-border text-white">
@@ -275,12 +322,13 @@ export function DeliveryOptions({ control, errors, onSubmit, onBack, watch }: De
           Back to Products
         </Button>
         <Button
-          onClick={onSubmit}
+          onClick={handleSubmit}
+          disabled={!isFormValid()}
           className="flex-1 bg-portfolio-accent hover:bg-blue-600"
         >
           Review Order
         </Button>
       </div>
     </div>
-  )
+    )
 }

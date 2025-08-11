@@ -1,4 +1,4 @@
-// components/apple-discount/BasketForm.tsx
+// components/epp/BasketForm.tsx
 'use client'
 
 import { useState } from 'react'
@@ -6,11 +6,11 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, ShoppingCart } from 'lucide-react'
+import { Plus, ShoppingCart, CheckCircle } from 'lucide-react'
 import { ProductSelector } from './ProductSelection'
-import { BasketSummary } from './BasketSummary'
 import { DeliveryOptions } from './DeliveryOptions'
 import { BasketItem as BasketItemComponent } from './BasketItem'
+import { OrderConfirmation } from './OrderConfirmation'
 import type { BasketItem, OrderData } from '@/types/basket'
 import { deliverySchema, type DeliveryFormData } from '@/lib/validation-schema'
 
@@ -18,13 +18,18 @@ export function BasketForm() {
   const [basket, setBasket] = useState<BasketItem[]>([])
   const [isAddingProduct, setIsAddingProduct] = useState(false)
   const [currentStep, setCurrentStep] = useState<'products' | 'delivery' | 'summary'>('products')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [orderSubmitted, setOrderSubmitted] = useState(false)
+  const [orderError, setOrderError] = useState<string | null>(null)
 
   const {
     control: deliveryControl,
     handleSubmit: handleDeliverySubmit,
-    formState: { errors: deliveryErrors, isValid: isDeliveryValid },
+    formState: { errors: deliveryErrors },
     watch: watchDelivery,
-    reset: resetDelivery
+    reset: resetDelivery,
+    setValue: setDeliveryValue,
+    trigger: triggerValidation
   } = useForm<DeliveryFormData>({
     resolver: zodResolver(deliverySchema),
     mode: 'onChange',
@@ -46,42 +51,88 @@ export function BasketForm() {
     setBasket(prev => prev.filter(item => item.id !== itemId))
   }
 
-  const updateQuantity = (itemId: string, quantity: number) => {
-    setBasket(prev => prev.map(item => 
-      item.id === itemId ? { ...item, quantity } : item
-    ))
-  }
-
-  const onDeliverySubmit = (deliveryFormData: DeliveryFormData) => {
+  const onDeliverySubmit = async (deliveryFormData: DeliveryFormData) => {
+    console.log('Delivery form submitted:', deliveryFormData)
     setCurrentStep('summary')
   }
 
+  // const onReviewConfirm = () => {
+  //   setCurrentStep('confirm')
+  // }
+
   const submitOrder = async (deliveryData: DeliveryFormData) => {
+    if (isSubmitting) return
+
     const orderData: OrderData = {
       basket,
       delivery: deliveryData,
       specialInstructions: ''
     }
 
+    setIsSubmitting(true)
+    setOrderError(null)
+
     try {
-      const response = await fetch('/api/apple-discount/order', {
+      const response = await fetch('/api/epp/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData)
       })
 
+      const result = await response.json()
+
       if (response.ok) {
-        // Handle successful submission
-        alert('Order submitted successfully!')
+        setOrderSubmitted(true)
         setBasket([])
         resetDelivery()
-        setCurrentStep('products')
+        setTimeout(() => {
+          setCurrentStep('products')
+          setOrderSubmitted(false)
+        }, 5000)
       } else {
-        throw new Error('Failed to submit order')
+        throw new Error(result.error || 'Failed to submit order')
       }
     } catch (error) {
-      alert('Failed to submit order. Please try again.')
+      console.error('Order submission error:', error)
+      setOrderError(error instanceof Error ? error.message : 'Failed to submit order. Please try again.')
+    } finally {
+      setIsSubmitting(false)
     }
+  }
+
+  // Success screen
+  if (orderSubmitted) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <Card className="bg-portfolio-card border-portfolio-border text-white text-center">
+          <CardContent className="pt-12 pb-12">
+            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
+            <h2 className="text-2xl font-bold text-portfolio-text mb-4">Order Submitted Successfully!</h2>
+            <p className="text-portfolio-muted mb-6">
+              Thank you for your EPP order request. We've received your order and sent you a confirmation email.
+            </p>
+            <div className="bg-portfolio-dark border border-portfolio-border rounded-lg p-4 mb-6">
+              <p className="text-sm text-portfolio-muted mb-2">What happens next:</p>
+              <ul className="text-sm text-left space-y-1">
+                <li>• Your order will be reviewed by our team</li>
+                <li>• We'll confirm availability and final pricing</li>
+                <li>• You'll be contacted within 1-2 business days</li>
+                <li>• Payment and delivery will be arranged once confirmed</li>
+              </ul>
+            </div>
+            <Button
+              onClick={() => {
+                setOrderSubmitted(false)
+                setCurrentStep('products')
+              }}
+              className="bg-portfolio-accent hover:bg-blue-600"
+            >
+              Submit Another Order
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -108,6 +159,14 @@ export function BasketForm() {
         </div>
       </div>
 
+      {/* Error Display */}
+      {orderError && (
+        <div className="mb-6 p-4 bg-red-900/20 border border-red-500 rounded-lg">
+          <p className="text-red-400 text-sm">{orderError}</p>
+        </div>
+      )}
+
+      {currentStep !== 'summary' && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
@@ -157,6 +216,17 @@ export function BasketForm() {
                   onCancel={() => setIsAddingProduct(false)}
                 />
               )}
+
+              <div className="space-y-3">
+                {currentStep === 'products' && basket.length > 0 && (
+                  <Button 
+                    onClick={() => setCurrentStep('delivery')}
+                    className="w-full bg-portfolio-accent hover:bg-blue-600"
+                  >
+                    Continue to Delivery
+                  </Button>
+                )}
+              </div>
             </>
           )}
 
@@ -164,18 +234,11 @@ export function BasketForm() {
             <DeliveryOptions
               control={deliveryControl}
               errors={deliveryErrors}
-              onSubmit={handleDeliverySubmit(onDeliverySubmit)}
+              onSubmit={onDeliverySubmit}
               onBack={() => setCurrentStep('products')}
               watch={watchDelivery}
-            />
-          )}
-
-          {currentStep === 'summary' && (
-            <BasketSummary
-              basket={basket}
-              deliveryData={watchDelivery()}
-              onSubmit={() => handleDeliverySubmit(submitOrder)()}
-              onBack={() => setCurrentStep('delivery')}
+              setValue={setDeliveryValue}
+              trigger={triggerValidation}
             />
           )}
         </div>
@@ -194,14 +257,20 @@ export function BasketForm() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-portfolio-muted">Total savings:</span>
-                <span className="text-portfolio-text">
+                <span className="text-portfolio-text text-green-500">
                   £{basket.reduce((sum, item) => sum + (item.discountValue ?? 0), 0).toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-portfolio-muted">Final cost:</span>
+                <span className="text-portfolio-muted">Estimated retail:</span>
                 <span className="text-portfolio-text">
-                  £{basket.reduce((sum, item) => sum + (item.estimatedPrice ?? 0) -(item.discountValue ?? 0), 0).toLocaleString()}
+                  £{basket.reduce((sum, item) => sum + (item.estimatedPrice ?? 0), 0).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm font-semibold border-t border-portfolio-border pt-2">
+                <span className="text-portfolio-muted">Final cost:</span>
+                <span className="text-green-500">
+                  £{basket.reduce((sum, item) => sum + (item.estimatedPrice ?? 0) - (item.discountValue ?? 0), 0).toLocaleString()}
                 </span>
               </div>
               <div className="border-t border-portfolio-border pt-3">
@@ -211,38 +280,24 @@ export function BasketForm() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Navigation */}
-          <div className="space-y-3">
-            {currentStep === 'products' && basket.length > 0 && (
-              <Button 
-                onClick={() => setCurrentStep('delivery')}
-                className="w-full bg-portfolio-accent hover:bg-blue-600"
-              >
-                Continue to Delivery
-              </Button>
-            )}
-            {currentStep === 'delivery' && (
-              <Button 
-                onClick={handleDeliverySubmit(onDeliverySubmit)}
-                disabled={!isDeliveryValid}
-                className="w-full bg-portfolio-accent hover:bg-blue-600"
-              >
-                Review Order
-              </Button>
-            )}
-            {(currentStep === 'delivery' || currentStep === 'summary') && (
-              <Button 
-                onClick={() => setCurrentStep(currentStep === 'summary' ? 'delivery' : 'products')}
-                variant="outline"
-                className="w-full border-portfolio-border text-portfolio-text"
-              >
-                {currentStep === 'summary' ? 'Back to Delivery' : 'Back to Products'}
-              </Button>
-            )}
-          </div>
         </div>
       </div>
+      )}
+
+      {currentStep === 'summary' && (
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          <OrderConfirmation
+              basket={basket}
+              deliveryData={watchDelivery()}
+              onSubmit={() => handleDeliverySubmit(submitOrder)()}
+              onBack={() => setCurrentStep('delivery')}
+              isSubmitting={false}
+            />
+        </div>
+      </div>
+      )}
     </div>
   )
 }
