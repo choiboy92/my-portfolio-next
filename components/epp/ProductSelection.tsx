@@ -142,6 +142,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
       appleCare: data.appleCare,
       quantity: 1,
       estimatedPrice: estimatedPrice,
+      discountValue: discountValue,
       tradeIn: data.tradeIn?.hasTradeIn ? {
         hasTradeIn: true,
         serialNumber: data.tradeIn.serialNumber,

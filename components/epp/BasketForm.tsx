@@ -185,22 +185,28 @@ export function BasketForm() {
           {/* Order Summary */}
           <Card className="bg-portfolio-card border-portfolio-border text-white">
             <CardHeader>
-              <CardTitle className="text-portfolio-text">Order Summary</CardTitle>
+              <CardTitle className="text-portfolio-text">Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-portfolio-muted">Items in basket:</span>
+                <span className="text-portfolio-muted">Items:</span>
                 <span className="text-portfolio-text">{basket.length}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-portfolio-muted">Total quantity:</span>
+                <span className="text-portfolio-muted">Total savings:</span>
                 <span className="text-portfolio-text">
-                  {basket.reduce((sum, item) => sum + item.quantity, 0)}
+                  £{basket.reduce((sum, item) => sum + (item.discountValue ?? 0), 0).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-portfolio-muted">Final cost:</span>
+                <span className="text-portfolio-text">
+                  £{basket.reduce((sum, item) => sum + (item.estimatedPrice ?? 0) -(item.discountValue ?? 0), 0).toLocaleString()}
                 </span>
               </div>
               <div className="border-t border-portfolio-border pt-3">
                 <p className="text-xs text-portfolio-muted">
-                  Final pricing will be calculated by the Apple employee after reviewing your order.
+                  Final pricing will be communicated after review
                 </p>
               </div>
             </CardContent>

@@ -17,6 +17,7 @@ export interface BasketItem {
   }
   quantity: number
   estimatedPrice?: number
+  discountValue?: number
 }
 
 export interface BasketState {
