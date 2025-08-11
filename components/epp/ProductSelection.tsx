@@ -194,6 +194,8 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                               setValue('storage', '')
                               setValue('specs', '')
                               setValue('connectivity', '')
+                              setValue('size', '')
+                              setValue('bands', '')
                             }} value={field.value}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select model" />
@@ -296,7 +298,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                             </div>
                           )}
 
-                          {/* Connectivity (for iPad) */}
+                          {/* Connectivity (for Watch & iPad) */}
                           {(availableOptions.connectivity?.length ?? 0) > 0 && (
                             <div>
                               <Label className="text-portfolio-text">Connectivity</Label>
@@ -310,6 +312,31 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                     </SelectTrigger>
                                     <SelectContent>
                                       {availableOptions.connectivity?.map((conn: string) => (
+                                        <SelectItem key={conn} value={conn}>
+                                          {conn}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                            </div>
+                          )}
+
+                          {/* Sizes (for Watch) */}
+                          {(availableOptions.size?.length ?? 0) > 0 && (
+                            <div>
+                              <Label className="text-portfolio-text">Size</Label>
+                              <Controller
+                                name="size"
+                                control={control}
+                                render={({ field }) => (
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select watch size" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {availableOptions.size?.map((conn: string) => (
                                         <SelectItem key={conn} value={conn}>
                                           {conn}
                                         </SelectItem>

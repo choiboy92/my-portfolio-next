@@ -35,8 +35,10 @@ interface AppleWatchConfig {
   colors: Record<string, string[]>;
   size: Record<string, string[]>;
   bands: Record<string, string[]>;
+  connectivity: string[];
   appleCareAvailable: boolean;
   basePrices: Record<string, Record<string, number>>;
+  cellularUpgrade: number;
   appleCarePrice: number;
 }
 
@@ -154,12 +156,14 @@ export const PRODUCT_CONFIGURATIONS: Record<string, ProductConfig> = {
       'Apple Watch SE': ['Sport Band', 'Sport Loop'],
       'Apple Watch Ultra 2': ['Alpine Loop', 'Trail Loop', 'Ocean Band']
     },
+    connectivity: ['Wi-Fi', 'Wi-Fi + Cellular'],
     appleCareAvailable: true,
     basePrices: {
       'Apple Watch Series 9': { '41mm': 399, '45mm': 429 },
       'Apple Watch SE': { '40mm': 249, '44mm': 279 },
       'Apple Watch Ultra 2': { '49mm': 799 }
     },
+    cellularUpgrade: 130,
     appleCarePrice: 79
   }
 }
@@ -198,10 +202,13 @@ export function calculateEstimatedPrice(category: string,
     if (size && basePrices[model]?.[size]) {
       basePrice = basePrices[model][size];
     }
+    if (model === 'Apple Watch Ultra 2') {
+        connectivity = 'Wi-Fi + Cellular'; // Ultra 2 only has cellular option
+    }
   }
-  // Add cellular upgrade for iPad
-  if (category === 'iPad' && connectivity === 'Wi-Fi + Cellular') {
-    basePrice += (config as iPadConfig).cellularUpgrade || 0;
+  // Add cellular upgrade (watch and iPad)
+  if (connectivity === 'Wi-Fi + Cellular') {
+    basePrice += (config as iPadConfig | AppleWatchConfig).cellularUpgrade || 0;
   }
 
   // Add AppleCare
