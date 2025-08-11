@@ -43,6 +43,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
   const [activeCategory, setActiveCategory] = useState('iPhone')
   const [availableOptions, setAvailableOptions] = useState<AvailableOptions | null>(null)
   const [estimatedPrice, setEstimatedPrice] = useState(0)
+  const [discountValue, setDiscountValue] = useState(0)
 
   const {
     control,
@@ -115,6 +116,12 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
         selectedBands, // bands not applicable for all categories
         selectedAppleCare
       )
+      if (selectedAppleCare) {
+        const applecarePrice = PRODUCT_CONFIGURATIONS[selectedCategory as keyof typeof PRODUCT_CONFIGURATIONS].appleCarePrice
+        setDiscountValue((price - applecarePrice) * 0.17)
+      } else {
+        setDiscountValue(price * 0.17)
+      }
       setEstimatedPrice(price)
     } else {
       setEstimatedPrice(0)
@@ -432,7 +439,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                     </div>
 
                     {/* Price Estimation Sidebar */}
-                    <div className="space-y-4">
+                    <div className="space-y-1">
                       <Card className="bg-portfolio-dark border-portfolio-border text-white">
                         <CardHeader>
                           <CardTitle className="text-portfolio-text text-lg">Price Estimation</CardTitle>
@@ -440,35 +447,47 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                         <CardContent className="space-y-3">
                           {estimatedPrice > 0 ? (
                             <>
-                              <div className="text-center p-4 bg-portfolio-card rounded-lg">
-                                <div className="text-2xl font-bold text-portfolio-accent">
+                              <div className="text-center p-1 bg-portfolio-card rounded-lg">
+                                <div className="text-2xl text-portfolio-accent">
                                   £{estimatedPrice.toLocaleString()}
                                 </div>
                                 <div className="text-xs text-portfolio-muted">
                                   Estimated retail price
                                 </div>
                               </div>
-                              
-                              <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                  <span className="text-portfolio-muted">Quantity:</span>
-                                  <span className="text-portfolio-text">1</span>
+                              <div className="text-center p-1 bg-portfolio-card rounded-lg">
+                                <div className="text-2xl font-bold text-portfolio-accent text-red-500">
+                                  - £{discountValue.toLocaleString()}
                                 </div>
+                                <div className="text-xs text-portfolio-muted">
+                                  discount
+                                </div>
+                              </div>
+                              <div className="space-y-2 text-sm">
                                 {selectedAppleCare && (
                                   <div className="flex justify-between">
-                                    <span className="text-portfolio-muted">AppleCare+:</span>
+                                    <span className="text-portfolio-muted">AppleCare+</span>
                                     <span className="text-portfolio-text">
-                                      £{PRODUCT_CONFIGURATIONS[category as keyof typeof PRODUCT_CONFIGURATIONS].appleCarePrice}
+                                      + £{PRODUCT_CONFIGURATIONS[category as keyof typeof PRODUCT_CONFIGURATIONS].appleCarePrice}
                                     </span>
                                   </div>
                                 )}
                               </div>
-                              
-                              <div className="border-t border-portfolio-border pt-3">
-                                <p className="text-xs text-portfolio-muted">
-                                  * Employee discount will be applied during checkout
-                                </p>
+                              <div className="border-t text-center p-4 border-portfolio-border pt-3 bg-portfolio-card">
+                                <div className="text-2xl font-bold text-portfolio-accent text-green-500">
+                                  £{(estimatedPrice-discountValue).toLocaleString()}
+                                </div>
+                                <div className="text-xs text-portfolio-muted">
+                                  Final price
+                                </div>
+                                {hasTradeIn && (
+                                  <div className="text-xs text-portfolio-muted text-right text-green-500">
+                                    - £TradeIn
+                                  </div>
+                                )}
                               </div>
+
+                                
                             </>
                           ) : (
                             <div className="text-center py-8 text-portfolio-muted">
@@ -479,23 +498,6 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                           )}
                         </CardContent>
                       </Card>
-
-                      {/* Selected Configuration Summary */}
-                      {selectedModel && (
-                        <Card className="bg-portfolio-dark border-portfolio-border text-white">
-                          <CardHeader>
-                            <CardTitle className="text-portfolio-text text-lg">Configuration</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-2">
-                            <div className="text-sm">
-                              <div className="text-portfolio-text font-medium">{selectedModel}</div>
-                              {selectedStorage && <div className="text-portfolio-muted">{selectedStorage}</div>}
-                              {selectedSpecs && <div className="text-portfolio-muted">{selectedSpecs}</div>}
-                              {selectedConnectivity && <div className="text-portfolio-muted">{selectedConnectivity}</div>}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
                     </div>
                   </div>
 
