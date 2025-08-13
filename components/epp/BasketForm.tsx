@@ -35,10 +35,21 @@ export function BasketForm() {
     mode: 'onChange',
     defaultValues: {
       method: 'delivery',
-      contact: {
-        email: '',
-        phone: ''
-      }
+      deliveryType: '',
+    storeLocation: '',
+    address: {
+      title: '',
+      firstName: '',
+      surname: '',
+      line1: '',
+      line2: '',
+      city: '',
+      postcode: ''
+    },
+    contact: {
+      email: '',
+      phone: ''
+    }
     }
   })
 
@@ -85,10 +96,10 @@ export function BasketForm() {
         setOrderSubmitted(true)
         setBasket([])
         resetDelivery()
-        setTimeout(() => {
-          setCurrentStep('products')
-          setOrderSubmitted(false)
-        }, 5000)
+        // setTimeout(() => {
+        //   setCurrentStep('products')
+        //   setOrderSubmitted(false)
+        // }, 5000)
       } else {
         throw new Error(result.error || 'Failed to submit order')
       }
