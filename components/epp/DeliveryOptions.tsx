@@ -103,12 +103,12 @@ export function DeliveryOptions({ control, errors, onSubmit, onBack, watch, setV
         <CardContent>
             <Tabs value={deliveryMethod} onValueChange={setDeliveryMethod}>
             {/* Category Tabs */}
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger key={"delivery"} value={"delivery"} className="flex items-center gap-2">
+                <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-500">
+                    <TabsTrigger key={"delivery"} value={"delivery"} className="flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-gray-600">
                         <Truck className="w-5 h-5 text-portfolio-accent" />
                         Delivery
                     </TabsTrigger>
-                    <TabsTrigger key={"pickup"} value={"pickup"} className="flex items-center gap-2">
+                    <TabsTrigger key={"pickup"} value={"pickup"} className="flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-gray-600">
                         <Store className="w-5 h-5 text-portfolio-accent" />
                         Pickup
                     </TabsTrigger>
@@ -317,14 +317,14 @@ export function DeliveryOptions({ control, errors, onSubmit, onBack, watch, setV
         <Button
           onClick={onBack}
           variant="outline"
-          className="flex-1 border-portfolio-border text-portfolio-text"
+          className="flex-1 border-portfolio-border text-portfolio-text text-black cursor-pointer"
         >
           Back to Products
         </Button>
         <Button
           onClick={handleSubmit}
           disabled={!isFormValid()}
-          className="flex-1 bg-portfolio-accent hover:bg-blue-600"
+          className="flex-1 bg-portfolio-accent bg-blue-600 hover:bg-blue-500 cursor-pointer"
         >
           Review Order
         </Button>

@@ -29,9 +29,7 @@ export function OrderConfirmation({
   isSubmitting = false 
 }: OrderConfirmationProps) {
   const [confirmations, setConfirmations] = useState({
-    termsAccepted: false,
-    informationCorrect: false,
-    understandsProcess: false
+    checkCompleted: false
   })
 
   const totalEstimatedPrice = basket.reduce((sum, item) => sum + (item.estimatedPrice ?? 0), 0)
@@ -39,9 +37,7 @@ export function OrderConfirmation({
   const finalPrice = totalEstimatedPrice - totalDiscount
 
   const canSubmit = !isSubmitting && 
-    confirmations.termsAccepted && 
-    confirmations.informationCorrect && 
-    confirmations.understandsProcess
+    confirmations.checkCompleted
 
   const handleConfirmationChange = (key: keyof typeof confirmations) => (checked: boolean) => {
     setConfirmations(prev => ({ ...prev, [key]: checked }))
@@ -200,21 +196,12 @@ export function OrderConfirmation({
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div>
               <h4 className="font-semibold mb-2">Order Processing</h4>
-              <ul className="space-y-1 text-xs">
-                <li>• Orders are processed manually</li>
-                <li>• Processing time: 1-2 business days</li>
-                <li>• You&apos;ll receive email confirmation</li>
-                <li>• Final pricing will be confirmed</li>
-              </ul>
+              Orders will be processed manually and I will contact you within 1-2 business days to confirm final pricing, availability, and delivery details.
             </div>
             <div>
               <h4 className="font-semibold mb-2">Payment & Delivery</h4>
-              <ul className="space-y-1 text-xs">
-                <li>• Payment arranged after confirmation</li>
-                <li>• Delivery scheduled once paid</li>
-                <li>• Tracking information provided</li>
-                <li>• Changes possible before processing</li>
-              </ul>
+                Payment arranged after confirmation with Delivery & Tracking information provided.
+                Do let me know if there are any additional things you would like to add to your order
             </div>
           </div>
         </CardContent>
@@ -232,40 +219,14 @@ export function OrderConfirmation({
           <div className="space-y-4">
             <div className="flex items-start space-x-3">
               <Checkbox
-                id="terms"
-                checked={confirmations.termsAccepted}
-                onCheckedChange={handleConfirmationChange('termsAccepted')}
+                id="check-completed"
+                checked={confirmations.checkCompleted}
+                onCheckedChange={handleConfirmationChange('checkCompleted')}
                 className="mt-1"
               />
               <Label htmlFor="terms" className="text-sm text-portfolio-text leading-relaxed">
-                I understand and accept that this is an employee purchase program order. Final pricing, 
+                I have checked my order configurations and understand and accept that this may change subject to availability. Final pricing, 
                 availability, and delivery terms will be confirmed before processing.
-              </Label>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <Checkbox
-                id="information"
-                checked={confirmations.informationCorrect}
-                onCheckedChange={handleConfirmationChange('informationCorrect')}
-                className="mt-1"
-              />
-              <Label htmlFor="information" className="text-sm text-portfolio-text leading-relaxed">
-                I confirm that all product configurations, delivery information, and contact details 
-                are correct and complete.
-              </Label>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <Checkbox
-                id="process"
-                checked={confirmations.understandsProcess}
-                onCheckedChange={handleConfirmationChange('understandsProcess')}
-                className="mt-1"
-              />
-              <Label htmlFor="process" className="text-sm text-portfolio-text leading-relaxed">
-                I understand that this order will be reviewed manually and I will be contacted 
-                within 1-2 business days to arrange payment and confirm delivery details.
               </Label>
             </div>
           </div>
@@ -274,7 +235,7 @@ export function OrderConfirmation({
             <div className="bg-red-900/20 border border-red-500 rounded-lg p-3 mt-4">
               <div className="flex items-center gap-2 text-red-400 text-sm">
                 <AlertTriangle className="w-4 h-4" />
-                Please confirm all items above to proceed with your order submission.
+                Please confirm above to proceed with your order submission.
               </div>
             </div>
           )}
@@ -287,7 +248,7 @@ export function OrderConfirmation({
           onClick={onBack}
           disabled={isSubmitting}
           variant="outline"
-          className="flex-1 border-portfolio-border text-portfolio-text hover:bg-portfolio-dark"
+          className="flex-1 border-portfolio-border text-portfolio-text text-black cursor-pointer"
         >
           Back to Review
         </Button>
@@ -296,7 +257,7 @@ export function OrderConfirmation({
           disabled={!canSubmit}
           className={`flex-1 ${
             canSubmit 
-              ? 'bg-green-600 hover:bg-green-700 text-white' 
+              ? 'bg-green-600 hover:bg-green-500 text-white cursor-pointer' 
               : 'bg-gray-600 text-gray-300 cursor-not-allowed'
           }`}
         >

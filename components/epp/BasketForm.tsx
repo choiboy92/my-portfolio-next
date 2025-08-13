@@ -120,23 +120,14 @@ export function BasketForm() {
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
             <h2 className="text-2xl font-bold text-portfolio-text mb-4">Order Submitted Successfully!</h2>
             <p className="text-portfolio-muted mb-6">
-              Thank you for your EPP order request. We&apos;ve received your order and sent you a confirmation email.
+              Thank you for your EPP order request. I&apos;ll let you know when I receive your request and contact you separately about the order.
             </p>
-            <div className="bg-portfolio-dark border border-portfolio-border rounded-lg p-4 mb-6">
-              <p className="text-sm text-portfolio-muted mb-2">What happens next:</p>
-              <ul className="text-sm text-left space-y-1">
-                <li>• Your order will be reviewed by our team</li>
-                <li>• We&apos;ll confirm availability and final pricing</li>
-                <li>• You&apos;ll be contacted within 1-2 business days</li>
-                <li>• Payment and delivery will be arranged once confirmed</li>
-              </ul>
-            </div>
             <Button
               onClick={() => {
                 setOrderSubmitted(false)
                 setCurrentStep('products')
               }}
-              className="bg-portfolio-accent hover:bg-blue-600"
+              className="bg-portfolio-accent bg-blue-600 hover:bg-blue-500 cursor-pointer"
             >
               Submit Another Order
             </Button>
@@ -193,7 +184,7 @@ export function BasketForm() {
                     </CardTitle>
                     <Button
                       onClick={() => setIsAddingProduct(true)}
-                      className="bg-portfolio-accent hover:bg-blue-600"
+                      className="bg-portfolio-accent bg-blue-600 hover:bg-blue-500 cursor-pointer"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Product
@@ -232,7 +223,7 @@ export function BasketForm() {
                 {currentStep === 'products' && basket.length > 0 && (
                   <Button 
                     onClick={() => setCurrentStep('delivery')}
-                    className="w-full bg-portfolio-accent hover:bg-blue-600"
+                    className="w-full bg-portfolio-accent bg-blue-600 hover:bg-blue-500 cursor-pointer"
                   >
                     Continue to Delivery
                   </Button>

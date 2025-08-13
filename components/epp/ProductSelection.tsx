@@ -168,12 +168,12 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
         <CardContent>
           <Tabs value={activeCategory} onValueChange={setActiveCategory}>
             {/* Category Tabs */}
-            <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-6 bg-gray-500">
               {Object.keys(PRODUCT_CONFIGURATIONS).map((category) => {
                 const Icon = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS]
                 console.log(`Category: ${category}, Icon: ${Icon}`) // Debugging line
                 return (
-                  <TabsTrigger key={category} value={category} className="flex items-center gap-2">
+                  <TabsTrigger key={category} value={category} className="flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-gray-600">
                     <Icon className="w-4 h-4" />
                     {category}
                   </TabsTrigger>
@@ -507,7 +507,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                     <Button
                       type="submit"
                       disabled={!isValid || estimatedPrice === 0}
-                      className="flex-1 bg-portfolio-accent hover:bg-blue-600"
+                      className="flex-3 bg-portfolio-accent bg-blue-600 hover:bg-blue-500 cursor-pointer"
                     >
                       Add to Basket
                     </Button>
@@ -515,7 +515,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                       type="button"
                       onClick={onCancel}
                       variant="outline"
-                      className="border-portfolio-border text-portfolio-text"
+                      className="flex-1 border-portfolio-border text-portfolio-text text-black cursor-pointer"
                     >
                       Cancel
                     </Button>
