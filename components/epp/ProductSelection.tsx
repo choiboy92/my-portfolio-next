@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,7 +12,15 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { X, Smartphone, Laptop, Tablet, Watch } from 'lucide-react'
-import { getAvailableOptions, calculateEstimatedPrice, PRODUCT_CONFIGURATIONS } from '@/lib/product-config'
+import {
+  PRODUCT_CONFIGURATIONS,
+  getModelConfigurations,
+  getAvailableOptions,
+  calculatePrice,
+  ProductCategoryKey,
+  ProductSpecificationOptions,
+  Pencil
+} from '@/lib/product-config'
 import { basketItemSchema, type BasketItemFormData } from '@/lib/validation-schema'
 import type { BasketItem } from '@/types/basket'
 
@@ -20,17 +28,6 @@ interface ProductSelectorProps {
   onAdd: (item: BasketItem) => void
   onCancel: () => void
 }
-
-type AvailableOptions = {
-  models: string[];
-  colors: string[];
-  storage: string[];
-  specs?: string[];
-  connectivity?: string[];
-  size?: string[];
-  bands?: string[] | Record<string, string[]>;
-  appleCareAvailable: boolean;
-};
 
 const CATEGORY_ICONS = {
   'iPhone': Smartphone,
@@ -40,8 +37,7 @@ const CATEGORY_ICONS = {
 }
 
 export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
-  const [activeCategory, setActiveCategory] = useState('iPhone')
-  const [availableOptions, setAvailableOptions] = useState<AvailableOptions | null>(null)
+  const [activeCategory, setActiveCategory] = useState<'iPhone' | 'MacBook' | 'iPad' | 'Apple Watch'>('iPhone')
   const [estimatedPrice, setEstimatedPrice] = useState(0)
   const [discountValue, setDiscountValue] = useState(0)
 
@@ -56,77 +52,111 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     resolver: zodResolver(basketItemSchema),
     mode: 'onChange',
     defaultValues: {
-      category: 'iPhone',
-      model: '',
-      color: '',
-      storage: '',
-      specs: '',
-      size: '',
-      connectivity: '',
-      bands: '',
-      appleCare: false,
-      tradeIn: {
-        hasTradeIn: false,
-        serialNumber: '',
-        model: ''
-      }
+    category: 'iPhone',
+    model: '',
+    color: '',
+    storage: '',
+    specs: '',
+    size: '',
+    connectivity: '',
+    bands: '',
+    memory: '',
+    charger: '',
+    applePencil: '',
+    magicKeyboard: false,
+    nanoTexture: false,
+    band: undefined,
+    appleCare: false,
+    tradeIn: {
+      hasTradeIn: false,
+      serialNumber: '',
+      model: ''
     }
+  }
   })
 
+  // Watch form values
   const selectedCategory = watch('category')
   const selectedModel = watch('model')
-  const selectedStorage = watch('storage')
   const selectedSpecs = watch('specs')
-  const selectedConnectivity = watch('connectivity')
-  const selectedSize = watch('size')
-  const selectedBands = watch('bands')
   const selectedAppleCare = watch('appleCare')
   const hasTradeIn = watch('tradeIn.hasTradeIn')
 
-  // Update category when tab changes
-  useEffect(() => {
-    setValue('category', activeCategory)
-    setValue('model', '')
-    setValue('color', '')
-    setValue('storage', '')
-    setValue('specs', '')
-    setValue('connectivity', '')
-    setValue('size', '')
-    setValue('bands', '')
-  }, [activeCategory, setValue])
+  // Get available models for current category
+  const availableModels = getModelConfigurations(selectedCategory as ProductCategoryKey) || []
+  
+  // Get available options for selected model and spec
+  const availableOptions = selectedModel 
+    ? getAvailableOptions(selectedCategory as ProductCategoryKey, selectedModel, selectedSpecs)
+    : null
 
-  // Update available options when category or model changes
-  useEffect(() => {
-    if (selectedCategory) {
-      const options = getAvailableOptions(selectedCategory, selectedModel)
-      setAvailableOptions(options)
-    }
-  }, [selectedCategory, selectedModel])
-
+    const watchedValues = useWatch({
+        control,
+        name: ['memory', 'storage', 'charger', 'connectivity', 'size', 'applePencil', 'magicKeyboard', 'nanoTexture', 'band']
+    })
   // Calculate price whenever form values change
   useEffect(() => {
-    if (selectedCategory && selectedModel) {
-      const price = calculateEstimatedPrice(
-        selectedCategory,
+    if (availableOptions?.specs && availableOptions.specs.length === 1 && !selectedSpecs) {
+        setValue('specs', availableOptions.specs[0].name || 'default')
+    }
+    if (selectedCategory && selectedModel && selectedSpecs) {
+      const [memory, storage, charger, connectivity, size, applePencil, magicKeyboard, nanoTexture, band] = watchedValues
+
+      const price = calculatePrice(
+        selectedCategory as any,
         selectedModel,
-        selectedStorage,
         selectedSpecs,
-        selectedConnectivity,
-        selectedSize, // size not applicable for all categories
-        selectedBands, // bands not applicable for all categories
-        selectedAppleCare
+        {
+          memory: memory as string,
+          storage: storage as string,
+          charger: charger as string,
+          connectivity: connectivity as string,
+          size: size as string,
+          applePencil: applePencil as string,
+          magicKeyboard: magicKeyboard as boolean,
+          nanoTexture: nanoTexture as boolean,
+          appleCare: selectedAppleCare,
+          band: band as { material: string; style: string; color: string }
+        }
       )
-      if (selectedAppleCare) {
-        const applecarePrice = PRODUCT_CONFIGURATIONS[selectedCategory as keyof typeof PRODUCT_CONFIGURATIONS].appleCarePrice
-        setDiscountValue((price - applecarePrice) * 0.17)
+
+      // Calculate 17% discount
+      if (selectedAppleCare && availableOptions?.appleCarePrice) {
+        setDiscountValue((price - availableOptions.appleCarePrice) * 0.17)
       } else {
         setDiscountValue(price * 0.17)
       }
       setEstimatedPrice(price)
     } else {
       setEstimatedPrice(0)
+      setDiscountValue(0)
     }
-  }, [selectedCategory, selectedModel, selectedStorage, selectedSpecs, selectedConnectivity, selectedSize, selectedBands, selectedAppleCare])
+  }, [selectedCategory, selectedModel, selectedSpecs, selectedAppleCare, availableOptions, watch])
+
+  const handleCategoryChange = (value: string) => {
+    setActiveCategory(value as 'iPhone' | 'MacBook' | 'iPad' | 'Apple Watch')
+    // Reset ALL form fields when category changes
+    setValue('category', value)
+    setValue('model', '')
+    setValue('specs', '')
+    setValue('color', '')
+    setValue('storage', '')
+    setValue('memory', '')
+    setValue('charger', '')
+    setValue('connectivity', '')
+    setValue('size', '')
+    setValue('bands', '')
+    setValue('applePencil', '')
+    setValue('magicKeyboard', false)
+    setValue('nanoTexture', false)
+    setValue('band', undefined)
+    setValue('appleCare', false)
+    setValue('tradeIn', {
+      hasTradeIn: false,
+      serialNumber: '',
+      model: ''
+    })
+  }
 
   const onSubmit = (data: BasketItemFormData) => {
     const item: BasketItem = {
@@ -156,7 +186,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <Card className="bg-portfolio-card border-portfolio-border max-w-4xl w-full max-h-[90vh] overflow-y-auto text-white">
+      <Card className="bg-portfolio-card border-portfolio-border max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-portfolio-text">Add Product to Basket</CardTitle>
@@ -166,14 +196,15 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+          <Tabs value={activeCategory} onValueChange={handleCategoryChange}>
             {/* Category Tabs */}
-            <TabsList className="grid w-full grid-cols-4 mb-6 bg-gray-500">
+            <TabsList className="grid w-full grid-cols-4 mb-6">
               {Object.keys(PRODUCT_CONFIGURATIONS).map((category) => {
                 const Icon = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS]
-                console.log(`Category: ${category}, Icon: ${Icon}`) // Debugging line
+                if (!Icon) return null
+                
                 return (
-                  <TabsTrigger key={category} value={category} className="flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-gray-600">
+                  <TabsTrigger key={category} value={category} className="flex items-center gap-2">
                     <Icon className="w-4 h-4" />
                     {category}
                   </TabsTrigger>
@@ -187,9 +218,10 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Product Configuration */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="lg:col-span-2 space-y-6 text-white">
+                      
                       {/* Model Selection */}
-                      <div>
+                      <div className="">
                         <Label className="text-portfolio-text">Model *</Label>
                         <Controller
                           name="model"
@@ -197,10 +229,9 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                           render={({ field }) => (
                             <Select onValueChange={(value) => {
                               field.onChange(value)
-                              // Reset dependent fields
+                              setValue('specs', '')
                               setValue('color', '')
                               setValue('storage', '')
-                              setValue('specs', '')
                               setValue('connectivity', '')
                               setValue('size', '')
                               setValue('bands', '')
@@ -209,9 +240,16 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                 <SelectValue placeholder="Select model" />
                               </SelectTrigger>
                               <SelectContent>
-                                {PRODUCT_CONFIGURATIONS[category as keyof typeof PRODUCT_CONFIGURATIONS].models.map((model: string) => (
-                                  <SelectItem key={model} value={model}>
-                                    {model}
+                                {availableModels.map((model) => (
+                                  <SelectItem key={model.key} value={model.key}>
+                                    <div className="flex flex-col">
+                                      <span>{model.config.displayName}</span>
+                                      {model.config.category && (
+                                        <span className="text-xs text-muted-foreground">
+                                          {model.config.category}
+                                        </span>
+                                      )}
+                                    </div>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -223,39 +261,101 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                         )}
                       </div>
 
-                      {/* Dynamic Options */}
-                      {selectedModel && availableOptions && (
+                      {/* Spec Selection */}
+                      {selectedModel && availableOptions?.specs && (availableOptions.specs.length > 1) && (
+                        <div>
+                          <Label className="text-portfolio-text">Configuration *</Label>
+                          <Controller
+                            name="specs"
+                            control={control}
+                            render={({ field }) => (
+                              <Select onValueChange={(value) => {
+                                field.onChange(value)
+                                // Reset dependent fields when spec changes
+                                setValue('storage', '')
+                                setValue('memory', '')
+                                setValue('charger', '')
+                              }} value={field.value}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select configuration" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableOptions.specs.map((spec: ProductSpecificationOptions, index: number) => (
+                                    <SelectItem key={index} value={spec.name}>
+                                      <div className="flex flex-col text-left">
+                                        <span className="font-medium">{spec.name}</span>
+                                        <span className="text-sm text-green-600">
+                                          From {'\u00A3'}{spec.price.toLocaleString()}
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </div>
+                      )}
+
+                      {/* Color Selection */}
+                      {selectedModel && availableOptions?.colors && (
+                        <div>
+                          <Label className="text-portfolio-text">Color *</Label>
+                          <Controller
+                            name="color"
+                            control={control}
+                            render={({ field }) => (
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select color" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableOptions.colors.map((color: string) => (
+                                    <SelectItem key={color} value={color}>
+                                      {color}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                          {errors.color && (
+                            <p className="text-red-500 text-sm mt-1">{errors.color.message}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Dynamic Options Based on Product Type */}
+                      {selectedSpecs && availableOptions && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* Color */}
-                          {availableOptions.colors.length > 0 && (
+                          
+                          {/* Memory Options (MacBook) */}
+                          {availableOptions.memoryOptions && (
                             <div>
-                              <Label className="text-portfolio-text">Color *</Label>
+                              <Label className="text-portfolio-text">Memory</Label>
                               <Controller
-                                name="color"
+                                name="memory"
                                 control={control}
                                 render={({ field }) => (
                                   <Select onValueChange={field.onChange} value={field.value}>
                                     <SelectTrigger>
-                                      <SelectValue placeholder="Select color" />
+                                      <SelectValue placeholder="Select memory" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.colors.map((color: string) => (
-                                        <SelectItem key={color} value={color}>
-                                          {color}
+                                      {availableOptions.memoryOptions.map((memory: string) => (
+                                        <SelectItem key={memory} value={memory}>
+                                          {memory}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
                                   </Select>
                                 )}
                               />
-                              {errors.color && (
-                                <p className="text-red-500 text-sm mt-1">{errors.color.message}</p>
-                              )}
                             </div>
                           )}
 
-                          {/* Storage */}
-                          {availableOptions.storage.length > 0 && (
+                          {/* Storage Options */}
+                          {availableOptions.storageOptions && (
                             <div>
                               <Label className="text-portfolio-text">
                                 Storage {(category === 'iPhone' || category === 'iPad') && '*'}
@@ -269,7 +369,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select storage" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.storage.map((storage: string) => (
+                                      {availableOptions.storageOptions.map((storage: string) => (
                                         <SelectItem key={storage} value={storage}>
                                           {storage}
                                         </SelectItem>
@@ -281,22 +381,22 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                             </div>
                           )}
 
-                          {/* Specs (for MacBooks) */}
-                          {(availableOptions.specs?.length ?? 0) > 0 && (
+                          {/* Charger Options (MacBook) */}
+                          {availableOptions.chargerOptions && (
                             <div>
-                              <Label className="text-portfolio-text">Chip *</Label>
+                              <Label className="text-portfolio-text">Charger</Label>
                               <Controller
-                                name="specs"
+                                name="charger"
                                 control={control}
                                 render={({ field }) => (
                                   <Select onValueChange={field.onChange} value={field.value}>
                                     <SelectTrigger>
-                                      <SelectValue placeholder="Select chip" />
+                                      <SelectValue placeholder="Select charger" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.specs?.map((spec: string) => (
-                                        <SelectItem key={spec} value={spec}>
-                                          {spec}
+                                      {availableOptions.chargerOptions.map((charger: string) => (
+                                        <SelectItem key={charger} value={charger}>
+                                          {charger}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
@@ -306,8 +406,8 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                             </div>
                           )}
 
-                          {/* Connectivity (for Watch & iPad) */}
-                          {(availableOptions.connectivity?.length ?? 0) > 0 && (
+                          {/* Connectivity Options (iPad/Apple Watch) */}
+                          {availableOptions.connectivityOptions && (
                             <div>
                               <Label className="text-portfolio-text">Connectivity</Label>
                               <Controller
@@ -319,7 +419,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select connectivity" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.connectivity?.map((conn: string) => (
+                                      {availableOptions.connectivityOptions.map((conn: string) => (
                                         <SelectItem key={conn} value={conn}>
                                           {conn}
                                         </SelectItem>
@@ -331,8 +431,8 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                             </div>
                           )}
 
-                          {/* Sizes (for Watch) */}
-                          {(availableOptions.size?.length ?? 0) > 0 && (
+                          {/* Size Options (Apple Watch) */}
+                          {availableOptions.sizeOptions && (
                             <div>
                               <Label className="text-portfolio-text">Size</Label>
                               <Controller
@@ -341,12 +441,12 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                 render={({ field }) => (
                                   <Select onValueChange={field.onChange} value={field.value}>
                                     <SelectTrigger>
-                                      <SelectValue placeholder="Select watch size" />
+                                      <SelectValue placeholder="Select size" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.size?.map((conn: string) => (
-                                        <SelectItem key={conn} value={conn}>
-                                          {conn}
+                                      {availableOptions.sizeOptions.map((size: string) => (
+                                        <SelectItem key={size} value={size}>
+                                          {size}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
@@ -355,11 +455,85 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                               />
                             </div>
                           )}
+
+                          {/* Apple Pencil Options (iPad) */}
+                          {availableOptions.applePencilOptions && (
+                            <div>
+                              <Label className="text-portfolio-text">Apple Pencil</Label>
+                              <Controller
+                                name="applePencil"
+                                control={control}
+                                render={({ field }) => (
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select Apple Pencil" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {availableOptions.applePencilOptions.map((pencil: Pencil) => (
+                                        <SelectItem key={pencil.pencilType} value={pencil.pencilType}>
+                                          {pencil.pencilType} (+{'\u00A3'}{pencil.price})
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                            </div>
+                          )}
+
+                        </div>
+                      )}
+
+                      {/* Nano-texture Option */}
+                      {availableOptions?.nanoTextureAvailable && (
+                        <div className="flex items-center space-x-2">
+                          <Controller
+                            name="nanoTexture"
+                            control={control}
+                            render={({ field }) => (
+                              <Checkbox
+                                id="nanotexture"
+                                checked={field.value}
+                                onCheckedChange={(checked) => field.onChange(checked === true)}
+                              />
+                            )}
+                          />
+                          <Label htmlFor="nanotexture" className="text-portfolio-text">
+                            Add Nano-texture glass
+                            {availableOptions.nanoTexturePrice && (
+                              <span className="text-portfolio-muted ml-2">
+                                (+{'\u00A3'}{availableOptions.nanoTexturePrice})
+                              </span>
+                            )}
+                          </Label>
+                        </div>
+                      )}
+
+                      {/* Magic Keyboard Option (iPad) */}
+                      {availableOptions?.magicKeyboardPrice && (
+                        <div className="flex items-center space-x-2">
+                          <Controller
+                            name="magicKeyboard"
+                            control={control}
+                            render={({ field }) => (
+                              <Checkbox
+                                id="magickeyboard"
+                                checked={field.value}
+                                onCheckedChange={(checked) => field.onChange(checked === true)}
+                              />
+                            )}
+                          />
+                          <Label htmlFor="magickeyboard" className="text-portfolio-text">
+                            Add Magic Keyboard
+                            <span className="text-portfolio-muted ml-2">
+                              (+{'\u00A3'}{availableOptions.magicKeyboardPrice})
+                            </span>
+                          </Label>
                         </div>
                       )}
 
                       {/* AppleCare */}
-                      {selectedModel && availableOptions?.appleCareAvailable && (
+                      {selectedModel && availableOptions?.appleCarePrice && (
                         <div className="flex items-center space-x-2">
                           <Controller
                             name="appleCare"
@@ -368,17 +542,15 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                               <Checkbox
                                 id="applecare"
                                 checked={field.value}
-                                onCheckedChange={field.onChange}
+                                onCheckedChange={(checked) => field.onChange(checked === true)}
                               />
                             )}
                           />
                           <Label htmlFor="applecare" className="text-portfolio-text">
                             Add AppleCare+ Protection
-                            {PRODUCT_CONFIGURATIONS[category as keyof typeof PRODUCT_CONFIGURATIONS].appleCarePrice && (
-                              <span className="text-portfolio-muted ml-2">
-                                (+£{PRODUCT_CONFIGURATIONS[category as keyof typeof PRODUCT_CONFIGURATIONS].appleCarePrice})
-                              </span>
-                            )}
+                            <span className="text-portfolio-muted ml-2">
+                              (+{'\u00A3'}{availableOptions.appleCarePrice})
+                            </span>
                           </Label>
                         </div>
                       )}
@@ -394,7 +566,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                 <Checkbox
                                   id="tradein"
                                   checked={field.value}
-                                  onCheckedChange={field.onChange}
+                                  onCheckedChange={(checked) => field.onChange(checked === true)}
                                 />
                               )}
                             />
@@ -469,26 +641,33 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                   <div className="flex justify-between">
                                     <span className="text-portfolio-muted">AppleCare+</span>
                                     <span className="text-portfolio-text">
-                                      + £{PRODUCT_CONFIGURATIONS[category as keyof typeof PRODUCT_CONFIGURATIONS].appleCarePrice}
+                                      +{'\u00A3'}{availableOptions.appleCarePrice}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                <div className="border-t border-portfolio-border pt-2">
+                                  <div className="flex justify-between font-bold text-lg">
+                                    <span>Final price:</span>
+                                    <span className="text-green-600">
+                                      {'\u00A3'}{(estimatedPrice - discountValue).toLocaleString()}
+                                    </span>
+                                  </div>
+                                </div>                                
+                                {hasTradeIn && (
+                                  <div className="text-center pt-2">
+                                    <span className="text-xs text-portfolio-muted">
+                                      - Additional trade-in value will be calculated
                                     </span>
                                   </div>
                                 )}
                               </div>
-                              <div className="border-t text-center p-4 border-portfolio-border pt-3 bg-portfolio-card">
-                                <div className="text-2xl font-bold text-portfolio-accent text-green-500">
-                                  £{(estimatedPrice-discountValue).toLocaleString()}
-                                </div>
-                                <div className="text-xs text-portfolio-muted">
-                                  Final price
-                                </div>
-                                {hasTradeIn && (
-                                  <div className="text-xs text-portfolio-muted text-right text-green-500">
-                                    - £TradeIn
-                                  </div>
-                                )}
+                              
+                              <div className="border-t border-portfolio-border pt-3">
+                                <p className="text-xs text-portfolio-muted">
+                                  * Final pricing subject to verification
+                                </p>
                               </div>
-
-                                
                             </>
                           ) : (
                             <div className="text-center py-8 text-portfolio-muted">

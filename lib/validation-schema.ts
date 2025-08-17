@@ -11,6 +11,16 @@ export const basketItemSchema = z.object({
   size: z.string().optional(),
   connectivity: z.string().optional(),
   bands: z.string().optional(),
+  memory: z.string().optional(),
+  charger: z.string().optional(),
+  applePencil: z.string().optional(),
+  magicKeyboard: z.boolean().optional(),
+  nanoTexture: z.boolean().optional(),
+  band: z.object({
+    material: z.string(),
+    style: z.string(),
+    color: z.string()
+  }).optional(),
   appleCare: z.boolean(),
   tradeIn: z.object({
     hasTradeIn: z.boolean(),

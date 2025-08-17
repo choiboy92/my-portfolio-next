@@ -10,14 +10,20 @@ export interface BasketItem {
   connectivity?: string
   bands?: string
   appleCare: boolean
+  memory?: string
+  charger?: string
+  applePencil?: string
+  magicKeyboard?: boolean
+  nanoTexture?: boolean
+  band?: { material: string; style: string; color: string }
+  quantity: number
+  estimatedPrice?: number
+  discountValue?: number
   tradeIn?: {
     hasTradeIn: boolean
     serialNumber?: string
     model?: string
   }
-  quantity: number
-  estimatedPrice?: number
-  discountValue?: number
 }
 
 export interface BasketState {
