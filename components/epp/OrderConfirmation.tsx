@@ -5,20 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { AlertTriangle, Shield, Loader2, CheckCircle, Info, Repeat } from 'lucide-react'
-import { useState } from 'react'
+import { AlertTriangle, Shield, Loader2, CheckCircle, Info, Repeat, MessageSquare } from 'lucide-react'
+import { useState, useCallback } from 'react'
 import type { BasketItem } from '@/types/basket'
-import type { DeliveryFormData } from '@/lib/validation-schema'
+import { orderSchema, type DeliveryFormData, type OrderFormData } from '@/lib/validation-schema'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
+import { Controller, useForm, useFormContext } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Textarea } from '@/components/ui/textarea'
+import { debounce } from 'lodash'
 
 
 interface OrderConfirmationProps {
   basket: BasketItem[]
-  deliveryData: DeliveryFormData
+  deliveryData: any
   onSubmit: () => void
   onBack: () => void
-  isSubmitting?: boolean
+  isSubmitting: boolean
 }
 
 export function OrderConfirmation({ 
@@ -28,20 +32,33 @@ export function OrderConfirmation({
   onBack, 
   isSubmitting = false 
 }: OrderConfirmationProps) {
-  const [confirmations, setConfirmations] = useState({
-    checkCompleted: false
-  })
+
+  const {
+    control,
+    formState: { errors },
+    watch 
+} = useFormContext<OrderFormData>()
+
+  const additionalComments = watch('additionalComments')
+  const checkCompleted = watch('checkCompleted')
+  const [commentLength, setCommentLength] = useState(0)
+  const maxLength = 1000
 
   const totalEstimatedPrice = basket.reduce((sum, item) => sum + (item.estimatedPrice ?? 0), 0)
   const totalDiscount = basket.reduce((sum, item) => sum + (item.discountValue ?? 0), 0)
   const finalPrice = totalEstimatedPrice - totalDiscount
 
-  const canSubmit = !isSubmitting && 
-    confirmations.checkCompleted
+  const canSubmit = !isSubmitting && checkCompleted
 
-  const handleConfirmationChange = (key: keyof typeof confirmations) => (checked: boolean) => {
-    setConfirmations(prev => ({ ...prev, [key]: checked }))
-  }
+//   const handleFormSubmit = ( data: OrderFormData) => {
+//     console.log('Submitting order data:', data)
+//     onSubmit(data.additionalComments)
+//   }
+
+  const debouncedSetLength = useCallback(
+    debounce((length: number) => setCommentLength(length), 300),
+    []
+  )
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -119,13 +136,61 @@ export function OrderConfirmation({
                         )}
                     </div>
                 </div>
-
-                
-
-                
               </div>
             </div>
           ))}
+
+          {/* ✅ Additional Comments Section */}
+        <Card className="bg-portfolio-card border-portfolio-border text-white">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-portfolio-accent" />
+              <CardTitle className="text-portfolio-text">Additional Instructions</CardTitle>
+            </div>
+            <p className="text-sm text-portfolio-muted mt-2">
+              Add any special requests, engravings, configuration changes, or delivery instructions
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Controller
+              name="additionalComments"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-2">
+                  <Textarea
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(e)
+                      debouncedSetLength(e.target.value.length)
+                    }}
+                    maxLength={maxLength}
+                    placeholder="Examples: Engraving requests, color preferences if unavailable, delivery preferences, and other 
+
+                    Enter any additional requirements here..."
+                    className="min-h-[150px] bg-portfolio-dark text-portfolio-text border-portfolio-border resize-none"
+                  />
+                  
+                  <div className="flex justify-between items-center text-xs">
+                    <div className="flex items-center gap-1 text-portfolio-muted">
+                      <Info className="w-3 h-3" />
+                      <span>These instructions will be reviewed manually and may affect final pricing</span>
+                    </div>
+                    <span className="text-portfolio-muted">
+                      {commentLength}/{maxLength}
+                    </span>
+                  </div>
+
+                  {commentLength > maxLength * 0.8 && (
+                    <div className="text-xs text-orange-500 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      Approaching character limit
+                    </div>
+                  )}
+                </div>
+              )}
+            />
+          </CardContent>
+        </Card>
 
           
           {/* Quick Summary */}
@@ -218,12 +283,17 @@ export function OrderConfirmation({
         <CardContent className="space-y-4">
           <div className="space-y-4">
             <div className="flex items-start space-x-3">
-              <Checkbox
-                id="check-completed"
-                checked={confirmations.checkCompleted}
-                onCheckedChange={handleConfirmationChange('checkCompleted')}
-                className="mt-1"
-              />
+              <Controller
+                  name="checkCompleted"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="confirm-order"
+                      checked={field.value}
+                      onCheckedChange={(checked) => field.onChange(checked === true)}
+                    />
+                  )}
+                />
               <Label htmlFor="terms" className="text-sm text-portfolio-text leading-relaxed">
                 I have checked my order configurations and understand and accept that this may change subject to availability. Final pricing, 
                 availability, and delivery terms will be confirmed before processing.
@@ -231,7 +301,7 @@ export function OrderConfirmation({
             </div>
           </div>
 
-          {!canSubmit && (
+          {!canSubmit && errors.checkCompleted && (
             <div className="bg-red-900/20 border border-red-500 rounded-lg p-3 mt-4">
               <div className="flex items-center gap-2 text-red-400 text-sm">
                 <AlertTriangle className="w-4 h-4" />
@@ -253,25 +323,17 @@ export function OrderConfirmation({
           Back to Review
         </Button>
         <Button
+          type="submit"
           onClick={onSubmit}
           disabled={!canSubmit}
-          className={`flex-1 ${
-            canSubmit 
-              ? 'bg-green-600 hover:bg-green-500 text-white cursor-pointer' 
-              : 'bg-gray-600 text-gray-300 cursor-not-allowed'
-          }`}
+          className="flex-1 bg-portfolio-accent bg-blue-600 hover:bg-blue-500 cursor-pointer"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               Submitting Order...
             </>
-          ) : (
-            <>
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Submit Order Request
-            </>
-          )}
+          ) : ('Submit Order')}
         </Button>
       </div>
     </div>

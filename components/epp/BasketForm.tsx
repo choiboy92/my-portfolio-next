@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,7 +12,9 @@ import { DeliveryOptions } from './DeliveryOptions'
 import { BasketItem as BasketItemComponent } from './BasketItem'
 import { OrderConfirmation } from './OrderConfirmation'
 import type { BasketItem, OrderData } from '@/types/basket'
-import { deliverySchema, type DeliveryFormData } from '@/lib/validation-schema'
+import { deliverySchema, OrderFormData, orderSchema, type DeliveryFormData } from '@/lib/validation-schema'
+
+
 
 export function BasketForm() {
   const [basket, setBasket] = useState<BasketItem[]>([])
@@ -21,85 +23,98 @@ export function BasketForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderSubmitted, setOrderSubmitted] = useState(false)
   const [orderError, setOrderError] = useState<string | null>(null)
+  const [submittedOrderId, setSubmittedOrderId] = useState<string>('')
 
-  const {
-    control: deliveryControl,
-    handleSubmit: handleDeliverySubmit,
-    formState: { errors: deliveryErrors },
-    watch: watchDelivery,
-    reset: resetDelivery,
-    setValue: setDeliveryValue,
-    trigger: triggerValidation
-  } = useForm<DeliveryFormData>({
-    resolver: zodResolver(deliverySchema),
+  const methods = useForm<OrderFormData>({
+    resolver: zodResolver(orderSchema),
     mode: 'onChange',
     defaultValues: {
-      method: 'delivery',
-      deliveryType: '',
-    storeLocation: '',
-    address: {
-      title: '',
-      firstName: '',
-      surname: '',
-      line1: '',
-      line2: '',
-      city: '',
-      postcode: ''
-    },
-    contact: {
-      email: '',
-      phone: ''
-    }
+      basket: [],
+      delivery: {
+        method: 'delivery',
+        deliveryType: '',
+        storeLocation: '',
+        address: {
+          title: '',
+          firstName: '',
+          surname: '',
+          line1: '',
+          line2: '',
+          city: '',
+          postcode: ''
+        },
+        contact: {
+          email: '',
+          phone: ''
+        }
+      },
+      additionalComments: '',
+      checkCompleted: false
     }
   })
 
+  const { handleSubmit, watch, setValue, getValues } = methods
+
+  const syncBasketToForm = (newBasket: BasketItem[]) => {
+    setBasket(newBasket)
+    setValue('basket', newBasket)
+  }
+
   const addToBasket = (item: BasketItem) => {
-    setBasket(prev => [...prev, { ...item, id: crypto.randomUUID() }])
+    const newItem: BasketItem = {
+      ...item,
+      id: crypto.randomUUID(),
+      quantity: item.quantity || 1,
+      memory: item.memory || undefined,
+      charger: item.charger || undefined,
+      applePencil: item.applePencil || undefined,
+      magicKeyboard: item.magicKeyboard || false,
+      nanoTexture: item.nanoTexture || false,
+      band: item.band || undefined,
+      estimatedPrice: item.estimatedPrice || 0,
+      discountValue: item.discountValue || 0,
+      appleCare: item.appleCare || false,
+      tradeIn: item.tradeIn || undefined
+    }
+    
+    const newBasket = [...basket, newItem]
+    syncBasketToForm(newBasket)
     setIsAddingProduct(false)
   }
 
   const removeFromBasket = (itemId: string) => {
-    setBasket(prev => prev.filter(item => item.id !== itemId))
+    const newBasket = basket.filter(item => item.id !== itemId)
+    syncBasketToForm(newBasket)
   }
 
-  const onDeliverySubmit = async (deliveryFormData: DeliveryFormData) => {
-    console.log('Delivery form submitted:', deliveryFormData)
+  const onDeliverySubmit = () => {
     setCurrentStep('summary')
   }
 
-  // const onReviewConfirm = () => {
-  //   setCurrentStep('confirm')
-  // }
-
-  const submitOrder = async (deliveryData: DeliveryFormData) => {
-    if (isSubmitting) return
-
-    const orderData: OrderData = {
-      basket,
-      delivery: deliveryData,
-      specialInstructions: ''
-    }
-
+  // ✅ Form submission handler
+  const onSubmit = async (data: OrderFormData) => {
     setIsSubmitting(true)
     setOrderError(null)
-
+    console.log('Submitting order data:', data)
     try {
       const response = await fetch('/api/epp/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
+        body: JSON.stringify({
+          basket: data.basket,
+          delivery: data.delivery,
+          orderComments: data.additionalComments,
+          checkCompleted: data.checkCompleted
+        })
       })
 
       const result = await response.json()
 
       if (response.ok) {
         setOrderSubmitted(true)
+        setSubmittedOrderId(result.orderId || '')
         setBasket([])
-        resetDelivery()
-        // setTimeout(() => {
-        //   setCurrentStep('products')
-        //   setOrderSubmitted(false)
-        // }, 5000)
+        methods.reset()
       } else {
         throw new Error(result.error || 'Failed to submit order')
       }
@@ -126,6 +141,7 @@ export function BasketForm() {
               onClick={() => {
                 setOrderSubmitted(false)
                 setCurrentStep('products')
+                setSubmittedOrderId('')
               }}
               className="bg-portfolio-accent bg-blue-600 hover:bg-blue-500 cursor-pointer"
             >
@@ -138,6 +154,7 @@ export function BasketForm() {
   }
 
   return (
+    <FormProvider {...methods}>  {
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Progress Indicator */}
       <div className="mb-8">
@@ -234,13 +251,8 @@ export function BasketForm() {
 
           {currentStep === 'delivery' && (
             <DeliveryOptions
-              control={deliveryControl}
-              errors={deliveryErrors}
               onSubmit={onDeliverySubmit}
               onBack={() => setCurrentStep('products')}
-              watch={watchDelivery}
-              setValue={setDeliveryValue}
-              trigger={triggerValidation}
             />
           )}
         </div>
@@ -292,14 +304,15 @@ export function BasketForm() {
         <div className="lg:col-span-2 space-y-6">
           <OrderConfirmation
               basket={basket}
-              deliveryData={watchDelivery()}
-              onSubmit={() => handleDeliverySubmit(submitOrder)()}
+              deliveryData={getValues('delivery')}
+              onSubmit={handleSubmit(onSubmit)}
               onBack={() => setCurrentStep('delivery')}
-              isSubmitting={false}
+              isSubmitting={isSubmitting}
             />
         </div>
       </div>
       )}
     </div>
+    } </FormProvider>
   )
 }

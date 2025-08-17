@@ -15,7 +15,12 @@ export interface BasketItem {
   applePencil?: string
   magicKeyboard?: boolean
   nanoTexture?: boolean
-  band?: { material: string; style: string; color: string }
+  band?: {
+    material: string;
+    style: string;
+    color: string;
+    size?: string
+  }
   quantity: number
   estimatedPrice?: number
   discountValue?: number
@@ -54,5 +59,6 @@ export interface DeliveryInfo {
 export interface OrderData {
   basket: BasketItem[]
   delivery: DeliveryInfo
-  specialInstructions?: string
+  additionalComments?: string
+  checkCompleted: boolean
 }
