@@ -233,7 +233,7 @@ export function DeliveryOptions({ onSubmit, onBack }: DeliveryOptionsProps) {
                         <CardHeader>
                             <CardTitle className="text-portfolio-text">Select Apple Store</CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="space-y-4">
                             <Controller
                             name="delivery.storeLocation"
                             control={control}
@@ -255,6 +255,32 @@ export function DeliveryOptions({ onSubmit, onBack }: DeliveryOptionsProps) {
                             {errors.delivery?.storeLocation && (
                             <p className="text-red-500 text-sm mt-2">{errors.delivery.storeLocation.message}</p>
                             )}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <Controller
+                                name="delivery.address.firstName"
+                                control={control}
+                                render={({ field }) => (
+                                    <Input {...field} placeholder="First name" />
+                                )}
+                                />
+                                {errors.delivery?.address?.firstName && (
+                                <p className="text-red-500 text-sm mt-1">{errors.delivery.address.firstName.message}</p>
+                                )}
+                            </div>
+                            <div>
+                                <Controller
+                                name="delivery.address.surname"
+                                control={control}
+                                render={({ field }) => (
+                                    <Input {...field} placeholder="Surname" />
+                                )}
+                                />
+                                {errors.delivery?.address?.surname && (
+                                <p className="text-red-500 text-sm mt-1">{errors.delivery.address.surname.message}</p>
+                                )}
+                            </div>
+                            </div>
                         </CardContent>
                     </div>
                 </TabsContent>

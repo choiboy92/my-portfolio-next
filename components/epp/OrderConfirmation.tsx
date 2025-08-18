@@ -240,6 +240,7 @@ export function OrderConfirmation({
                 {deliveryData.storeLocation === 'stratford-city' && 'Apple Stratford City'}
                 {deliveryData.storeLocation === 'bluewater' && 'Apple Bluewater'}
                 {deliveryData.storeLocation === 'kingston' && 'Apple Kingston'}
+                &nbsp;by {deliveryData.address.firstName} {deliveryData.address.surname} 
               </p>
             )}
             <p className="text-portfolio-muted text-sm mt-2">

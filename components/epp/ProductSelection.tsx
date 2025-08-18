@@ -198,13 +198,13 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
         <CardContent>
           <Tabs value={activeCategory} onValueChange={handleCategoryChange}>
             {/* Category Tabs */}
-            <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-6 bg-gray-500">
               {Object.keys(PRODUCT_CONFIGURATIONS).map((category) => {
                 const Icon = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS]
                 if (!Icon) return null
                 
                 return (
-                  <TabsTrigger key={category} value={category} className="flex items-center gap-2">
+                  <TabsTrigger key={category} value={category} className="flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-gray-600">
                     <Icon className="w-4 h-4" />
                     {category}
                   </TabsTrigger>

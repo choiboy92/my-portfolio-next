@@ -769,9 +769,9 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
 
 // Aggregate all product configurations
 export const PRODUCT_CONFIGURATIONS = {
-  'MacBook': MACBOOK_CONFIGURATIONS,
   'iPhone': IPHONE_CONFIGURATIONS,
   'iPad': IPAD_CONFIGURATIONS,
+  'MacBook': MACBOOK_CONFIGURATIONS,
   'Apple Watch': WATCH_CONFIGURATIONS
 } as const
 

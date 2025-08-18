@@ -63,8 +63,8 @@ const pickupMethodSchema = baseSchema.extend({
   // address not needed for pickup
   address: z.object({
     title: z.string().optional(),
-    firstName: z.string().optional(),
-    surname: z.string().optional(),
+    firstName: z.string().min(1, 'First name is required'),
+    surname: z.string().min(1, 'Surname is required'),
     line1: z.string().optional(),
     line2: z.string().optional(),
     city: z.string().optional(),
