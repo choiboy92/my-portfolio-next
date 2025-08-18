@@ -101,7 +101,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     }
     if (selectedCategory && selectedModel && selectedSpecs) {
       const [memory, storage, charger, connectivity, size, applePencil, magicKeyboard, nanoTexture, band] = watchedValues
-
+      //console.log(availableOptions)
       const price = calculatePrice(
         selectedCategory as any,
         selectedModel,
@@ -169,7 +169,6 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
       size: data.size,
       connectivity: data.connectivity,
       band: data.band,
-      // bands: data.bands,
       appleCare: data.appleCare,
       quantity: 1,
       estimatedPrice: estimatedPrice,
@@ -235,7 +234,6 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                               setValue('storage', '')
                               setValue('connectivity', '')
                               setValue('size', '')
-                              // setValue('bands', '')
                               setValue('band', undefined)
                             }} value={field.value}>
                               <SelectTrigger>
@@ -276,7 +274,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                 // Reset dependent fields when spec changes
                                 setValue('storage', '')
                                 setValue('memory', '')
-                                setValue('charger', '')
+                                setValue('charger', undefined)
                               }} value={field.value}>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select configuration" />
@@ -486,7 +484,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                         </div>
                           {/* Apple Watch Band Selection */}
                           {selectedCategory === 'Apple Watch' && selectedSpecs && availableOptions?.bandOptions && (
-                            <div className="space-y-4 p-4 bg-portfolio-dark rounded-lg border border-portfolio-border flex justify-between">
+                            <div className="space-y-4 p-4 bg-portfolio-dark rounded-lg border border-portfolio-border flex flex-col">
                               <h4 className="text-portfolio-text font-medium  items-center gap-2">
                                 Band Selection
                               </h4>
@@ -500,7 +498,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                 }
                                 return null;
                               })()}
-
+                              <div className="flex grow justify-between">
                               {/* Band Material Selection */}
                               { availableOptions?.bandOptions.length > 1 && (
                               <div>
@@ -582,7 +580,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                               )}
 
                               {/* Band Color Selection */}
-                              {watch('band.style') && (
+                              {watch('band.material') && (
                                 <div>
                                   <Label className="text-portfolio-text">Band Color</Label>
                                   <Controller
@@ -595,7 +593,6 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       const selectedStyleObj = selectedMaterialGroup?.style.find(
                                         (style: any) => style.styleName === watch('band.style')
                                       )
-                                      
                                       return (
                                         <Select onValueChange={(value) => {
                                           field.onChange(value)
@@ -632,7 +629,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                               )}
 
                               {/* Band Size Selection */}
-                              {watch('band.color') && (
+                              {watch('band.material') && (
                                 <div>
                                   <Label className="text-portfolio-text">Band Size</Label>
                                   <Controller
@@ -682,6 +679,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                   />
                                 </div>
                               )}
+                              </div>
 
                               {/* Band Selection Summary
                               {watch('band.material') && watch('band.style') && watch('band.color') && (

@@ -80,6 +80,7 @@ const MACBOOK_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Ma
           constraints: { minStorage: '512GB', minMemory: '24GB' },
           memoryOptions: { '24GB': 0, '36GB': 200, '48GB': 400, '64GB': 600, '128GB': 1400},
           storageOptions: { '512GB': 0, '1TB': 200, '2TB': 600, '4TB': 1200, '8TB': 2400 },
+          chargerOptions: { '70W': 0, '96W': 20 },
           nanoTexture: 150
         },
         {
@@ -88,6 +89,7 @@ const MACBOOK_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Ma
           constraints: { minStorage: '512GB', minMemory: '36GB' },
           memoryOptions: { '36GB': 0, '48GB': 0, '64GB': 200, '128GB': 1000},
           storageOptions: { '512GB': 0, '1TB': 200, '2TB': 600, '4TB': 1200, '8TB': 2400 },
+          chargerOptions: { '70W': 0, '96W': 20 },
           nanoTexture: 150
         },
         {
@@ -96,6 +98,7 @@ const MACBOOK_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Ma
           constraints: { minStorage: '1TB', minMemory: '24GB' },
           memoryOptions: { '36GB': 0, '48GB': 200, '64GB': 400, '128GB': 1200},
           storageOptions: { '1TB': 0, '2TB': 400, '4TB': 1000, '8TB': 2200 },
+          chargerOptions: { '70W': 0, '96W': 20 },
           nanoTexture: 150
         },
         {
@@ -104,6 +107,7 @@ const MACBOOK_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Ma
           constraints: { minStorage: '1TB', minMemory: '48GB' },
           memoryOptions: { '48GB': 0, '64GB': 200, '128GB': 1000},
           storageOptions: { '1TB': 0, '2TB': 400, '4TB': 1000, '8TB': 2200 },
+          chargerOptions: { '70W': 0, '96W': 20 },
           nanoTexture: 150
         }
       ],
@@ -146,6 +150,7 @@ const MACBOOK_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Ma
           constraints: { minStorage: '1TB', minMemory: '24GB' },
           memoryOptions: { '24GB': 0, '36GB': 200, '48GB': 400, '64GB': 600, '128GB': 1400},
           storageOptions: { '1TB': 0, '2TB': 400, '4TB': 1000, '8TB': 2200 },
+          chargerOptions: { '70W': 0, '96W': 20 },
           nanoTexture: 150
         },
         {
@@ -154,6 +159,7 @@ const MACBOOK_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Ma
           constraints: { minStorage: '1TB', minMemory: '36GB' },
           memoryOptions: { '36GB': 0, '48GB': 200, '64GB': 400, '128GB': 1200},
           storageOptions: { '1TB': 0, '2TB': 400, '4TB': 1000, '8TB': 2200 },
+          chargerOptions: { '70W': 0, '96W': 20 },
           nanoTexture: 150
         }
       ],
@@ -243,12 +249,13 @@ const MACBOOK_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Ma
           constraints: { minStorage: '256GB' },
           memoryOptions: { '16GB': 0, '24GB': 200 },
           storageOptions: { '256GB': 200, '512GB': 400, '1TB': 800 },
-          chargerOptions: { '30W': 0, '67W': 0 }
         },
         {
           name: 'M4 8-Core CPU 10-Core GPU 24GB Unified Memory',
           price: 899,
-          constraints: { minStorage: '512GB' }
+          constraints: { minStorage: '512GB' },
+          memoryOptions: { '24GB': 0 },
+          storageOptions: { '512GB': 0, '1TB': 400 },
         }
       ],
       appleCarePrice: 199
@@ -846,16 +853,15 @@ export function getAvailableOptions<T extends ProductCategoryKey>(
   function parseStorageSize(size: string): number {
     const match = size.match(/(\d+)(GB|TB)/i)
     if (!match) return 0
-    
     const value = parseInt(match[1])
-    const unit = match[1].toUpperCase()
+    const unit = match[2].toUpperCase()
     return unit === 'TB' ? value * 1024 : value
   }
 
   // Parse memory sizes to GB for comparison
   function parseMemorySize(memory: string): number {
     const match = memory.match(/(\d+)GB/i)
-    return match ? parseInt(match[2]) : 0
+    return match ? parseInt(match[1]) : 0
   }
 
   const result = {
@@ -878,7 +884,11 @@ export function getAvailableOptions<T extends ProductCategoryKey>(
         macSpec.constraints,
         'minStorage'
       )
-      result.chargerOptions = Object.keys(macSpec.chargerOptions || {})
+      if (macSpec.chargerOptions) {
+        result.chargerOptions = Object.keys(macSpec.chargerOptions)
+      } else {
+        result.chargerOptions = undefined
+      }
       result.nanoTextureAvailable = typeof macSpec.nanoTexture === 'number'
       result.nanoTexturePrice = macSpec.nanoTexture
     }
@@ -974,7 +984,6 @@ export function calculatePrice<T extends ProductCategoryKey>(
     }
   }
 
-  console.log(totalPrice)
   // iPad pricing
   if ('connectivityOptions' in spec && category === 'iPad') {
     const ipadSpec = spec as iPadSpecificationOption
@@ -994,7 +1003,6 @@ export function calculatePrice<T extends ProductCategoryKey>(
     if (selectedOptions.nanoTexture && ipadSpec.nanoTexture) {
       totalPrice += ipadSpec.nanoTexture
     }
-    console.log(selectedOptions)
   }
 
   // Apple Watch pricing
