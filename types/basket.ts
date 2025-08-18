@@ -8,7 +8,6 @@ export interface BasketItem {
   specs?: string
   size?: string
   connectivity?: string
-  bands?: string
   appleCare: boolean
   memory?: string
   charger?: string

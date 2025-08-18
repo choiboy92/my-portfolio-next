@@ -637,6 +637,7 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
           connectivityOptions: {'GPS + Cellular': 0},
           bandOptions: [
             {
+              material: 'default',
               style: [
                 { 
                   styleName: 'Trail Loop',

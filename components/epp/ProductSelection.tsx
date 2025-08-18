@@ -59,7 +59,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     specs: '',
     size: '',
     connectivity: '',
-    bands: '',
+    // bands: '',
     memory: '',
     charger: '',
     applePencil: '',
@@ -90,10 +90,10 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     ? getAvailableOptions(selectedCategory as ProductCategoryKey, selectedModel, selectedSpecs)
     : null
 
-    const watchedValues = useWatch({
-        control,
-        name: ['memory', 'storage', 'charger', 'connectivity', 'size', 'applePencil', 'magicKeyboard', 'nanoTexture', 'band']
-    })
+  const watchedValues = useWatch({
+      control,
+      name: ['memory', 'storage', 'charger', 'connectivity', 'size', 'applePencil', 'magicKeyboard', 'nanoTexture', 'band']
+  })
   // Calculate price whenever form values change
   useEffect(() => {
     if (availableOptions?.specs && availableOptions.specs.length === 1 && !selectedSpecs) {
@@ -116,7 +116,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
           magicKeyboard: magicKeyboard as boolean,
           nanoTexture: nanoTexture as boolean,
           appleCare: selectedAppleCare,
-          band: band as { material: string; style: string; color: string }
+          band: band as { material: string; style: string; color: string; size?: string }
         }
       )
 
@@ -145,7 +145,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     setValue('charger', '')
     setValue('connectivity', '')
     setValue('size', '')
-    setValue('bands', '')
+    // setValue('bands', '')
     setValue('applePencil', '')
     setValue('magicKeyboard', false)
     setValue('nanoTexture', false)
@@ -168,7 +168,8 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
       specs: data.specs,
       size: data.size,
       connectivity: data.connectivity,
-      bands: data.bands,
+      band: data.band,
+      // bands: data.bands,
       appleCare: data.appleCare,
       quantity: 1,
       estimatedPrice: estimatedPrice,
@@ -234,7 +235,8 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                               setValue('storage', '')
                               setValue('connectivity', '')
                               setValue('size', '')
-                              setValue('bands', '')
+                              // setValue('bands', '')
+                              setValue('band', undefined)
                             }} value={field.value}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select model" />
@@ -327,6 +329,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
 
                       {/* Dynamic Options Based on Product Type */}
                       {selectedSpecs && availableOptions && (
+                        <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           
                           {/* Memory Options (MacBook) */}
@@ -480,7 +483,222 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                               />
                             </div>
                           )}
+                        </div>
+                          {/* Apple Watch Band Selection */}
+                          {selectedCategory === 'Apple Watch' && selectedSpecs && availableOptions?.bandOptions && (
+                            <div className="space-y-4 p-4 bg-portfolio-dark rounded-lg border border-portfolio-border flex justify-between">
+                              <h4 className="text-portfolio-text font-medium  items-center gap-2">
+                                Band Selection
+                              </h4>
+                              
+                              {/* Auto-select material if only one option */}
+                              {availableOptions.bandOptions.length === 1 && (() => {
+                                const singleMaterial = availableOptions.bandOptions[0].material || 'default';
+                                // Auto-set the material if not already set
+                                if (!watch('band.material')) {
+                                  setValue('band.material', singleMaterial);
+                                }
+                                return null;
+                              })()}
 
+                              {/* Band Material Selection */}
+                              { availableOptions?.bandOptions.length > 1 && (
+                              <div>
+                                <Label className="text-portfolio-text">Band Material</Label>
+                                <Controller
+                                  name="band.material"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <Select onValueChange={(value) => {
+                                      field.onChange(value)
+                                      // Reset dependent band fields
+                                      setValue('band.style', '')
+                                      setValue('band.color', '')
+                                      setValue('band.size', '')
+                                    }} value={field.value}>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select band material" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {availableOptions.bandOptions.map((bandGroup: any, groupIndex: number) => (
+                                          <SelectItem 
+                                            key={bandGroup.material || `material-${groupIndex}`} 
+                                            value={bandGroup.material || `material-${groupIndex}`}
+                                          >
+                                            {bandGroup.material || 'Default Material'}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                />
+                              </div>
+                              )}
+
+                              {/* Band Style Selection */}
+                              {watch('band.material') && (
+                                <div>
+                                  <Label className="text-portfolio-text">Band Style</Label>
+                                  <Controller
+                                    name="band.style"
+                                    control={control}
+                                    render={({ field }) => {
+                                      const selectedMaterialGroup = availableOptions.bandOptions.find(
+                                        (group: any) => group.material === watch('band.material')
+                                      )
+                                      
+                                      return (
+                                        <Select onValueChange={(value) => {
+                                          field.onChange(value)
+                                          // Reset dependent fields
+                                          setValue('band.color', '')
+                                          setValue('band.size', '')
+                                        }} value={field.value}>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select band style" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {selectedMaterialGroup?.style.map((style: any, styleIndex: number) => (
+                                              <SelectItem 
+                                                key={style.styleName || `style-${styleIndex}`} 
+                                                value={style.styleName || `style-${styleIndex}`}
+                                              >
+                                                <div className="flex flex-col">
+                                                  <span>{style.styleName || 'Default Style'}</span>
+                                                  {style.price > 0 && (
+                                                    <span className="text-xs text-green-600">
+                                                      +{'\u00A3'}{style.price}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      )
+                                    }}
+                                  />
+                                </div>
+                              )}
+
+                              {/* Band Color Selection */}
+                              {watch('band.style') && (
+                                <div>
+                                  <Label className="text-portfolio-text">Band Color</Label>
+                                  <Controller
+                                    name="band.color"
+                                    control={control}
+                                    render={({ field }) => {
+                                      const selectedMaterialGroup = availableOptions.bandOptions.find(
+                                        (group: any) => group.material === watch('band.material')
+                                      )
+                                      const selectedStyleObj = selectedMaterialGroup?.style.find(
+                                        (style: any) => style.styleName === watch('band.style')
+                                      )
+                                      
+                                      return (
+                                        <Select onValueChange={(value) => {
+                                          field.onChange(value)
+                                          setValue('band.size', '') // Reset size when color changes
+                                        }} value={field.value}>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select band color" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {selectedStyleObj?.bandColor.map((color: string, colorIndex: number) => (
+                                              <SelectItem key={color || `color-${colorIndex}`} value={color}>
+                                                <div className="flex items-center gap-2">
+                                                  <div 
+                                                    className="w-4 h-4 rounded-full border border-gray-300"
+                                                    style={{ 
+                                                      backgroundColor: color.toLowerCase().includes('black') ? '#000000' :
+                                                                    color.toLowerCase().includes('white') ? '#ffffff' :
+                                                                    color.toLowerCase().includes('blue') ? '#0066cc' :
+                                                                    color.toLowerCase().includes('red') ? '#cc0000' :
+                                                                    color.toLowerCase().includes('green') ? '#00cc00' :
+                                                                    '#cccccc'
+                                                    }}
+                                                  />
+                                                  <span>{color}</span>
+                                                </div>
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      )
+                                    }}
+                                  />
+                                </div>
+                              )}
+
+                              {/* Band Size Selection */}
+                              {watch('band.color') && (
+                                <div>
+                                  <Label className="text-portfolio-text">Band Size</Label>
+                                  <Controller
+                                    name="band.size"
+                                    control={control}
+                                    render={({ field }) => {
+                                      const selectedMaterialGroup = availableOptions.bandOptions.find(
+                                        (group: any) => group.material === watch('band.material')
+                                      )
+                                      const selectedStyleObj = selectedMaterialGroup?.style.find(
+                                        (style: any) => style.styleName === watch('band.style')
+                                      )
+                                      
+                                      // Some bands don't have size options
+                                      if (!selectedStyleObj?.bandSizeOptions || selectedStyleObj.bandSizeOptions.length === 0) {
+                                        return (
+                                          <div className="text-sm text-portfolio-muted p-3 bg-portfolio-card rounded border border-portfolio-border">
+                                            No size selection needed for this band style
+                                          </div>
+                                        )
+                                      }
+                                      
+                                      return (
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select band size" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {selectedStyleObj.bandSizeOptions.map((size: string, sizeIndex: number) => (
+                                              <SelectItem key={size || `size-${sizeIndex}`} value={size}>
+                                                <div className="flex items-center justify-between w-full">
+                                                  <span>{size}</span>
+                                                  {/* Add size guidance if needed */}
+                                                  {size.includes('S/M') && (
+                                                    <span className="text-xs text-muted-foreground ml-2">130-180mm</span>
+                                                  )}
+                                                  {size.includes('M/L') && (
+                                                    <span className="text-xs text-muted-foreground ml-2">160-210mm</span>
+                                                  )}
+                                                </div>
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      )
+                                    }}
+                                  />
+                                </div>
+                              )}
+
+                              {/* Band Selection Summary
+                              {watch('band.material') && watch('band.style') && watch('band.color') && (
+                                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                  <h5 className="font-medium text-blue-800 mb-2">Selected Band:</h5>
+                                  <div className="text-sm text-blue-700 space-y-1">
+                                    <div><strong>Material:</strong> {watch('band.material')}</div>
+                                    <div><strong>Style:</strong> {watch('band.style')}</div>
+                                    <div><strong>Color:</strong> {watch('band.color')}</div>
+                                    {watch('band.size') && (
+                                      <div><strong>Size:</strong> {watch('band.size')}</div>
+                                    )}
+                                  </div>
+                                </div>
+                              )} */}
+                            </div>
+                          )}
                         </div>
                       )}
 

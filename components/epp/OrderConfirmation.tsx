@@ -106,9 +106,9 @@ export function OrderConfirmation({
                             {item.connectivity}
                             </Badge>
                         )}
-                        {item.bands && (
+                        {item.band && (
                             <Badge variant="outline" className="border-portfolio-border text-portfolio-text">
-                            {item.bands}
+                            {item.band.material} - {item.band.style} - {item.band.color} - {item.band.size}
                             </Badge>
                         )}
                         {/* Services */}
