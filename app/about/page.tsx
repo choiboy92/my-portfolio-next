@@ -44,8 +44,7 @@ export default function AboutPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="flex flex-col lg:flex-row-reverse items-center justify-center min-h-screen px-4 lg:px-[20%] py-8 gap-8">
+    <div className="flex flex-col h-full lg:flex-row-reverse items-center justify-center px-4 lg:px-[20%] py-8 gap-8 bg-white">
         
         {/* Left side - Text content */}
         <div className={`flex-1 min-w-[300px] transition-all duration-1000 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
@@ -105,7 +104,7 @@ export default function AboutPage() {
           <div className="space-y-4">
             {achievements.map((achievement, index) => (
               <Card key={index} className="border-l-4 border-green-400 shadow-md hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
+                <CardContent className="">
                   <h3 className="font-bold text-black mb-3 text-lg">
                     {achievement.institution}
                   </h3>
@@ -123,7 +122,6 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
-      </div>
     </div>
   )
 }

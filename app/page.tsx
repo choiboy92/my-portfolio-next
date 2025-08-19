@@ -115,7 +115,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="flex w-full min-h-screen bg-black items-center justify-center flex-col lg:flex-row lg:px-[20%] py-8">
+    <div className="flex flex-1 w-full h-full bg-black items-center justify-center flex-col lg:flex-row lg:px-[20%] py-8">
       {/* Left side - Label */}
       <div className={`flex flex-1 min-w-[200px] justify-start mb-8 lg:mb-0 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
         <div className="border-b border-white pb-2">

@@ -135,7 +135,7 @@ export default function CurrentWorkPage() {
   }, [selectedStatus])
 
   return (
-    <div className="min-h-screen bg-black py-8 px-4 lg:px-[10%]">
+    <div className="h-full bg-black py-8 px-4 lg:px-[10%]">
       <div className="max-w-7xl mx-auto space-y-12">
         
         {/* Page Header */}

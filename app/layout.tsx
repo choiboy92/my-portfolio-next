@@ -14,10 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-black text-white font-jost">
-        <div className="flex flex-col min-h-screen">
+      <body className="bg-black text-white font-jost">
+        <div className="flex flex-col h-screen">
           {/* Header */}
-          <header className="flex w-full bg-black items-center justify-center flex-wrap border-b border-gray-800">
+          <header className="flex w-full bg-black items-center justify-center flex-wrap">
             <Link href="/" className="flex justify-center text-white no-underline flex-1 min-w-[500px] text-lg font-black hover:text-green-400 transition-colors">
               <h1 className="m-0 font-black font-shippori">
                 <span className="px-4 shadow-[inset_0_-15px_0_0_#96c8a2]">
@@ -42,13 +42,13 @@ export default function RootLayout({
           </main>
 
           {/* Footer */}
-          <footer className="flex w-full bg-black mt-auto pt-2.5 pb-2.5 flex-wrap border-t border-gray-800">
-            <p className="w-full pl-25 text-xs my-auto mb-0.5 border-b border-gray-600 text-gray-400">
+          <footer className="flex w-full bg-black mt-auto flex-wrap">
+            <p className="w-full pl-25 text-xs my-auto border-b border-gray-600 text-gray-400">
               CONTACT ME
             </p>
             <a 
-              href='mailto:junho.choi.imp@gmail.com' 
-              className="flex-1 text-gray-500 border-l border-r border-gray-600 flex justify-center items-center py-2 hover:text-white transition-colors" 
+              href='mailto:ask@junho.co.uk' 
+              className="flex-1 text-gray-500 flex justify-center items-center py-2 hover:text-white transition-colors" 
               target="_blank" 
               rel="noopener noreferrer"
             >
@@ -56,7 +56,7 @@ export default function RootLayout({
             </a>
             <a 
               href='https://github.com/choiboy92' 
-              className="flex-1 text-gray-500 border-l border-r border-gray-600 flex justify-center items-center py-2 hover:text-white transition-colors" 
+              className="flex-1 text-gray-500 flex justify-center items-center py-2 hover:text-white transition-colors" 
               target="_blank" 
               rel="noopener noreferrer"
             >
@@ -64,7 +64,7 @@ export default function RootLayout({
             </a>
             <a 
               href='https://www.linkedin.com/in/junho-c-b2461bb2/' 
-              className="flex-1 text-gray-500 border-l border-r border-gray-600 flex justify-center items-center py-2 hover:text-white transition-colors" 
+              className="flex-1 text-gray-500 flex justify-center items-center py-2 hover:text-white transition-colors" 
               target="_blank" 
               rel="noopener noreferrer"
             >
@@ -72,7 +72,7 @@ export default function RootLayout({
             </a>
             <a 
               href='https://www.instagram.com/junho.what/' 
-              className="flex-1 text-gray-500 border-l border-r border-gray-600 flex justify-center items-center py-2 hover:text-white transition-colors" 
+              className="flex-1 text-gray-500 flex justify-center items-center py-2 hover:text-white transition-colors" 
               target="_blank" 
               rel="noopener noreferrer"
             >
