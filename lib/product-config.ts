@@ -287,24 +287,50 @@ const IPHONE_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<iPh
   category: 'iPhone',
   appleCareAvailable: true,
   models: {
-    'iPhone 16 Pro & Pro Max': {
-      displayName: 'iPhone 16 Pro & Pro Max',
-      colors: ['Desert Titanium', 'Natural Titanium', 'White Titanium', 'Black Titanium'],
+    'iPhone 17 Pro & Pro Max': {
+      displayName: 'iPhone 17 Pro & Pro Max',
+      colors: ['Silver', 'Cosmic Orange', 'Deep Blue'],
       specs: [
         {
-          name: 'iPhone 16 Pro',
-          price: 999,
-          constraints: { minStorage: '128GB' },
-          storageOptions: { '128GB': 0, '256GB': 100, '512GB': 300, '1TB': 500 },
+          name: 'iPhone 17 Pro',
+          price: 1099,
+          constraints: { minStorage: '256GB' },
+          storageOptions: { '256GB': 0, '512GB': 200, '1TB': 400 },
         },
         {
-          name: 'iPhone 16 Pro Max',
+          name: 'iPhone 17 Pro Max',
           price: 1199,
           constraints: { minStorage: '256GB' },
-          storageOptions: { '256GB': 0, '512GB': 100, '1TB': 200 },
+          storageOptions: { '256GB': 0, '512GB': 200, '1TB': 400, '2TB': 800 },
         }
       ],
       appleCarePrice: 179
+    },
+    'iPhone Air': {
+      displayName: 'iPhone Air',
+      colors: ['Sky Blue', 'Light Gold', 'Cloud White', 'Space Black'],
+      specs: [
+        {
+          name: 'iPhone Air',
+          price: 999,
+          constraints: { minStorage: '256GB' },
+          storageOptions: { '256GB': 0, '512GB': 200, '1TB': 400 },
+        }
+      ],
+      appleCarePrice: 179
+    },
+    'iPhone 17': {
+      displayName: 'iPhone 17',
+      colors: ['Lavender', 'Sage', 'Mist Blue', 'White', 'Black'],
+      specs: [
+        {
+          name: 'iPhone 17',
+          price: 799,
+          constraints: { minStorage: '256GB' },
+          storageOptions: { '256GB': 0, '512GB': 200},
+        }
+      ],
+      appleCarePrice: 129
     },
     'iPhone 16 & 16 Plus': {
       displayName: 'iPhone 16 & 16 Plus',
@@ -312,18 +338,18 @@ const IPHONE_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<iPh
       specs: [
         {
           name: 'iPhone 16',
-          price: 799,
+          price: 699,
           constraints: { minStorage: '128GB' },
-          storageOptions: { '128GB': 0, '256GB': 100, '512GB': 300 },
+          storageOptions: { '128GB': 0},
         },
         {
           name: 'iPhone 16 Plus',
-          price: 899,
+          price: 799,
           constraints: { minStorage: '128GB'},
-          storageOptions: { '128GB': 0, '256GB': 100, '512GB': 300 },
+          storageOptions: { '128GB': 0, '256GB': 100 },
         }
       ],
-      appleCarePrice: 179
+      appleCarePrice: 159
     },
     'iPhone 16e': {
       displayName: 'iPhone 16e',
