@@ -287,24 +287,50 @@ const IPHONE_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<iPh
   category: 'iPhone',
   appleCareAvailable: true,
   models: {
-    'iPhone 16 Pro & Pro Max': {
-      displayName: 'iPhone 16 Pro & Pro Max',
-      colors: ['Desert Titanium', 'Natural Titanium', 'White Titanium', 'Black Titanium'],
+    'iPhone 17 Pro & Pro Max': {
+      displayName: 'iPhone 17 Pro & Pro Max',
+      colors: ['Silver', 'Cosmic Orange', 'Deep Blue'],
       specs: [
         {
-          name: 'iPhone 16 Pro',
-          price: 999,
-          constraints: { minStorage: '128GB' },
-          storageOptions: { '128GB': 0, '256GB': 100, '512GB': 300, '1TB': 500 },
+          name: 'iPhone 17 Pro',
+          price: 1099,
+          constraints: { minStorage: '256GB' },
+          storageOptions: { '256GB': 0, '512GB': 200, '1TB': 400 },
         },
         {
-          name: 'iPhone 16 Pro Max',
+          name: 'iPhone 17 Pro Max',
           price: 1199,
           constraints: { minStorage: '256GB' },
-          storageOptions: { '256GB': 0, '512GB': 100, '1TB': 200 },
+          storageOptions: { '256GB': 0, '512GB': 200, '1TB': 400, '2TB': 800 },
         }
       ],
       appleCarePrice: 179
+    },
+    'iPhone Air': {
+      displayName: 'iPhone Air',
+      colors: ['Sky Blue', 'Light Gold', 'Cloud White', 'Space Black'],
+      specs: [
+        {
+          name: 'iPhone Air',
+          price: 999,
+          constraints: { minStorage: '256GB' },
+          storageOptions: { '256GB': 0, '512GB': 200, '1TB': 400 },
+        }
+      ],
+      appleCarePrice: 179
+    },
+    'iPhone 17': {
+      displayName: 'iPhone 17',
+      colors: ['Lavender', 'Sage', 'Mist Blue', 'White', 'Black'],
+      specs: [
+        {
+          name: 'iPhone 17',
+          price: 799,
+          constraints: { minStorage: '256GB' },
+          storageOptions: { '256GB': 0, '512GB': 200},
+        }
+      ],
+      appleCarePrice: 129
     },
     'iPhone 16 & 16 Plus': {
       displayName: 'iPhone 16 & 16 Plus',
@@ -312,18 +338,18 @@ const IPHONE_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<iPh
       specs: [
         {
           name: 'iPhone 16',
-          price: 799,
+          price: 699,
           constraints: { minStorage: '128GB' },
-          storageOptions: { '128GB': 0, '256GB': 100, '512GB': 300 },
+          storageOptions: { '128GB': 0},
         },
         {
           name: 'iPhone 16 Plus',
-          price: 899,
+          price: 799,
           constraints: { minStorage: '128GB'},
-          storageOptions: { '128GB': 0, '256GB': 100, '512GB': 300 },
+          storageOptions: { '128GB': 0, '256GB': 100 },
         }
       ],
-      appleCarePrice: 179
+      appleCarePrice: 159
     },
     'iPhone 16e': {
       displayName: 'iPhone 16e',
@@ -461,14 +487,14 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
   category: 'Apple Watch',
   appleCareAvailable: true,
   models: {
-    'Apple Watch Series 10': {
-      displayName: 'Apple Watch Series 10',
+    'Apple Watch Series 11': {
+      displayName: 'Apple Watch Series 11',
       colors: [],
       specs: [
         {
           name: 'Aluminium Case',
-          price: 399,
-          colors: ['Silver', 'Rose Gold', 'Jet Black'],
+          price: 369,
+          colors: ['Space Grey', 'Silver', 'Rose Gold', 'Jet Black'],
           sizeOptions: {'42mm': 0, '46mm': 30},
           connectivityOptions: { 'GPS': 0, 'GPS + Cellular': 100 },
           bandOptions: [
@@ -478,19 +504,19 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
                 { 
                   styleName: 'Solo Loop',
                   price: 0,
-                  bandColor: ['Northern Lights', 'Periwinkle', 'Peony', 'Black', 'Light Blush'],
+                  bandColor: ['Neon Yellow', 'Anchor Blue', 'Green Grey', 'Black', 'Light Blush'],
                   bandSizeOptions: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
                 },
                 { 
                   styleName: 'Sport Band', 
                   price: 0, 
-                  bandColor: ['Aquamarine', 'Periwinkle', 'Tangerine', 'Starlight', 'Black', 'Light Blush', 'Stone Grey', 'Pride', 'Black Unity'],
+                  bandColor: ['Neon Yellow', 'Anchor Blue', 'Purple Fog', 'Starlight', 'Black', 'Light Blush', 'Stone Grey', 'Pride', 'Black Unity'],
                   bandSizeOptions: ['S/M', 'M/L']
                 },
                 {
                   styleName: 'Nike Sport Band',
                   price: 0,
-                  bandColor: ['Volt Splash', 'Magic Ember', 'Midnight Sky', 'Pure Platinum', 'Desert Stone', 'Cargo Khaki', 'Blue Flame'],
+                  bandColor: ['Midnight Black', 'Alpenglow Pink', 'Blue Ribbon', 'Veiled Grey', 'Volt Splash'],
                   bandSizeOptions: ['S/M', 'M/L']
                 }
               ]
@@ -501,31 +527,31 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
                 {
                   styleName: 'Sport Loop',
                   price: 0,
-                  bandColor: ['Black', 'White', 'Red', 'Blue', 'Green'],
+                  bandColor: ['Neon Yellow', 'Anchor Blue', 'Purple Fog', 'Forest', 'Dark Grey', 'Pride', 'Black Unity'],
                   bandSizeOptions: ['S/M', 'M/L']
                 },
                 {
                   styleName: 'Magnetic Link',
                   price: 50,
-                  bandColor: ['Dark Taupe', 'Black', 'Blackberry'],
+                  bandColor: ['Caramel', 'Sage Grey', 'Navy'],
                   bandSizeOptions: ['S/M', 'M/L']
                 },
                 {
                   styleName: 'Modern Buckle',
                   price: 100,
-                  bandColor: ['Deep Blue', 'Dark Taupe', 'Chartreuse'],
+                  bandColor: ['Caramel', 'Sage Grey', 'Midnight Purple'],
                   bandSizeOptions: ['Small', 'Medium', 'Large']
                 },
                 {
                   styleName: 'Braided Solo Loop',
                   price: 50,
-                  bandColor: ['Black', 'White', 'Red', 'Blue', 'Green'],
+                  bandColor: ['Turmeric', 'Neon Yellow', 'Anchor Blue', 'Green Grey', 'Midnight', 'Pride', 'Black Unity'],
                   bandSizeOptions: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
                 },
                 {
                   styleName: 'Nike Sport Loop',
                   price: 0,
-                  bandColor: ['Black', 'White', 'Red', 'Blue', 'Green'],
+                  bandColor: ['Midnight Black', 'Alpenglow Pink', 'Blue Ribbon', 'Veiled Grey', 'Volt Splash'],
                   bandSizeOptions: ['S/M', 'M/L']
                 }
               ]
@@ -550,7 +576,7 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
         },
         {
           name: 'Titanium Case',
-          price: 699,
+          price: 649,
           sizeOptions: {'42mm': 0 , '46mm': 50},
           colors: ['Natural', 'Slate', 'Gold'],
           connectivityOptions: {'GPS + Cellular': 0},
@@ -561,19 +587,19 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
                 { 
                   styleName: 'Solo Loop',
                   price: 0,
-                  bandColor: ['Northern Lights', 'Periwinkle', 'Peony', 'Black', 'Light Blush'],
+                  bandColor: ['Neon Yellow', 'Anchor Blue', 'Green Grey', 'Black', 'Light Blush'],
                   bandSizeOptions: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
                 },
                 { 
                   styleName: 'Sport Band', 
                   price: 0, 
-                  bandColor: ['Aquamarine', 'Periwinkle', 'Tangerine', 'Starlight', 'Black', 'Light Blush', 'Stone Grey', 'Pride', 'Black Unity'],
+                  bandColor: ['Neon Yellow', 'Anchor Blue', 'Purple Fog', 'Starlight', 'Black', 'Light Blush', 'Stone Grey', 'Pride', 'Black Unity'],
                   bandSizeOptions: ['S/M', 'M/L']
                 },
                 {
                   styleName: 'Nike Sport Band',
                   price: 0,
-                  bandColor: ['Volt Splash', 'Magic Ember', 'Midnight Sky', 'Pure Platinum', 'Desert Stone', 'Cargo Khaki', 'Blue Flame'],
+                  bandColor: ['Midnight Black', 'Alpenglow Pink', 'Blue Ribbon', 'Veiled Grey', 'Volt Splash'],
                   bandSizeOptions: ['S/M', 'M/L']
                 }
               ]
@@ -584,31 +610,31 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
                 {
                   styleName: 'Sport Loop',
                   price: 0,
-                  bandColor: ['Black', 'White', 'Red', 'Blue', 'Green'],
+                  bandColor: ['Neon Yellow', 'Anchor Blue', 'Purple Fog', 'Forest', 'Dark Grey', 'Pride', 'Black Unity'],
                   bandSizeOptions: ['S/M', 'M/L']
                 },
                 {
                   styleName: 'Magnetic Link',
                   price: 50,
-                  bandColor: ['Dark Taupe', 'Black', 'Blackberry'],
+                  bandColor: ['Caramel', 'Sage Grey', 'Navy'],
                   bandSizeOptions: ['S/M', 'M/L']
                 },
                 {
                   styleName: 'Modern Buckle',
                   price: 100,
-                  bandColor: ['Deep Blue', 'Dark Taupe', 'Chartreuse'],
+                  bandColor: ['Caramel', 'Sage Grey', 'Midnight Purple'],
                   bandSizeOptions: ['Small', 'Medium', 'Large']
                 },
                 {
                   styleName: 'Braided Solo Loop',
                   price: 50,
-                  bandColor: ['Black', 'White', 'Red', 'Blue', 'Green'],
+                  bandColor: ['Turmeric', 'Neon Yellow', 'Anchor Blue', 'Green Grey', 'Midnight', 'Pride', 'Black Unity'],
                   bandSizeOptions: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
                 },
                 {
                   styleName: 'Nike Sport Loop',
                   price: 0,
-                  bandColor: ['Black', 'White', 'Red', 'Blue', 'Green'],
+                  bandColor: ['Midnight Black', 'Alpenglow Pink', 'Blue Ribbon', 'Veiled Grey', 'Volt Splash'],
                   bandSizeOptions: ['S/M', 'M/L']
                 }
               ]
@@ -633,13 +659,13 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
         }
       ]
     },
-    'Apple Watch Ultra 2': {
-      displayName: 'Apple Watch Ultra 2',
+    'Apple Watch Ultra 3': {
+      displayName: 'Apple Watch Ultra 3',
       colors: ['Natural', 'Black'],
       specs: [
         {
           name: 'default',
-          price: 799,
+          price: 749,
           sizeOptions: {'49mm': 0},
           connectivityOptions: {'GPS + Cellular': 0},
           bandOptions: [
@@ -655,12 +681,12 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
                 { 
                   styleName: 'Ocean Band', 
                   price: 0, 
-                  bandColor: ['Ice Blue', 'Black', 'Navy'],
+                  bandColor: ['Neon Green', 'Anchor Blue', 'Black'],
                 },
                 {
                   styleName: 'Alpine Loop',
                   price: 0,
-                  bandColor: ['Tan', 'Navy', 'Dark Green'],
+                  bandColor: ['Light Blue', 'Terra Cotta', 'Black'],
                   bandSizeOptions: ['Small', 'Medium', 'Large']
                 },
                 { 
@@ -677,8 +703,8 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
       ]
     },
     'Apple Watch SE': {
-      displayName: 'Apple Watch SE 2nd Gen',
-      colors: ['Midnight', 'Starlight', 'Silver'],
+      displayName: 'Apple Watch SE 3',
+      colors: ['Midnight', 'Starlight'],
       appleCarePrice: 49,
       specs: [
         {
@@ -693,19 +719,19 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
                 { 
                   styleName: 'Solo Loop',
                   price: 0,
-                  bandColor: ['Northern Lights', 'Periwinkle', 'Peony', 'Black', 'Light Blush'],
+                  bandColor: ['Neon Yellow', 'Anchor Blue', 'Green Grey', 'Black', 'Light Blush'],
                   bandSizeOptions: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
                 },
                 { 
                   styleName: 'Sport Band', 
                   price: 0, 
-                  bandColor: ['Aquamarine', 'Periwinkle', 'Tangerine', 'Starlight', 'Black', 'Light Blush', 'Stone Grey', 'Pride', 'Black Unity'],
+                  bandColor: ['Neon Yellow', 'Anchor Blue', 'Purple Fog', 'Starlight', 'Black', 'Light Blush', 'Stone Grey', 'Pride', 'Black Unity'],
                   bandSizeOptions: ['S/M', 'M/L']
                 },
                 {
                   styleName: 'Nike Sport Band',
                   price: 0,
-                  bandColor: ['Volt Splash', 'Magic Ember', 'Midnight Sky', 'Pure Platinum', 'Desert Stone', 'Cargo Khaki', 'Blue Flame'],
+                  bandColor: ['Midnight Black', 'Alpenglow Pink', 'Blue Ribbon', 'Veiled Grey', 'Volt Splash'],
                   bandSizeOptions: ['S/M', 'M/L']
                 }
               ]
@@ -716,31 +742,31 @@ const WATCH_CONFIGURATIONS: ProductCategoryConfiguration<ModelConfiguration<Appl
                 {
                   styleName: 'Sport Loop',
                   price: 0,
-                  bandColor: ['Black', 'White', 'Red', 'Blue', 'Green'],
+                  bandColor: ['Neon Yellow', 'Anchor Blue', 'Purple Fog', 'Forest', 'Dark Grey', 'Pride', 'Black Unity'],
                   bandSizeOptions: ['S/M', 'M/L']
                 },
                 {
                   styleName: 'Magnetic Link',
                   price: 50,
-                  bandColor: ['Dark Taupe', 'Black', 'Blackberry'],
+                  bandColor: ['Caramel', 'Sage Grey', 'Navy'],
                   bandSizeOptions: ['S/M', 'M/L']
                 },
                 {
                   styleName: 'Modern Buckle',
                   price: 100,
-                  bandColor: ['Deep Blue', 'Dark Taupe', 'Chartreuse'],
+                  bandColor: ['Caramel', 'Sage Grey', 'Midnight Purple'],
                   bandSizeOptions: ['Small', 'Medium', 'Large']
                 },
                 {
                   styleName: 'Braided Solo Loop',
                   price: 50,
-                  bandColor: ['Black', 'White', 'Red', 'Blue', 'Green'],
+                  bandColor: ['Turmeric', 'Neon Yellow', 'Anchor Blue', 'Green Grey', 'Midnight', 'Pride', 'Black Unity'],
                   bandSizeOptions: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
                 },
                 {
                   styleName: 'Nike Sport Loop',
                   price: 0,
-                  bandColor: ['Black', 'White', 'Red', 'Blue', 'Green'],
+                  bandColor: ['Midnight Black', 'Alpenglow Pink', 'Blue Ribbon', 'Veiled Grey', 'Volt Splash'],
                   bandSizeOptions: ['S/M', 'M/L']
                 }
               ]
