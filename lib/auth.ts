@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from 'node:crypto'
+import { scryptSync, timingSafeEqual } from 'node:crypto'
 import { jwtVerify } from 'jose'
 import type { NextRequest } from 'next/server'
 
@@ -9,12 +9,12 @@ export function getJwtSecret(): Uint8Array | null {
   return secret.length >= 32 ? secret : null
 }
 
-const sha256 = (value: string) => createHash('sha256').update(value).digest()
+const hashPassword = (value: string) => scryptSync(value, 'epp-portal', 32)
 
 export function verifyPassword(candidate: unknown): boolean {
   const expected = process.env.EPP_PORTAL_PASSWORD
   if (!expected || typeof candidate !== 'string') return false
-  return timingSafeEqual(sha256(candidate), sha256(expected))
+  return timingSafeEqual(hashPassword(candidate), hashPassword(expected))
 }
 
 export async function isAuthenticated(request: NextRequest): Promise<boolean> {
