@@ -14,18 +14,17 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [attempts, setAttempts] = useState(0)
 
   useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const response = await fetch('/api/auth/epp')
+        const data = await response.json()
+        setIsAuthenticated(data.authenticated)
+      } catch {
+        setIsAuthenticated(false)
+      }
+    }
     checkAuthStatus()
   }, [])
-
-  const checkAuthStatus = async () => {
-    try {
-      const response = await fetch('/api/auth/epp')
-      const data = await response.json()
-      setIsAuthenticated(data.authenticated)
-    } catch {
-      setIsAuthenticated(false)
-    }
-  }
 
   const handleAuth = async () => {
     if (attempts >= 5) {
