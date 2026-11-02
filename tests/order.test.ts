@@ -45,6 +45,9 @@ test('schema rejects orderComments and enforces limits', () => {
   expect(orderSchema.safeParse(validOrder({ additionalComments: 'x'.repeat(1001) })).success).toBe(false)
   expect(orderSchema.safeParse(validOrder({ basket: [validItem({ estimatedPrice: -1 })] })).success).toBe(false)
 })
+test('schema requires confirmation', () => {
+  expect(orderSchema.safeParse({ ...validOrder(), checkCompleted: false }).success).toBe(false)
+})
 test('returns 401 without a session', async () => {
   const res = await POST(new NextRequest('http://x/api/epp/order', { method: 'POST', body: JSON.stringify(validOrder()) }))
   expect(res.status).toBe(401)

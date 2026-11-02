@@ -1,26 +1,14 @@
 // components/apple-discount/DeliveryOptions.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Controller, Control, FieldErrors, UseFormWatch, UseFormSetValue, UseFormTrigger, useFormContext } from 'react-hook-form'
+import { Controller, useFormContext } from 'react-hook-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Truck, Store } from 'lucide-react'
-import type { DeliveryFormData } from '@/lib/validation-schema'
 import { OrderFormData } from '@/lib/validation-schema'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-
-// interface DeliveryOptionsProps {
-//   control: Control<DeliveryFormData>
-//   errors: FieldErrors<DeliveryFormData>
-//   onSubmit: (data: DeliveryFormData) => Promise<void>
-//   onBack: () => void
-//   watch: UseFormWatch<DeliveryFormData>
-//   setValue: UseFormSetValue<DeliveryFormData>
-//   trigger: UseFormTrigger<DeliveryFormData>
-// }
 
 const DELIVERY_TYPES = [
   { value: 'standard', label: 'Standard Delivery (5-7 business days)' },
@@ -53,18 +41,16 @@ interface DeliveryOptionsProps {
 export function DeliveryOptions({ onSubmit, onBack }: DeliveryOptionsProps) {
     const {
         control,
-        formState: { errors, isValid },
+        formState: { errors },
         watch,
         trigger
     } = useFormContext<OrderFormData>()
 
-    // Watch delivery method to conditionally render fields
     const deliveryMethod = watch('delivery.method')
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        
-        // Trigger validation for delivery fields only
+
         const isDeliveryValid = await trigger('delivery')
         
         if (isDeliveryValid) {
@@ -74,7 +60,6 @@ export function DeliveryOptions({ onSubmit, onBack }: DeliveryOptionsProps) {
 
     return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Delivery Method Selection */}
       <Card className="bg-portfolio-card border-portfolio-border text-white">
         <CardHeader>
           <CardTitle className="text-portfolio-text">Delivery Method</CardTitle>
@@ -85,7 +70,6 @@ export function DeliveryOptions({ onSubmit, onBack }: DeliveryOptionsProps) {
               control={control}
               render={({ field }) => (
             <Tabs value={field.value} onValueChange={field.onChange}>
-                {/* Category Tabs */}
                 <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-500">
                     <TabsTrigger key={"delivery"} value={"delivery"} className="flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-gray-600">
                         <Truck className="w-5 h-5 text-portfolio-accent" />
@@ -290,7 +274,6 @@ export function DeliveryOptions({ onSubmit, onBack }: DeliveryOptionsProps) {
         </CardContent>
       </Card>
 
-      {/* Contact Information */}
       <Card className="bg-portfolio-card border-portfolio-border text-white">
         <CardHeader>
           <CardTitle className="text-portfolio-text">Contact Information</CardTitle>
@@ -325,9 +308,9 @@ export function DeliveryOptions({ onSubmit, onBack }: DeliveryOptionsProps) {
         </CardContent>
       </Card>
 
-      {/* Navigation Buttons */}
       <div className="flex gap-4">
         <Button
+          type="button"
           onClick={onBack}
           variant="outline"
           className="flex-1 border-portfolio-border text-portfolio-text text-black cursor-pointer"
@@ -335,8 +318,7 @@ export function DeliveryOptions({ onSubmit, onBack }: DeliveryOptionsProps) {
           Back to Products
         </Button>
         <Button
-          onClick={onSubmit}
-          disabled={!isValid}
+          type="submit"
           className="flex-1 bg-portfolio-accent bg-blue-600 hover:bg-blue-500 cursor-pointer"
         >
           Review Order

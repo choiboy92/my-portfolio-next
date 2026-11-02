@@ -82,7 +82,7 @@ export const orderSchema = z.object({
   basket: z.array(basketItemSchema).min(1, 'Your basket cannot be empty').max(20),
   delivery: deliverySchema,
   additionalComments: z.string().max(1000).optional(),
-  checkCompleted: z.boolean()
+  checkCompleted: z.literal(true, { message: 'Please confirm your order' })
 }).strict()
 
 export type BasketItemFormData = z.infer<typeof basketItemSchema>
