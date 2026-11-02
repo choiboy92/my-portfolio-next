@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 
+const scatter = (i: number, salt: number) => {
+  const x = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453
+  return x - Math.floor(x)
+}
+
 interface ProjectIntroProps {
   name: string
   date: string
@@ -52,10 +57,10 @@ export default function ProjectIntro({ name, date, id, description, tags = [] }:
             key={i}
             className="absolute w-1 h-1 bg-green-400 rounded-full animate-ping"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 2}s`,
-              animationDuration: `${2 + Math.random() * 2}s`
+              left: `${scatter(i, 1) * 100}%`,
+              top: `${scatter(i, 2) * 100}%`,
+              animationDelay: `${scatter(i, 3) * 2}s`,
+              animationDuration: `${2 + scatter(i, 4) * 2}s`
             }}
           />
         ))}
