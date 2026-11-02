@@ -3,10 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { z } from 'zod'
 import { isAuthenticated } from '@/lib/auth'
+import { escapeStrings } from '@/lib/escape-html'
+import { priceBasketItem } from '@/lib/product-config'
 import { OrderFormData, orderSchema } from '@/lib/validation-schema'
-
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY!)
 
 // Generate order ID
 function generateOrderId(): string {
@@ -176,7 +175,7 @@ function formatOrderEmail(orderData: OrderFormData, orderId: string): { text: st
                     ${item.band.material ? `<span style="color: #424242;">Material: ${item.band.material}</span><br>` : ''}
                     ${item.band.style ? `<span style="color: #424242;">Style: ${item.band.style}</span><br>` : ''}
                     ${item.band.color ? `<span style="color: #424242;">Color: ${item.band.color}</span><br>` : ''}
-                    ${item.band.style ? `<span style="color: #424242;">Size: ${item.band.style}</span>` : ''}
+                    ${item.band.size ? `<span style="color: #424242;">Size: ${item.band.size}</span>` : ''}
                   </div>
                 </div>
               ` : ''}
@@ -314,7 +313,6 @@ function formatOrderEmail(orderData: OrderFormData, orderId: string): { text: st
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Check authentication
     const isAuthorized = await isAuthenticated(request)
     if (!isAuthorized) {
       return NextResponse.json(
@@ -323,69 +321,43 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('Processing EPP Order submission...')
-    
-    // 2. Parse and validate request body
-    const body = await request.json()
-    console.log(body)
-    const validatedData = orderSchema.parse(body)
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid order data' }, { status: 400 })
+    }
+    const parsed = orderSchema.parse(body)
+    const basket = parsed.basket.map(item => ({ ...item, ...priceBasketItem(item) }))
+    const unpriced = basket.findIndex(item => item.estimatedPrice === 0)
+    if (unpriced !== -1) {
+      return NextResponse.json(
+        { error: 'Invalid order data', details: [{ field: `basket.${unpriced}`, message: 'Unknown product' }] },
+        { status: 400 }
+      )
+    }
+    const order = { ...parsed, basket }
 
-    // 3. Generate order ID
     const orderId = generateOrderId()
 
-    // 4. Send email notification using Resend
-    const { text, html } = formatOrderEmail(validatedData, orderId)
-    
+    const resend = new Resend(process.env.RESEND_API_KEY)
     const emailResult = await resend.emails.send({
       from: process.env.EMAIL_FROM!,
       to: [process.env.EMAIL_TO!],
-      subject: `🍎 New Apple EPP Order ${orderId} - ${validatedData.delivery.contact.email}`,
-      text,
-      html
+      subject: `🍎 New Apple EPP Order ${orderId} - ${order.delivery.contact.email}`,
+      text: formatOrderEmail(order, orderId).text,
+      html: formatOrderEmail(escapeStrings(order), orderId).html
     })
 
-    // 5. Optional: Send customer confirmation
-    // try {
-    //   await resend.emails.send({
-    //     from: process.env.EMAIL_FROM!,
-    //     to: [validatedData.delivery.contact.email],
-    //     subject: `Apple EPP Order Confirmation - ${orderId}`,
-    //     text: `Thank you for your Apple Employee Purchase Program order!\n\nOrder ID: ${orderId}\n\nYour order has been received and will be processed shortly. You will be contacted via email or phone to complete the purchase.\n\nOrder Summary:\n- ${validatedData.basket.length} item(s) requested\n- Delivery method: ${validatedData.delivery.method}\n- Estimated total: £${validatedData.basket.reduce((sum, item) => sum + ((item.estimatedPrice || 0) - (item.discountValue || 0)) * (item.quantity || 1), 0).toLocaleString()}\n\nThank you!`,
-    //     html: `
-    //       <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-    //         <h1 style="color: #007bff;">🍎 Order Confirmation</h1>
-    //         <p>Thank you for your Apple Employee Purchase Program order!</p>
-    //         <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-    //           <strong>Order ID:</strong> ${orderId}
-    //         </div>
-    //         <p>Your order has been received and will be processed shortly. You will be contacted via email or phone to complete the purchase.</p>
-    //         <div style="background: #e8f5e8; padding: 15px; border-radius: 5px; margin: 20px 0;">
-    //           <h3 style="margin-top: 0;">Order Summary:</h3>
-    //           <ul style="margin-bottom: 0;">
-    //             <li>${validatedData.basket.length} item(s) requested</li>
-    //             <li>Delivery method: ${validatedData.delivery.method}</li>
-    //             <li>Estimated total: £${validatedData.basket.reduce((sum, item) => sum + ((item.estimatedPrice || 0) - (item.discountValue || 0)), 0).toLocaleString()}</li>
-    //           </ul>
-    //         </div>
-    //         <p>Thank you for choosing Apple!</p>
-    //       </div>
-    //     `
-    //   })
-    // } catch (confirmationError) {
-    //   console.warn('Failed to send customer confirmation email:', confirmationError)
-    // }
+    if (emailResult.error) {
+      console.error('EPP order email failed', { orderId, name: emailResult.error.name })
+      return NextResponse.json(
+        { error: "We couldn't send your order. Please try again." },
+        { status: 502 }
+      )
+    }
 
-    // 6. Log successful submission
-    console.log('EPP Order submitted successfully:', {
-      orderId,
-      resendId: emailResult.data?.id,
-      customerEmail: validatedData.delivery.contact.email,
-      itemCount: validatedData.basket.length,
-      totalItems: validatedData.basket.length,
-      estimatedTotal: validatedData.basket.reduce((sum, item) => sum + ((item.estimatedPrice || 0) - (item.discountValue || 0)), 0),
-      hasComments: !!validatedData.additionalComments?.trim(),
-      timestamp: new Date().toISOString()
-    })
+    console.info('EPP order submitted', { orderId, itemCount: basket.length })
 
     return NextResponse.json({
       success: true,
@@ -395,8 +367,6 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('EPP Order submission error:', error)
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
@@ -410,6 +380,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.error('EPP order failed', error instanceof Error ? error.message : 'unknown')
     return NextResponse.json(
       { error: 'Failed to process order. Please try again.' },
       { status: 500 }

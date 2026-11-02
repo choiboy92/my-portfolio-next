@@ -95,17 +95,11 @@ export function BasketForm() {
   const onSubmit = async (data: OrderFormData) => {
     setIsSubmitting(true)
     setOrderError(null)
-    console.log('Submitting order data:', data)
     try {
       const response = await fetch('/api/epp/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          basket: data.basket,
-          delivery: data.delivery,
-          orderComments: data.additionalComments,
-          checkCompleted: data.checkCompleted
-        })
+        body: JSON.stringify(data)
       })
 
       const result = await response.json()
