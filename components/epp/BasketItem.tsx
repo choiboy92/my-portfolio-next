@@ -68,7 +68,7 @@ export function BasketItem({ item, onRemove }: BasketItemProps) {
               <div className="text-sm text-portfolio-muted">
                 Quantity: 1
               </div>
-              {item.estimatedPrice && (
+              {!!item.estimatedPrice && (
                 <div className="text-portfolio-accent font-semibold">
                   £{item.estimatedPrice.toLocaleString()}
                 </div>

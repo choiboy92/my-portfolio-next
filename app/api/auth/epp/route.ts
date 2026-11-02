@@ -1,39 +1,46 @@
 // app/api/auth/epp/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { SignJWT, jwtVerify } from 'jose'
-
-const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+import { SignJWT } from 'jose'
+import { AUTH_COOKIE, getJwtSecret, isAuthenticated, verifyPassword } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
+  const secret = getJwtSecret()
+  if (!secret || !process.env.EPP_PORTAL_PASSWORD) {
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
+  }
+
+  let body
   try {
-    const { password } = await request.json()
-    
-    if (password === process.env.EPP_PORTAL_PASSWORD) {
-      // Create JWT token for session
-      const token = await new SignJWT({ authorized: true })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setExpirationTime('24h')
-        .setIssuedAt()
-        .sign(secret)
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  }
 
-      const response = NextResponse.json({ success: true })
-      
-      // Set secure HTTP-only cookie
-      response.cookies.set('auth-token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 // 24 hours
-      })
-
-      return response
-    }
-    
+  if (!verifyPassword(body?.password)) {
     return NextResponse.json(
       { error: 'Invalid password' },
       { status: 401 }
     )
-  } catch (error) {
+  }
+
+  try {
+    const token = await new SignJWT({ authorized: true })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setExpirationTime('24h')
+      .setIssuedAt()
+      .sign(secret)
+
+    const response = NextResponse.json({ success: true })
+
+    response.cookies.set(AUTH_COOKIE, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60
+    })
+
+    return response
+  } catch {
     return NextResponse.json(
       { error: 'Authentication failed' },
       { status: 500 }
@@ -41,18 +48,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Verify session endpoint
 export async function GET(request: NextRequest) {
-  try {
-    const token = request.cookies.get('auth-token')?.value
-    
-    if (!token) {
-      return NextResponse.json({ authenticated: false })
-    }
-
-    await jwtVerify(token, secret)
-    return NextResponse.json({ authenticated: true })
-  } catch {
-    return NextResponse.json({ authenticated: false })
-  }
+  return NextResponse.json({ authenticated: await isAuthenticated(request) })
 }
