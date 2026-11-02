@@ -2,24 +2,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { z } from 'zod'
-import { jwtVerify } from 'jose'
+import { isAuthenticated } from '@/lib/auth'
 import { OrderFormData, orderSchema } from '@/lib/validation-schema'
 
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY!)
-const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
-
-// Authentication check
-async function verifyAuth(request: NextRequest) {
-  try {
-    const token = request.cookies.get('auth-token')?.value
-    if (!token) return false
-    await jwtVerify(token, secret)
-    return true
-  } catch {
-    return false
-  }
-}
 
 // Generate order ID
 function generateOrderId(): string {
@@ -328,7 +315,7 @@ function formatOrderEmail(orderData: OrderFormData, orderId: string): { text: st
 export async function POST(request: NextRequest) {
   try {
     // 1. Check authentication
-    const isAuthorized = await verifyAuth(request)
+    const isAuthorized = await isAuthenticated(request)
     if (!isAuthorized) {
       return NextResponse.json(
         { error: 'Unauthorized. Please log in to submit orders.' },
