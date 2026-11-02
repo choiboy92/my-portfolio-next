@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useForm, Controller, useWatch } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,7 @@ import {
   PRODUCT_CONFIGURATIONS,
   getModelConfigurations,
   getAvailableOptions,
-  calculatePrice,
+  priceBasketItem,
   ProductCategoryKey,
   ProductSpecificationOptions,
   Pencil
@@ -38,8 +38,6 @@ const CATEGORY_ICONS = {
 
 export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
   const [activeCategory, setActiveCategory] = useState<'iPhone' | 'MacBook' | 'iPad' | 'Apple Watch'>('iPhone')
-  const [estimatedPrice, setEstimatedPrice] = useState(0)
-  const [discountValue, setDiscountValue] = useState(0)
 
   const {
     control,
@@ -59,7 +57,6 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     specs: '',
     size: '',
     connectivity: '',
-    // bands: '',
     memory: '',
     charger: '',
     applePencil: '',
@@ -80,6 +77,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
   const selectedModel = watch('model')
   const selectedSpecs = watch('specs')
   const selectedAppleCare = watch('appleCare')
+  const selectedStorage = watch('storage')
   const hasTradeIn = watch('tradeIn.hasTradeIn')
 
   // Get available models for current category
@@ -87,51 +85,32 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
   
   // Get available options for selected model and spec
   const availableOptions = selectedModel 
-    ? getAvailableOptions(selectedCategory as ProductCategoryKey, selectedModel, selectedSpecs)
+    ? getAvailableOptions(selectedCategory as ProductCategoryKey, selectedModel, selectedSpecs, selectedStorage)
     : null
 
-  const watchedValues = useWatch({
-      control,
-      name: ['memory', 'storage', 'charger', 'connectivity', 'size', 'applePencil', 'magicKeyboard', 'nanoTexture', 'band']
-  })
-  // Calculate price whenever form values change
-  useEffect(() => {
-    if (availableOptions?.specs && availableOptions.specs.length === 1 && !selectedSpecs) {
-        setValue('specs', availableOptions.specs[0].name || 'default')
-    }
-    if (selectedCategory && selectedModel && selectedSpecs) {
-      const [memory, storage, charger, connectivity, size, applePencil, magicKeyboard, nanoTexture, band] = watchedValues
-      //console.log(availableOptions)
-      const price = calculatePrice(
-        selectedCategory as any,
-        selectedModel,
-        selectedSpecs,
-        {
-          memory: memory as string,
-          storage: storage as string,
-          charger: charger as string,
-          connectivity: connectivity as string,
-          size: size as string,
-          applePencil: applePencil as string,
-          magicKeyboard: magicKeyboard as boolean,
-          nanoTexture: nanoTexture as boolean,
-          appleCare: selectedAppleCare,
-          band: band as { material: string; style: string; color: string; size?: string }
-        }
-      )
+  const { estimatedPrice, discountValue } = selectedSpecs
+    ? priceBasketItem(watch())
+    : { estimatedPrice: 0, discountValue: 0 }
 
-      // Calculate 17% discount
-      if (selectedAppleCare && availableOptions?.appleCarePrice) {
-        setDiscountValue((price - availableOptions.appleCarePrice) * 0.17)
-      } else {
-        setDiscountValue(price * 0.17)
-      }
-      setEstimatedPrice(price)
-    } else {
-      setEstimatedPrice(0)
-      setDiscountValue(0)
+  const singleSpec = availableOptions?.specs?.length === 1 ? availableOptions.specs[0].name || 'default' : undefined
+  const singleBandMaterial = selectedSpecs && availableOptions?.bandOptions?.length === 1
+    ? availableOptions.bandOptions[0].material || 'default'
+    : undefined
+  const nanoTextureAvailable = availableOptions?.nanoTextureAvailable
+  const selectedBandMaterial = watch('band.material')
+  const selectedNanoTexture = watch('nanoTexture')
+
+  useEffect(() => {
+    if (singleSpec && !selectedSpecs) {
+      setValue('specs', singleSpec)
     }
-  }, [selectedCategory, selectedModel, selectedSpecs, selectedAppleCare, availableOptions, watch])
+    if (singleBandMaterial && !selectedBandMaterial) {
+      setValue('band.material', singleBandMaterial)
+    }
+    if (!nanoTextureAvailable && selectedNanoTexture) {
+      setValue('nanoTexture', false)
+    }
+  }, [singleSpec, selectedSpecs, singleBandMaterial, selectedBandMaterial, nanoTextureAvailable, selectedNanoTexture, setValue])
 
   const handleCategoryChange = (value: string) => {
     setActiveCategory(value as 'iPhone' | 'MacBook' | 'iPad' | 'Apple Watch')
@@ -145,7 +124,6 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     setValue('charger', '')
     setValue('connectivity', '')
     setValue('size', '')
-    // setValue('bands', '')
     setValue('applePencil', '')
     setValue('magicKeyboard', false)
     setValue('nanoTexture', false)
@@ -159,33 +137,22 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
   }
 
   const onSubmit = (data: BasketItemFormData) => {
-    const item: BasketItem = {
+    onAdd({
+      ...data,
       id: crypto.randomUUID(),
-      category: data.category!,
-      model: data.model!,
-      color: data.color!,
-      storage: data.storage,
-      specs: data.specs,
-      size: data.size,
-      connectivity: data.connectivity,
-      band: data.band,
-      appleCare: data.appleCare,
       quantity: 1,
-      estimatedPrice: estimatedPrice,
-      discountValue: discountValue,
+      ...priceBasketItem(data),
       tradeIn: data.tradeIn?.hasTradeIn ? {
         hasTradeIn: true,
         serialNumber: data.tradeIn.serialNumber,
         model: data.tradeIn.model
       } : { hasTradeIn: false }
-    }
-
-    onAdd(item)
+    })
     reset()
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black flex items-center justify-center p-4 z-50">
       <Card className="bg-portfolio-card border-portfolio-border max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -235,6 +202,12 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                               setValue('connectivity', '')
                               setValue('size', '')
                               setValue('band', undefined)
+                              setValue('memory', '')
+                              setValue('charger', '')
+                              setValue('applePencil', '')
+                              setValue('magicKeyboard', false)
+                              setValue('nanoTexture', false)
+                              setValue('appleCare', false)
                             }} value={field.value}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select model" />
@@ -271,10 +244,16 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                             render={({ field }) => (
                               <Select onValueChange={(value) => {
                                 field.onChange(value)
-                                // Reset dependent fields when spec changes
+                                setValue('color', '')
                                 setValue('storage', '')
                                 setValue('memory', '')
                                 setValue('charger', undefined)
+                                setValue('connectivity', '')
+                                setValue('size', '')
+                                setValue('band', undefined)
+                                setValue('applePencil', '')
+                                setValue('magicKeyboard', false)
+                                setValue('nanoTexture', false)
                               }} value={field.value}>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select configuration" />
@@ -489,15 +468,6 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                 Band Selection
                               </h4>
                               
-                              {/* Auto-select material if only one option */}
-                              {availableOptions.bandOptions.length === 1 && (() => {
-                                const singleMaterial = availableOptions.bandOptions[0].material || 'default';
-                                // Auto-set the material if not already set
-                                if (!watch('band.material')) {
-                                  setValue('band.material', singleMaterial);
-                                }
-                                return null;
-                              })()}
                               <div className="flex grow justify-between">
                               {/* Band Material Selection */}
                               { availableOptions?.bandOptions.length > 1 && (
@@ -802,6 +772,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                     <Input
                                       {...field}
                                       placeholder="e.g., iPhone 12 Pro Max"
+                                      maxLength={100}
                                       className="bg-portfolio-card text-portfolio-text border-portfolio-border"
                                     />
                                   )}
@@ -816,6 +787,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                     <Input
                                       {...field}
                                       placeholder="Device serial number"
+                                      maxLength={50}
                                       className="bg-portfolio-card text-portfolio-text border-portfolio-border"
                                     />
                                   )}

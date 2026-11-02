@@ -91,21 +91,14 @@ export function BasketForm() {
     setCurrentStep('summary')
   }
 
-  // ✅ Form submission handler
   const onSubmit = async (data: OrderFormData) => {
     setIsSubmitting(true)
     setOrderError(null)
-    console.log('Submitting order data:', data)
     try {
       const response = await fetch('/api/epp/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          basket: data.basket,
-          delivery: data.delivery,
-          orderComments: data.additionalComments,
-          checkCompleted: data.checkCompleted
-        })
+        body: JSON.stringify(data)
       })
 
       const result = await response.json()
@@ -201,12 +194,16 @@ export function BasketForm() {
                     </CardTitle>
                     <Button
                       onClick={() => setIsAddingProduct(true)}
+                      disabled={basket.length >= 20}
                       className="bg-portfolio-accent bg-blue-600 hover:bg-blue-500 cursor-pointer"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Product
                     </Button>
                   </div>
+                  {basket.length >= 20 && (
+                    <p className="text-sm text-portfolio-muted">Maximum 20 items per order</p>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {basket.length === 0 ? (

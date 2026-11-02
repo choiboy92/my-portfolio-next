@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { AlertTriangle, Shield, Loader2, CheckCircle, Info, Repeat, MessageSquare } from 'lucide-react'
-import { useState, useCallback } from 'react'
 import type { BasketItem } from '@/types/basket'
 import { orderSchema, type DeliveryFormData, type OrderFormData } from '@/lib/validation-schema'
 import { Separator } from '@/components/ui/separator'
@@ -14,7 +13,6 @@ import { Badge } from '@/components/ui/badge'
 import { Controller, useForm, useFormContext } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Textarea } from '@/components/ui/textarea'
-import { debounce } from 'lodash'
 
 
 interface OrderConfirmationProps {
@@ -41,8 +39,8 @@ export function OrderConfirmation({
 
   const additionalComments = watch('additionalComments')
   const checkCompleted = watch('checkCompleted')
-  const [commentLength, setCommentLength] = useState(0)
   const maxLength = 1000
+  const commentLength = (additionalComments ?? '').length
 
   const totalEstimatedPrice = basket.reduce((sum, item) => sum + (item.estimatedPrice ?? 0), 0)
   const totalDiscount = basket.reduce((sum, item) => sum + (item.discountValue ?? 0), 0)
@@ -50,19 +48,8 @@ export function OrderConfirmation({
 
   const canSubmit = !isSubmitting && checkCompleted
 
-//   const handleFormSubmit = ( data: OrderFormData) => {
-//     console.log('Submitting order data:', data)
-//     onSubmit(data.additionalComments)
-//   }
-
-  const debouncedSetLength = useCallback(
-    debounce((length: number) => setCommentLength(length), 300),
-    []
-  )
-
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Final Order Summary */}
       <Card className="bg-portfolio-card border-portfolio-border text-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-portfolio-text text-xl">
@@ -81,7 +68,6 @@ export function OrderConfirmation({
                         <h4 className="text-portfolio-text font-semibold text-lg">
                         {item.model}
                         </h4>
-                        {/* Configuration */}
                         <div className="flex flex-wrap gap-2 mb-3">
                             <Badge variant="outline" className="border-portfolio-border text-portfolio-text">
                                 {item.color}
@@ -111,7 +97,6 @@ export function OrderConfirmation({
                             {item.band.material} - {item.band.style} - {item.band.color} - {item.band.size}
                             </Badge>
                         )}
-                        {/* Services */}
                         {item.appleCare && (
                             <Badge className="bg-blue-600 text-white">
                                 <Shield className="w-3 h-3 mr-1" />
@@ -128,10 +113,10 @@ export function OrderConfirmation({
                     </div>
                     <div className="text-right">
                         <p className="text-portfolio-text font-medium">Qty: {item.quantity}</p>
-                        {item.estimatedPrice && (
+                        {!!item.estimatedPrice && (
                         <div className="text-sm space-y-1">
                             <p className="text-portfolio-muted line-through">£{item.estimatedPrice.toLocaleString()}</p>
-                            <p className="text-green-500 font-semibold">£{((item.estimatedPrice ?? 0) - (item.discountValue ?? 0)).toLocaleString()}</p>
+                            <p className="text-green-500 font-semibold">£{(item.estimatedPrice - (item.discountValue ?? 0)).toLocaleString()}</p>
                         </div>
                         )}
                     </div>
@@ -140,7 +125,6 @@ export function OrderConfirmation({
             </div>
           ))}
 
-          {/* ✅ Additional Comments Section */}
         <Card className="bg-portfolio-card border-portfolio-border text-white">
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -159,10 +143,6 @@ export function OrderConfirmation({
                 <div className="space-y-2">
                   <Textarea
                     {...field}
-                    onChange={(e) => {
-                      field.onChange(e)
-                      debouncedSetLength(e.target.value.length)
-                    }}
                     maxLength={maxLength}
                     placeholder="Examples: Engraving requests, color preferences if unavailable, delivery preferences, and other 
 
@@ -193,7 +173,6 @@ export function OrderConfirmation({
         </Card>
 
           
-          {/* Quick Summary */}
           <div className="bg-portfolio-dark rounded-lg p-4 border border-portfolio-border">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
@@ -215,7 +194,6 @@ export function OrderConfirmation({
             </div>
           </div>
 
-          {/* Delivery Summary */}
           <div className="bg-portfolio-dark rounded-lg p-4 border border-portfolio-border">
             <h3 className="font-semibold text-portfolio-text mb-2">
               {deliveryData.method === 'delivery' ? 'Delivery to:' : 'Pickup from:'}
@@ -240,7 +218,7 @@ export function OrderConfirmation({
                 {deliveryData.storeLocation === 'stratford-city' && 'Apple Stratford City'}
                 {deliveryData.storeLocation === 'bluewater' && 'Apple Bluewater'}
                 {deliveryData.storeLocation === 'kingston' && 'Apple Kingston'}
-                &nbsp;by {deliveryData.address.firstName} {deliveryData.address.surname} 
+                &nbsp;by {deliveryData.address?.firstName} {deliveryData.address?.surname} 
               </p>
             )}
             <p className="text-portfolio-muted text-sm mt-2">
@@ -250,7 +228,6 @@ export function OrderConfirmation({
         </CardContent>
       </Card>
 
-      {/* Important Information */}
       <Card className="bg-amber-900/20 border-amber-600/30">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-amber-200">
@@ -273,7 +250,6 @@ export function OrderConfirmation({
         </CardContent>
       </Card>
 
-      {/* Confirmation Checkboxes */}
       <Card className="bg-portfolio-card border-portfolio-border text-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-portfolio-text">
@@ -295,7 +271,7 @@ export function OrderConfirmation({
                     />
                   )}
                 />
-              <Label htmlFor="terms" className="text-sm text-portfolio-text leading-relaxed">
+              <Label htmlFor="confirm-order" className="text-sm text-portfolio-text leading-relaxed">
                 I have checked my order configurations and understand and accept that this may change subject to availability. Final pricing, 
                 availability, and delivery terms will be confirmed before processing.
               </Label>
@@ -313,9 +289,9 @@ export function OrderConfirmation({
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
       <div className="flex gap-4 pt-4">
         <Button
+          type="button"
           onClick={onBack}
           disabled={isSubmitting}
           variant="outline"
