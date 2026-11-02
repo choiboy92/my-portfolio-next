@@ -1,4 +1,6 @@
 // lib/product-config.ts
+import type { BasketItemFormData } from './validation-schema'
+
 interface SpecificationOption {
   name: string;                    // Display name
   price: number;                 // Optional price for this option
@@ -825,20 +827,28 @@ export function getModelConfiguration<T extends ProductCategoryKey>(category: T,
   return productCategory.models[modelName]
 }
 
+function parseStorageSize(size: string): number {
+  const match = size.match(/(\d+)(GB|TB)/i)
+  if (!match) return 0
+  const value = parseInt(match[1])
+  const unit = match[2].toUpperCase()
+  return unit === 'TB' ? value * 1024 : value
+}
+
 /**
  * Get available options filtered by selected spec and constraints
  */
 export function getAvailableOptions<T extends ProductCategoryKey>(
   category: T,
   modelName: string,
-  specName?: string
+  specName?: string,
+  selectedStorage?: string
 ) {
   const model = getModelConfiguration(category, modelName)
   if (!model) return null
 
   const selectedSpec = specName ? model.specs.find(spec => spec.name === specName) : null
 
-  // Helper function to filter options based on constraints
   function filterOptionsByConstraints(
     options: Record<string, number> | undefined,
     constraints: Record<string, unknown> | undefined,
@@ -857,15 +867,6 @@ export function getAvailableOptions<T extends ProductCategoryKey>(
       })
     }
 
-    if (constraintKey === 'minStorageForNanotexture') {
-      const minValue = constraints[constraintKey] as string
-      const minSizeGB = parseStorageSize(minValue)
-
-      return Object.keys(options).filter(option => {
-        const optionSizeGB = parseStorageSize(option)
-        return optionSizeGB >= minSizeGB
-      })
-    }
     const minValue = constraints[constraintKey] as string
     const minSizeGB = parseStorageSize(minValue)
 
@@ -875,16 +876,6 @@ export function getAvailableOptions<T extends ProductCategoryKey>(
     })
   }
 
-  // Parse storage sizes to GB for comparison
-  function parseStorageSize(size: string): number {
-    const match = size.match(/(\d+)(GB|TB)/i)
-    if (!match) return 0
-    const value = parseInt(match[1])
-    const unit = match[2].toUpperCase()
-    return unit === 'TB' ? value * 1024 : value
-  }
-
-  // Parse memory sizes to GB for comparison
   function parseMemorySize(memory: string): number {
     const match = memory.match(/(\d+)GB/i)
     return match ? parseInt(match[1]) : 0
@@ -897,7 +888,6 @@ export function getAvailableOptions<T extends ProductCategoryKey>(
   } as any
 
   if (selectedSpec) {
-    // MacBook specific options
     if ('memoryOptions' in selectedSpec) {
       const macSpec = selectedSpec as MacbookSpecificationOption
       result.memoryOptions = filterOptionsByConstraints(
@@ -919,7 +909,6 @@ export function getAvailableOptions<T extends ProductCategoryKey>(
       result.nanoTexturePrice = macSpec.nanoTexture
     }
 
-    // iPhone specific options
     if ('storageOptions' in selectedSpec && category === 'iPhone') {
       const iphoneSpec = selectedSpec as iPhoneSpecificationOption
       result.storageOptions = filterOptionsByConstraints(
@@ -929,7 +918,6 @@ export function getAvailableOptions<T extends ProductCategoryKey>(
       )
     }
 
-    // iPad specific options
     if ('connectivityOptions' in selectedSpec && category === 'iPad') {
       const ipadSpec = selectedSpec as iPadSpecificationOption
       result.storageOptions = filterOptionsByConstraints(
@@ -940,11 +928,12 @@ export function getAvailableOptions<T extends ProductCategoryKey>(
       result.connectivityOptions = Object.keys(ipadSpec.connectivityOptions || {})
       result.applePencilOptions = ipadSpec.applePencil || []
       result.magicKeyboardPrice = ipadSpec.magicKeyboard
-      result.nanoTextureAvailable = typeof ipadSpec.nanoTexture === 'number'
+      const minNano = ipadSpec.constraints?.minStorageForNanotexture as string | undefined
+      result.nanoTextureAvailable = typeof ipadSpec.nanoTexture === 'number' &&
+        (!minNano || (!!selectedStorage && parseStorageSize(selectedStorage) >= parseStorageSize(minNano)))
       result.nanoTexturePrice = ipadSpec.nanoTexture
     }
 
-    // Apple Watch specific options
     if ('sizeOptions' in selectedSpec && category === 'Apple Watch') {
       const watchSpec = selectedSpec as AppleWatchSpecificationOption
       result.sizeOptions = Object.keys(watchSpec.sizeOptions || {})
@@ -985,7 +974,6 @@ export function calculatePrice<T extends ProductCategoryKey>(
 
   let totalPrice = spec.price
 
-  // MacBook pricing
   if ('memoryOptions' in spec) {
     const macSpec = spec as MacbookSpecificationOption
     if (selectedOptions.memory && macSpec.memoryOptions) {
@@ -1002,7 +990,6 @@ export function calculatePrice<T extends ProductCategoryKey>(
     }
   }
 
-  // iPhone pricing
   if ('storageOptions' in spec && category === 'iPhone') {
     const iphoneSpec = spec as iPhoneSpecificationOption
     if (selectedOptions.storage && iphoneSpec.storageOptions) {
@@ -1010,7 +997,6 @@ export function calculatePrice<T extends ProductCategoryKey>(
     }
   }
 
-  // iPad pricing
   if ('connectivityOptions' in spec && category === 'iPad') {
     const ipadSpec = spec as iPadSpecificationOption
     if (selectedOptions.storage && ipadSpec.storageOptions) {
@@ -1026,12 +1012,13 @@ export function calculatePrice<T extends ProductCategoryKey>(
     if (selectedOptions.magicKeyboard && ipadSpec.magicKeyboard) {
       totalPrice += ipadSpec.magicKeyboard
     }
-    if (selectedOptions.nanoTexture && ipadSpec.nanoTexture) {
+    const minNano = ipadSpec.constraints?.minStorageForNanotexture as string | undefined
+    const nanoAllowed = !minNano || (!!selectedOptions.storage && parseStorageSize(selectedOptions.storage) >= parseStorageSize(minNano))
+    if (selectedOptions.nanoTexture && ipadSpec.nanoTexture && nanoAllowed) {
       totalPrice += ipadSpec.nanoTexture
     }
   }
 
-  // Apple Watch pricing
   if ('sizeOptions' in spec && category === 'Apple Watch') {
     const watchSpec = spec as AppleWatchSpecificationOption
     if (selectedOptions.size && watchSpec.sizeOptions) {
@@ -1041,7 +1028,6 @@ export function calculatePrice<T extends ProductCategoryKey>(
       totalPrice += watchSpec.connectivityOptions[selectedOptions.connectivity] || 0
     }
     if (selectedOptions.band && watchSpec.bandOptions) {
-      // Find the band price based on material, style, and color
       for (const bandGroup of watchSpec.bandOptions) {
         if (bandGroup.material === selectedOptions.band.material) {
           const style = bandGroup.style.find(s => s.styleName === selectedOptions.band?.style)
@@ -1053,7 +1039,6 @@ export function calculatePrice<T extends ProductCategoryKey>(
       }
     }
   }
-  // AppleCare pricing (common to all products)
   if (selectedOptions.appleCare && model.appleCarePrice) {
     totalPrice += model.appleCarePrice
   } else if (selectedOptions.appleCare && spec.appleCarePrice) {
@@ -1062,6 +1047,25 @@ export function calculatePrice<T extends ProductCategoryKey>(
   
 
   return totalPrice
+}
+
+export function priceBasketItem(item: BasketItemFormData): { estimatedPrice: number; discountValue: number } {
+  const category = item.category as ProductCategoryKey
+  const estimatedPrice = calculatePrice(category, item.model, item.specs ?? '', {
+    memory: item.memory,
+    storage: item.storage,
+    charger: item.charger,
+    connectivity: item.connectivity,
+    size: item.size,
+    applePencil: item.applePencil,
+    magicKeyboard: item.magicKeyboard,
+    nanoTexture: item.nanoTexture,
+    appleCare: item.appleCare,
+    band: item.band,
+  })
+  const appleCare = item.appleCare ? getAppleCarePrice(category, item.model, item.specs) ?? 0 : 0
+  const discountValue = Math.round((estimatedPrice - appleCare) * 0.17 * 100) / 100
+  return { estimatedPrice, discountValue }
 }
 
 export function getAppleCarePrice<T extends ProductCategoryKey>(
