@@ -179,7 +179,7 @@ export function DeliveryOptions({ onSubmit, onBack }: DeliveryOptionsProps) {
                                 name="delivery.address.line2"
                                 control={control}
                                 render={({ field }) => (
-                                <Input {...field} placeholder="Apartment, suite, etc. (optional)" />
+                                <Input {...field} placeholder="Apartment, suite, etc. (optional)" maxLength={200} />
                                 )}
                             />
                             </div>

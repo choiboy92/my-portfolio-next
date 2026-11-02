@@ -57,7 +57,6 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     specs: '',
     size: '',
     connectivity: '',
-    // bands: '',
     memory: '',
     charger: '',
     applePencil: '',
@@ -124,7 +123,6 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     setValue('charger', '')
     setValue('connectivity', '')
     setValue('size', '')
-    // setValue('bands', '')
     setValue('applePencil', '')
     setValue('magicKeyboard', false)
     setValue('nanoTexture', false)
@@ -245,7 +243,6 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                             render={({ field }) => (
                               <Select onValueChange={(value) => {
                                 field.onChange(value)
-                                // Reset dependent fields when spec changes
                                 setValue('storage', '')
                                 setValue('memory', '')
                                 setValue('charger', undefined)
@@ -768,6 +765,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                     <Input
                                       {...field}
                                       placeholder="e.g., iPhone 12 Pro Max"
+                                      maxLength={100}
                                       className="bg-portfolio-card text-portfolio-text border-portfolio-border"
                                     />
                                   )}
@@ -782,6 +780,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                     <Input
                                       {...field}
                                       placeholder="Device serial number"
+                                      maxLength={50}
                                       className="bg-portfolio-card text-portfolio-text border-portfolio-border"
                                     />
                                   )}

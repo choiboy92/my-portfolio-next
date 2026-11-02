@@ -811,8 +811,8 @@ export type ProductCategoryKey = keyof typeof PRODUCT_CONFIGURATIONS
  * Get all models for a given product category
  */
 export function getModelConfigurations<T extends ProductCategoryKey>(category: T): Array<{ key: string; config: ModelConfiguration }> | undefined {
+  if (!Object.hasOwn(PRODUCT_CONFIGURATIONS, category)) return undefined
   const productCategory = PRODUCT_CONFIGURATIONS[category]
-  if (!productCategory) return undefined
 
   return Object.entries(productCategory.models).map(([key, config]) => ({ key, config }))
 }
@@ -821,8 +821,9 @@ export function getModelConfigurations<T extends ProductCategoryKey>(category: T
  * Get configuration for a specific model
  */
 export function getModelConfiguration<T extends ProductCategoryKey>(category: T, modelName: string): ModelConfiguration | undefined {
+  if (!Object.hasOwn(PRODUCT_CONFIGURATIONS, category)) return undefined
   const productCategory = PRODUCT_CONFIGURATIONS[category]
-  if (!productCategory) return undefined
+  if (!Object.hasOwn(productCategory.models, modelName)) return undefined
 
   return productCategory.models[modelName]
 }
@@ -1073,11 +1074,11 @@ export function getAppleCarePrice<T extends ProductCategoryKey>(
   modelName: string,
   specName?: string
 ): number | undefined {
+  if (!Object.hasOwn(PRODUCT_CONFIGURATIONS, lineName)) return undefined
   const productLine = PRODUCT_CONFIGURATIONS[lineName]
-  if (!productLine) return undefined
 
+  if (!Object.hasOwn(productLine.models, modelName)) return undefined
   const model = productLine.models[modelName]
-  if (!model) return undefined
 
   // Priority 1: Check selected spec's appleCarePrice
   if (specName) {

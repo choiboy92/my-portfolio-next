@@ -91,7 +91,6 @@ export function BasketForm() {
     setCurrentStep('summary')
   }
 
-  // ✅ Form submission handler
   const onSubmit = async (data: OrderFormData) => {
     setIsSubmitting(true)
     setOrderError(null)

@@ -90,6 +90,13 @@ test('rejects unknown products', async () => {
   expect((await res.json()).details[0].field).toBe('basket.0')
   expect(send).not.toHaveBeenCalled()
 })
+test('rejects prototype-key category and model as unknown products', async () => {
+  for (const item of [validItem({ model: 'constructor' }), validItem({ category: 'constructor' }), validItem({ category: 'toString', appleCare: true })]) {
+    const res = await submit(validOrder({ basket: [item] }))
+    expect(res.status).toBe(400)
+  }
+  expect(send).not.toHaveBeenCalled()
+})
 test('returns 502 when Resend returns an error', async () => {
   muteConsole()
   send.mockResolvedValue({ data: null, error: { name: 'rate_limit_exceeded', message: 'x' } })

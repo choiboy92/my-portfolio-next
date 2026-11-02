@@ -53,7 +53,6 @@ function formatOrderEmail(orderData: OrderFormData, orderId: string): { text: st
     if (item.magicKeyboard) itemLine += `\n   • Magic Keyboard: Yes`
     if (item.nanoTexture) itemLine += `\n   • Nano-texture Glass: Yes`
     
-    // Existing fields
     if (item.appleCare) itemLine += `\n   • AppleCare+: Yes`
     if (item.tradeIn?.hasTradeIn) {
       itemLine += `\n   • Trade-in: ${item.tradeIn.model || 'Device'}`
