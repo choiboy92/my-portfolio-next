@@ -9,14 +9,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
   }
 
-  let password: unknown
+  let body
   try {
-    ;({ password } = await request.json())
+    body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  if (!verifyPassword(password)) {
+  if (!verifyPassword(body?.password)) {
     return NextResponse.json(
       { error: 'Invalid password' },
       { status: 401 }

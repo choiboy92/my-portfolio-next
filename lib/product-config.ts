@@ -1013,9 +1013,8 @@ export function calculatePrice<T extends ProductCategoryKey>(
     if (selectedOptions.magicKeyboard && ipadSpec.magicKeyboard) {
       totalPrice += ipadSpec.magicKeyboard
     }
-    const minNano = ipadSpec.constraints?.minStorageForNanotexture as string | undefined
-    const nanoAllowed = !minNano || (!!selectedOptions.storage && parseStorageSize(selectedOptions.storage) >= parseStorageSize(minNano))
-    if (selectedOptions.nanoTexture && ipadSpec.nanoTexture && nanoAllowed) {
+    if (selectedOptions.nanoTexture && ipadSpec.nanoTexture &&
+      getAvailableOptions(category, modelName, specName, selectedOptions.storage)?.nanoTextureAvailable) {
       totalPrice += ipadSpec.nanoTexture
     }
   }
@@ -1074,13 +1073,9 @@ export function getAppleCarePrice<T extends ProductCategoryKey>(
   modelName: string,
   specName?: string
 ): number | undefined {
-  if (!Object.hasOwn(PRODUCT_CONFIGURATIONS, lineName)) return undefined
-  const productLine = PRODUCT_CONFIGURATIONS[lineName]
+  const model = getModelConfiguration(lineName, modelName)
+  if (!model) return undefined
 
-  if (!Object.hasOwn(productLine.models, modelName)) return undefined
-  const model = productLine.models[modelName]
-
-  // Priority 1: Check selected spec's appleCarePrice
   if (specName) {
     const selectedSpec = model.specs.find(spec => spec.name === specName)
     if (selectedSpec && 'appleCarePrice' in selectedSpec && typeof selectedSpec.appleCarePrice === 'number') {
@@ -1088,14 +1083,10 @@ export function getAppleCarePrice<T extends ProductCategoryKey>(
     }
   }
 
-  // Priority 2: Check model's appleCarePrice
   if ('appleCarePrice' in model && typeof model.appleCarePrice === 'number') {
     return model.appleCarePrice
   }
 
-  // Priority 3: Check product line's default appleCarePrice (if you have one)
-  // This would be rare, but you could add it to your ProductLineConfiguration interface
-  
   return undefined
 }
 

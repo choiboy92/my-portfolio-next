@@ -49,7 +49,7 @@ export function BasketForm() {
         }
       },
       additionalComments: '',
-      checkCompleted: false as unknown as true
+      checkCompleted: false
     }
   })
 

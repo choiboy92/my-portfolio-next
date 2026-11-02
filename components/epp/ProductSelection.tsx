@@ -77,6 +77,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
   const selectedModel = watch('model')
   const selectedSpecs = watch('specs')
   const selectedAppleCare = watch('appleCare')
+  const selectedStorage = watch('storage')
   const hasTradeIn = watch('tradeIn.hasTradeIn')
 
   // Get available models for current category
@@ -84,7 +85,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
   
   // Get available options for selected model and spec
   const availableOptions = selectedModel 
-    ? getAvailableOptions(selectedCategory as ProductCategoryKey, selectedModel, selectedSpecs, watch('storage'))
+    ? getAvailableOptions(selectedCategory as ProductCategoryKey, selectedModel, selectedSpecs, selectedStorage)
     : null
 
   const { estimatedPrice, discountValue } = selectedSpecs

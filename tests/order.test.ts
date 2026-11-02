@@ -4,14 +4,13 @@ import { SignJWT } from 'jose'
 import { POST } from '@/app/api/epp/order/route'
 import { escapeStrings } from '@/lib/escape-html'
 import { orderSchema } from '@/lib/validation-schema'
-import { validItem, validOrder } from './fixtures/order'
+import { AUTH_COOKIE } from '@/lib/auth'
+import { macbookItem as macbook, validItem, validOrder, watchItem as watch } from './fixtures/order'
 
 const send = vi.hoisted(() => vi.fn())
 vi.mock('resend', () => ({ Resend: vi.fn(() => ({ emails: { send } })) }))
 
 const SECRET = '0123456789abcdef0123456789abcdef'
-const macbook = validItem({ category: 'MacBook', model: 'MacBook Pro 16"', specs: 'M4 Pro 14-Core CPU 20-Core GPU 24GB Unified Memory', color: 'Space Black', memory: '36GB', storage: '1TB', charger: '96W' })
-const watch = validItem({ category: 'Apple Watch', model: 'Apple Watch Series 11', specs: 'Aluminium Case', color: 'Space Grey', storage: undefined, size: '46mm', connectivity: 'GPS + Cellular', band: { material: 'Rubber', style: 'Solo Loop', color: 'Black', size: '5' } })
 
 beforeEach(() => {
   send.mockReset().mockResolvedValue({ data: { id: 're_1' }, error: null })
@@ -27,13 +26,11 @@ afterEach(() => {
 
 async function submit(body: unknown) {
   const token = await new SignJWT({ authorized: true }).setProtectedHeader({ alg: 'HS256' }).setExpirationTime('1h').sign(new TextEncoder().encode(SECRET))
-  return POST(new NextRequest('http://x/api/epp/order', { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body), headers: { cookie: `auth-token=${token}` } }))
+  return POST(new NextRequest('http://x/api/epp/order', { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body), headers: { cookie: `${AUTH_COOKIE}=${token}` } }))
 }
 const sent = () => send.mock.calls[0][0] as { text: string; html: string }
-const muteConsole = () => {
-  vi.spyOn(console, 'error').mockImplementation(() => {})
-  vi.spyOn(console, 'info').mockImplementation(() => {})
-}
+const muteConsole = () =>
+  [vi.spyOn(console, 'log'), vi.spyOn(console, 'info'), vi.spyOn(console, 'error')].map(spy => spy.mockImplementation(() => {}))
 
 test('escapeStrings escapes nested strings', () => {
   expect(escapeStrings({ a: [`O'Brien & <Sons>`], n: 1, b: true })).toEqual({ a: ['O&#39;Brien &amp; &lt;Sons&gt;'], n: 1, b: true })
@@ -46,7 +43,7 @@ test('schema rejects orderComments and enforces limits', () => {
   expect(orderSchema.safeParse(validOrder({ basket: [validItem({ estimatedPrice: -1 })] })).success).toBe(false)
 })
 test('schema requires confirmation', () => {
-  expect(orderSchema.safeParse({ ...validOrder(), checkCompleted: false }).success).toBe(false)
+  expect(orderSchema.safeParse(validOrder({ checkCompleted: false })).success).toBe(false)
 })
 test('returns 401 without a session', async () => {
   const res = await POST(new NextRequest('http://x/api/epp/order', { method: 'POST', body: JSON.stringify(validOrder()) }))
@@ -105,7 +102,7 @@ test('returns 502 when Resend returns an error', async () => {
   expect(console.error).toHaveBeenCalledWith('EPP order email failed', { orderId: expect.any(String), name: 'rate_limit_exceeded' })
 })
 test('never logs contact details', async () => {
-  const spies = [vi.spyOn(console, 'log'), vi.spyOn(console, 'info'), vi.spyOn(console, 'error')].map(spy => spy.mockImplementation(() => {}))
+  const spies = muteConsole()
   await submit(validOrder())
   send.mockResolvedValue({ data: null, error: { name: 'rate_limit_exceeded', message: 'buyer@example.com' } })
   await submit(validOrder())
@@ -116,7 +113,7 @@ test('never logs contact details', async () => {
   expect(calls.some(args => JSON.stringify(args).includes('buyer@example.com'))).toBe(false)
 })
 test('rejects malformed JSON without logging the body', async () => {
-  const spies = [vi.spyOn(console, 'log'), vi.spyOn(console, 'info'), vi.spyOn(console, 'error')].map(spy => spy.mockImplementation(() => {}))
+  const spies = muteConsole()
   const res = await submit('buyer@example.com')
   expect(res.status).toBe(400)
   expect(send).not.toHaveBeenCalled()

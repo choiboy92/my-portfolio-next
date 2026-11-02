@@ -1,7 +1,7 @@
 import { test, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { createHmac } from 'node:crypto'
-import { verifyPassword, isAuthenticated } from '@/lib/auth'
+import { AUTH_COOKIE, verifyPassword, isAuthenticated } from '@/lib/auth'
 import { GET, POST } from '@/app/api/auth/epp/route'
 
 const SECRET = '0123456789abcdef0123456789abcdef'
@@ -9,7 +9,7 @@ beforeEach(() => { vi.stubEnv('JWT_SECRET', SECRET); vi.stubEnv('EPP_PORTAL_PASS
 afterEach(() => vi.unstubAllEnvs())
 
 const login = (body: string) => POST(new NextRequest('http://x/api/auth/epp', { method: 'POST', body }))
-const withCookie = (token: string) => new NextRequest('http://x/', { headers: { cookie: `auth-token=${token}` } })
+const withCookie = (token: string) => new NextRequest('http://x/', { headers: { cookie: `${AUTH_COOKIE}=${token}` } })
 
 test('verifyPassword accepts only the exact password', () => {
   expect([verifyPassword('hunter22'), verifyPassword('hunter2'), verifyPassword(undefined), verifyPassword(12345678)]).toEqual([true, false, false, false])
@@ -41,7 +41,7 @@ test('isAuthenticated rejects a token signed with a short key', async () => {
   expect(await isAuthenticated(withCookie(forgeWithKey('short')))).toBe(false)
 })
 test('GET reports a session from a successful login', async () => {
-  const cookie = (await login('{"password":"hunter22"}')).cookies.get('auth-token')!.value
+  const cookie = (await login('{"password":"hunter22"}')).cookies.get(AUTH_COOKIE)!.value
   expect(await (await GET(withCookie(cookie))).json()).toEqual({ authenticated: true })
   vi.stubEnv('JWT_SECRET', 'short')
   expect(await (await GET(withCookie(forgeWithKey('short')))).json()).toEqual({ authenticated: false })

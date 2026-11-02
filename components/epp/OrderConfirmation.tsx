@@ -40,6 +40,7 @@ export function OrderConfirmation({
   const additionalComments = watch('additionalComments')
   const checkCompleted = watch('checkCompleted')
   const maxLength = 1000
+  const commentLength = (additionalComments ?? '').length
 
   const totalEstimatedPrice = basket.reduce((sum, item) => sum + (item.estimatedPrice ?? 0), 0)
   const totalDiscount = basket.reduce((sum, item) => sum + (item.discountValue ?? 0), 0)
@@ -112,10 +113,10 @@ export function OrderConfirmation({
                     </div>
                     <div className="text-right">
                         <p className="text-portfolio-text font-medium">Qty: {item.quantity}</p>
-                        {(item.estimatedPrice ?? 0) > 0 && (
+                        {!!item.estimatedPrice && (
                         <div className="text-sm space-y-1">
-                            <p className="text-portfolio-muted line-through">£{(item.estimatedPrice ?? 0).toLocaleString()}</p>
-                            <p className="text-green-500 font-semibold">£{((item.estimatedPrice ?? 0) - (item.discountValue ?? 0)).toLocaleString()}</p>
+                            <p className="text-portfolio-muted line-through">£{item.estimatedPrice.toLocaleString()}</p>
+                            <p className="text-green-500 font-semibold">£{(item.estimatedPrice - (item.discountValue ?? 0)).toLocaleString()}</p>
                         </div>
                         )}
                     </div>
@@ -155,11 +156,11 @@ export function OrderConfirmation({
                       <span>These instructions will be reviewed manually and may affect final pricing</span>
                     </div>
                     <span className="text-portfolio-muted">
-                      {(additionalComments ?? '').length}/{maxLength}
+                      {commentLength}/{maxLength}
                     </span>
                   </div>
 
-                  {(additionalComments ?? '').length > maxLength * 0.8 && (
+                  {commentLength > maxLength * 0.8 && (
                     <div className="text-xs text-orange-500 flex items-center gap-1">
                       <AlertTriangle className="w-3 h-3" />
                       Approaching character limit
