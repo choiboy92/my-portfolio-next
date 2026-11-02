@@ -94,6 +94,20 @@ test('rejects prototype-key category and model as unknown products', async () =>
   }
   expect(send).not.toHaveBeenCalled()
 })
+test('rejects options the configuration does not offer', async () => {
+  const titanium = { ...watch, specs: 'Titanium Case', color: 'Natural' }
+  for (const item of [
+    validItem({ storage: '4TB' }),
+    validItem({ color: 'Hot Pink' }),
+    { ...macbook, memory: '8GB' },
+    { ...titanium, connectivity: 'GPS' },
+    { ...watch, band: { ...watch.band!, color: 'Tartan' } },
+  ]) {
+    const res = await submit(validOrder({ basket: [item] }))
+    expect(res.status).toBe(400)
+  }
+  expect(send).not.toHaveBeenCalled()
+})
 test('returns 502 when Resend returns an error', async () => {
   muteConsole()
   send.mockResolvedValue({ data: null, error: { name: 'rate_limit_exceeded', message: 'x' } })

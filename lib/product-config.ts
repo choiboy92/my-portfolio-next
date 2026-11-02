@@ -1049,6 +1049,26 @@ export function calculatePrice<T extends ProductCategoryKey>(
   return totalPrice
 }
 
+export function isOffered(item: BasketItemFormData): boolean {
+  const options = getAvailableOptions(item.category as ProductCategoryKey, item.model, item.specs, item.storage)
+  if (!options) return false
+  const offered = (value: string | undefined, list: string[] = []) => !value || list.includes(value)
+  const pencils: Pencil[] = options.applePencilOptions ?? []
+  const bandOptions: AppleWatchSpecificationOption['bandOptions'] = options.bandOptions
+  const bandStyle = bandOptions?.find(b => b.material === item.band?.material)?.style.find(s => s.styleName === item.band?.style)
+  return offered(item.color, options.colors) &&
+    offered(item.storage, options.storageOptions) &&
+    offered(item.memory, options.memoryOptions) &&
+    offered(item.charger, options.chargerOptions) &&
+    offered(item.connectivity, options.connectivityOptions) &&
+    offered(item.size, options.sizeOptions) &&
+    offered(item.applePencil, pencils.map(p => p.pencilType)) &&
+    (!item.magicKeyboard || options.magicKeyboardPrice !== undefined) &&
+    (!item.nanoTexture || !!options.nanoTextureAvailable) &&
+    (!item.appleCare || options.appleCarePrice !== undefined) &&
+    (!item.band || (!!bandStyle && bandStyle.bandColor.includes(item.band.color) && offered(item.band.size, bandStyle.bandSizeOptions)))
+}
+
 export function priceBasketItem(item: BasketItemFormData): { estimatedPrice: number; discountValue: number } {
   const category = item.category as ProductCategoryKey
   const estimatedPrice = calculatePrice(category, item.model, item.specs ?? '', {

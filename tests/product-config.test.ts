@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { calculatePrice, getAvailableOptions, priceBasketItem } from '@/lib/product-config'
+import { calculatePrice, getAvailableOptions, isOffered, priceBasketItem } from '@/lib/product-config'
 import { macbookItem, validItem, watchItem } from './fixtures/order'
 
 test('iPad Pro nano-texture requires 1TB storage', () => {
@@ -16,4 +16,9 @@ test.each([
   ['unknown model', validItem({ model: 'iPhone 99' }), 0, 0],
 ])('priceBasketItem: %s', (_, item, estimatedPrice, discountValue) => {
   expect(priceBasketItem(item)).toEqual({ estimatedPrice, discountValue })
+})
+test('isOffered accepts every valid catalog item', () => {
+  const ipad = validItem({ category: 'iPad', model: 'iPad Pro', specs: '11-inch iPad Pro', color: 'Silver', storage: '1TB', connectivity: 'Wi-Fi', nanoTexture: true, appleCare: true })
+  expect([validItem(), macbookItem, ipad, watchItem].map(isOffered)).toEqual([true, true, true, true])
+  expect(isOffered({ ...ipad, storage: '256GB' })).toBe(false)
 })

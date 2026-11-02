@@ -4,7 +4,7 @@ import { Resend } from 'resend'
 import { z } from 'zod'
 import { isAuthenticated } from '@/lib/auth'
 import { escapeStrings } from '@/lib/escape-html'
-import { priceBasketItem } from '@/lib/product-config'
+import { isOffered, priceBasketItem } from '@/lib/product-config'
 import { OrderFormData, orderSchema } from '@/lib/validation-schema'
 
 // Generate order ID
@@ -328,10 +328,10 @@ export async function POST(request: NextRequest) {
     }
     const parsed = orderSchema.parse(body)
     const basket = parsed.basket.map(item => ({ ...item, ...priceBasketItem(item) }))
-    const unpriced = basket.findIndex(item => item.estimatedPrice === 0)
+    const unpriced = basket.findIndex(item => item.estimatedPrice === 0 || !isOffered(item))
     if (unpriced !== -1) {
       return NextResponse.json(
-        { error: 'Invalid order data', details: [{ field: `basket.${unpriced}`, message: 'Unknown product' }] },
+        { error: 'Invalid order data', details: [{ field: `basket.${unpriced}`, message: 'Unknown product or option' }] },
         { status: 400 }
       )
     }

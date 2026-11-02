@@ -244,9 +244,15 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                             render={({ field }) => (
                               <Select onValueChange={(value) => {
                                 field.onChange(value)
+                                setValue('color', '')
                                 setValue('storage', '')
                                 setValue('memory', '')
                                 setValue('charger', undefined)
+                                setValue('connectivity', '')
+                                setValue('size', '')
+                                setValue('band', undefined)
+                                setValue('applePencil', '')
+                                setValue('magicKeyboard', false)
                                 setValue('nanoTexture', false)
                               }} value={field.value}>
                                 <SelectTrigger>
