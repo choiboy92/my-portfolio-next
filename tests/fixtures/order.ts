@@ -1,12 +1,12 @@
-import { PRODUCT_CONFIGURATIONS } from '@/lib/product-config'
-import type { CategoryKey, PriceMap, Spec } from '@/lib/catalogue/schema'
+import { PRODUCT_CONFIGURATIONS, getAvailableOptions } from '@/lib/product-config'
+import type { CategoryKey, Spec } from '@/lib/catalogue/schema'
 import type { BasketItemFormData, OrderFormData } from '@/lib/validation-schema'
 
 export function cheapestItem(category: CategoryKey, pick: (model: string, spec: Spec) => boolean = () => true): BasketItemFormData {
   for (const [model, config] of Object.entries(PRODUCT_CONFIGURATIONS[category].models)) {
     const spec = config.specs.find(s => pick(model, s))
     if (!spec) continue
-    const first = (map: PriceMap | undefined) => (map ? Object.keys(map)[0] : undefined)
+    const offered = getAvailableOptions(category, model, spec.name)
     const group = spec.bandOptions?.[0]
     const style = group?.style[0]
     return {
@@ -14,13 +14,13 @@ export function cheapestItem(category: CategoryKey, pick: (model: string, spec: 
       model,
       specs: spec.name,
       color: (spec.colors ?? config.colors)[0],
-      storage: first(spec.storageOptions),
-      memory: first(spec.memoryOptions),
-      charger: first(spec.chargerOptions),
-      connectivity: first(spec.connectivityOptions),
-      size: first(spec.sizeOptions),
+      storage: offered?.storageOptions?.[0],
+      memory: offered?.memoryOptions?.[0],
+      charger: offered?.chargerOptions?.[0],
+      connectivity: offered?.connectivityOptions?.[0],
+      size: offered?.sizeOptions?.[0],
       band: group && style ? { material: group.material, style: style.styleName, color: style.bandColor[0], size: style.bandSizeOptions?.[0] } : undefined,
-      appleCare: false,
+      appleCare: undefined,
     }
   }
   throw new Error(`No ${category} model matches`)

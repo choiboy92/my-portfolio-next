@@ -5,8 +5,8 @@ import { POST } from '@/app/api/epp/order/route'
 import { escapeStrings } from '@/lib/escape-html'
 import { orderSchema } from '@/lib/validation-schema'
 import { AUTH_COOKIE } from '@/lib/auth'
-import { priceBasketItem } from '@/lib/product-config'
-import { macbookItem as macbook, validItem, validOrder, watchItem as watch } from './fixtures/order'
+import { PRODUCT_CONFIGURATIONS, priceBasketItem } from '@/lib/product-config'
+import { cheapestItem, macbookItem as macbook, validItem, validOrder, watchItem as watch } from './fixtures/order'
 
 const send = vi.hoisted(() => vi.fn())
 vi.mock('resend', () => ({ Resend: vi.fn(() => ({ emails: { send } })) }))
@@ -42,6 +42,20 @@ test('schema rejects orderComments and enforces limits', () => {
   expect(orderSchema.safeParse(validOrder({ basket: Array.from({ length: 21 }, () => validItem()) })).success).toBe(false)
   expect(orderSchema.safeParse(validOrder({ additionalComments: 'x'.repeat(1001) })).success).toBe(false)
   expect(orderSchema.safeParse(validOrder({ basket: [validItem({ estimatedPrice: -1 })] })).success).toBe(false)
+})
+test('schema rejects a boolean appleCare', () => {
+  expect(orderSchema.safeParse(validOrder({ basket: [{ ...validItem(), appleCare: true as unknown as string }] })).success).toBe(false)
+})
+test('emails the chosen AppleCare+ tier', async () => {
+  muteConsole()
+  const item = cheapestItem('iPhone', (_, spec) => spec.appleCare.length > 0)
+  const model = PRODUCT_CONFIGURATIONS.iPhone.models[item.model]
+  const tier = model.specs.find(s => s.name === item.specs)!.appleCare[0]
+  const price = Number.isInteger(tier.price) ? `${tier.price}` : tier.price.toFixed(2)
+  const res = await submit(validOrder({ basket: [{ ...item, appleCare: tier.name }] }))
+  expect(res.status).toBe(200)
+  expect(sent().text).toContain(`AppleCare+: ${tier.name} (£${price}/${tier.billing === 'monthly' ? 'month' : 'year'}, not discounted`)
+  expect(sent().html).toContain(tier.name)
 })
 test('schema requires confirmation', () => {
   expect(orderSchema.safeParse(validOrder({ checkCompleted: false })).success).toBe(false)
@@ -90,7 +104,7 @@ test('rejects unknown products', async () => {
   expect(send).not.toHaveBeenCalled()
 })
 test('rejects prototype-key category and model as unknown products', async () => {
-  for (const item of [validItem({ model: 'constructor' }), validItem({ category: 'constructor' }), validItem({ category: 'toString', appleCare: true })]) {
+  for (const item of [validItem({ model: 'constructor' }), validItem({ category: 'constructor' }), validItem({ category: 'toString', appleCare: 'AppleCare+' })]) {
     const res = await submit(validOrder({ basket: [item] }))
     expect(res.status).toBe(400)
   }

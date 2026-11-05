@@ -4,7 +4,8 @@ import { Resend } from 'resend'
 import { z } from 'zod'
 import { isAuthenticated } from '@/lib/auth'
 import { escapeStrings } from '@/lib/escape-html'
-import { isOffered, priceBasketItem } from '@/lib/product-config'
+import { formatAppleCarePrice } from '@/lib/catalogue/format'
+import { getAppleCareTiers, isOffered, priceBasketItem } from '@/lib/product-config'
 import { OrderFormData, orderSchema } from '@/lib/validation-schema'
 
 // Generate order ID
@@ -53,7 +54,11 @@ function formatOrderEmail(orderData: OrderFormData, orderId: string): { text: st
     if (item.magicKeyboard) itemLine += `\n   • Magic Keyboard: Yes`
     if (item.nanoTexture) itemLine += `\n   • Nano-texture Glass: Yes`
     
-    if (item.appleCare) itemLine += `\n   • AppleCare+: Yes`
+    if (item.appleCare) {
+      const tier = getAppleCareTiers(item.category, item.model, item.specs).find(t => t.name === item.appleCare)
+      const detail = tier ? ` (${formatAppleCarePrice(tier)}, not discounted${tier.partNumber ? `, Apple part ${tier.partNumber}` : ''})` : ''
+      itemLine += `\n   • AppleCare+: ${item.appleCare}${detail}`
+    }
     if (item.tradeIn?.hasTradeIn) {
       itemLine += `\n   • Trade-in: ${item.tradeIn.model || 'Device'}`
       if (item.tradeIn.serialNumber) {
@@ -181,7 +186,7 @@ function formatOrderEmail(orderData: OrderFormData, orderId: string): { text: st
 
               <!-- Additional Services -->
               <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
-                ${item.appleCare ? `<span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">🛡️ AppleCare+</span>` : ''}
+                ${item.appleCare ? `<span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">🛡️ ${item.appleCare}</span>` : ''}
                 ${item.tradeIn?.hasTradeIn ? `<span style="background: #17a2b8; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">🔄 Trade-in</span>` : ''}
               </div>
 

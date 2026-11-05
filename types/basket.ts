@@ -8,7 +8,7 @@ export interface BasketItem {
   specs?: string
   size?: string
   connectivity?: string
-  appleCare: boolean
+  appleCare?: string
   memory?: string
   charger?: string
   applePencil?: string

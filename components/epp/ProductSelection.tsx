@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { formatAppleCarePrice } from '@/lib/catalogue/format'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { X, Smartphone, Laptop, Tablet, Watch } from 'lucide-react'
@@ -63,7 +65,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     magicKeyboard: false,
     nanoTexture: false,
     band: undefined,
-    appleCare: false,
+    appleCare: undefined,
     tradeIn: {
       hasTradeIn: false,
       serialNumber: '',
@@ -87,6 +89,9 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
   const availableOptions = selectedModel 
     ? getAvailableOptions(selectedCategory as ProductCategoryKey, selectedModel, selectedSpecs, selectedStorage)
     : null
+
+  const appleCareTiers = availableOptions?.appleCareTiers ?? []
+  const selectedAppleCareTier = appleCareTiers.find(t => t.name === selectedAppleCare)
 
   const { estimatedPrice, discountValue } = selectedSpecs
     ? priceBasketItem(watch())
@@ -128,7 +133,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     setValue('magicKeyboard', false)
     setValue('nanoTexture', false)
     setValue('band', undefined)
-    setValue('appleCare', false)
+    setValue('appleCare', undefined)
     setValue('tradeIn', {
       hasTradeIn: false,
       serialNumber: '',
@@ -207,7 +212,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                               setValue('applePencil', '')
                               setValue('magicKeyboard', false)
                               setValue('nanoTexture', false)
-                              setValue('appleCare', false)
+                              setValue('appleCare', undefined)
                             }} value={field.value}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select model" />
@@ -249,6 +254,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                 setValue('applePencil', '')
                                 setValue('magicKeyboard', false)
                                 setValue('nanoTexture', false)
+                                setValue('appleCare', undefined)
                               }} value={field.value}>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select configuration" />
@@ -714,7 +720,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                       )}
 
                       {/* AppleCare */}
-                      {selectedModel && availableOptions?.appleCarePrice && (
+                      {selectedModel && appleCareTiers.length === 1 && (
                         <div className="flex items-center space-x-2">
                           <Controller
                             name="appleCare"
@@ -722,18 +728,50 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                             render={({ field }) => (
                               <Checkbox
                                 id="applecare"
-                                checked={field.value}
-                                onCheckedChange={(checked) => field.onChange(checked === true)}
+                                checked={!!field.value}
+                                onCheckedChange={(checked) => field.onChange(checked === true ? appleCareTiers[0].name : undefined)}
                               />
                             )}
                           />
                           <Label htmlFor="applecare" className="text-portfolio-text">
                             Add AppleCare+ Protection
                             <span className="text-portfolio-muted ml-2">
-                              (+{'\u00A3'}{availableOptions.appleCarePrice})
+                              (+{formatAppleCarePrice(appleCareTiers[0])})
                             </span>
                           </Label>
                         </div>
+                      )}
+                      {selectedModel && appleCareTiers.length > 1 && (
+                        <Controller
+                          name="appleCare"
+                          control={control}
+                          render={({ field }) => (
+                            <RadioGroup
+                              value={field.value ?? 'none'}
+                              onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
+                              aria-label="AppleCare+"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="none" id="applecare-none" />
+                                <Label htmlFor="applecare-none" className="text-portfolio-text">No AppleCare+</Label>
+                              </div>
+                              {appleCareTiers.map((tier, index) => (
+                                <div key={tier.name} className="flex items-center space-x-2">
+                                  <RadioGroupItem value={tier.name} id={`applecare-${index}`} />
+                                  <Label htmlFor={`applecare-${index}`} className="text-portfolio-text">
+                                    {tier.name}
+                                    <span className="text-portfolio-muted ml-2">
+                                      (+{formatAppleCarePrice(tier)})
+                                    </span>
+                                  </Label>
+                                </div>
+                              ))}
+                              <p className="text-xs text-portfolio-muted">
+                                Apple bills AppleCare+ monthly or annually until cancelled. The price added is the first payment.
+                              </p>
+                            </RadioGroup>
+                          )}
+                        />
                       )}
 
                       {/* Trade-in */}
@@ -820,11 +858,11 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                 </div>
                               </div>
                               <div className="space-y-2 text-sm">
-                                {selectedAppleCare && (
+                                {selectedAppleCareTier && (
                                   <div className="flex justify-between">
-                                    <span className="text-portfolio-muted">AppleCare+</span>
+                                    <span className="text-portfolio-muted">{selectedAppleCareTier.name}</span>
                                     <span className="text-portfolio-text">
-                                      +{'\u00A3'}{availableOptions?.appleCarePrice}
+                                      +{formatAppleCarePrice(selectedAppleCareTier)}
                                     </span>
                                   </div>
                                 )}

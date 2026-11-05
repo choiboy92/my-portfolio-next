@@ -3,11 +3,11 @@ import { makeCatalogueHelpers } from '@/lib/catalogue/helpers'
 import type { BasketItemFormData } from '@/lib/validation-schema'
 import { testCatalogue } from './fixtures/test-catalogue'
 
-const { calculatePrice, getAvailableOptions, isOffered, priceBasketItem } = makeCatalogueHelpers(testCatalogue)
+const { calculatePrice, getAppleCareTiers, getAvailableOptions, isOffered, priceBasketItem } = makeCatalogueHelpers(testCatalogue)
 
-const phone: BasketItemFormData = { category: 'iPhone', model: 'Phone X', specs: 'Phone X', color: 'Silver', storage: '512GB', appleCare: false }
-const mac: BasketItemFormData = { category: 'MacBook', model: 'Book 16"', specs: 'Chip A', color: 'Space Black', memory: '36GB', storage: '1TB', charger: '96W', appleCare: false }
-const pad: BasketItemFormData = { category: 'iPad', model: 'Pad Pro', specs: '11-inch Pad Pro', color: 'Silver', storage: '1TB', connectivity: 'Wi-Fi', nanoTexture: true, appleCare: true }
+const phone: BasketItemFormData = { category: 'iPhone', model: 'Phone X', specs: 'Phone X', color: 'Silver', storage: '512GB', appleCare: undefined }
+const mac: BasketItemFormData = { category: 'MacBook', model: 'Book 16"', specs: 'Chip A', color: 'Space Black', memory: '36GB', storage: '1TB', charger: '96W', appleCare: undefined }
+const pad: BasketItemFormData = { category: 'iPad', model: 'Pad Pro', specs: '11-inch Pad Pro', color: 'Silver', storage: '1TB', connectivity: 'Wi-Fi', nanoTexture: true, appleCare: 'AppleCare+' }
 const watch: BasketItemFormData = {
   category: 'Apple Watch',
   model: 'Watch 11',
@@ -16,7 +16,7 @@ const watch: BasketItemFormData = {
   size: '46mm',
   connectivity: 'GPS + Cellular',
   band: { material: 'Textile', style: 'Magnetic Link', color: 'Navy', size: 'S/M' },
-  appleCare: false,
+  appleCare: undefined,
 }
 
 test('iPad nano-texture requires the minimum storage', () => {
@@ -40,4 +40,22 @@ test('isOffered accepts valid items and rejects unsupported ones', () => {
   expect(isOffered({ ...phone, model: 'constructor' })).toBe(false)
   expect(isOffered({ ...phone, category: 'toString' })).toBe(false)
   expect(isOffered({ ...watch, size: '42mm' })).toBe(false)
+})
+test.each([
+  ['Annual', 'AppleCare+ with Theft and Loss (Annual)', 1128.99],
+  ['Monthly', 'AppleCare+ with Theft and Loss (Monthly)', 1011.99],
+])('phone with %s tier is never discounted', (_, appleCare, estimatedPrice) => {
+  expect(priceBasketItem({ ...phone, storage: '256GB', appleCare })).toEqual({ estimatedPrice, discountValue: 169.83 })
+})
+test('getAppleCareTiers returns the tiers in order', () => {
+  expect(getAppleCareTiers('iPhone', 'Phone X', 'Phone X').map(t => t.name)).toEqual([
+    'AppleCare+ with Theft and Loss (Monthly)',
+    'AppleCare+ with Theft and Loss (Annual)',
+  ])
+  expect(getAppleCareTiers('iPhone', 'Phone X')).toEqual([])
+})
+test('isOffered rejects unknown or unavailable AppleCare tiers', () => {
+  expect(isOffered({ ...phone, appleCare: 'Gold Plan' })).toBe(false)
+  expect(isOffered({ ...phone, appleCare: 'AppleCare+ with Theft and Loss (Annual)' })).toBe(true)
+  expect(isOffered({ ...mac, appleCare: 'AppleCare+' })).toBe(false)
 })

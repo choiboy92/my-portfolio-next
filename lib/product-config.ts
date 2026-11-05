@@ -17,7 +17,7 @@ export const {
   getSpecConfiguration,
   getAvailableOptions,
   calculatePrice,
-  getAppleCarePrice,
+  getAppleCareTiers,
   isOffered,
   priceBasketItem,
 } = makeCatalogueHelpers(catalogue)

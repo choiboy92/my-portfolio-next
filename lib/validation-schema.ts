@@ -21,7 +21,7 @@ export const basketItemSchema = z.object({
     color: z.string(),
     size: z.string().optional()
   }).optional(),
-  appleCare: z.boolean(),
+  appleCare: z.string().min(1).max(100).optional(),
   tradeIn: z.object({
     hasTradeIn: z.boolean(),
     serialNumber: z.string().max(50).optional(),

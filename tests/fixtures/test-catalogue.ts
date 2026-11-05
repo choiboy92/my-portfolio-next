@@ -12,7 +12,17 @@ export const testCatalogue: Catalogue = {
         'Phone X': {
           displayName: 'Phone X',
           colors: ['Silver'],
-          specs: [{ name: 'Phone X', price: 999, storageOptions: { '256GB': 0, '512GB': 300 }, appleCare }],
+          specs: [
+            {
+              name: 'Phone X',
+              price: 999,
+              storageOptions: { '256GB': 0, '512GB': 300 },
+              appleCare: [
+                { name: 'AppleCare+ with Theft and Loss (Monthly)', price: 12.99, billing: 'monthly' as const, partNumber: 'SHNP3ZM/A' },
+                { name: 'AppleCare+ with Theft and Loss (Annual)', price: 129.99, billing: 'annual' as const, partNumber: 'SHNQ3ZM/A' },
+              ],
+            },
+          ],
         },
       },
     },

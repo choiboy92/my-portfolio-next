@@ -1,5 +1,5 @@
 import type { BasketItemFormData } from '../validation-schema'
-import type { BandGroup, Catalogue, CategoryKey, Model, Pencil, PriceMap, Spec } from './schema'
+import type { AppleCareTier, BandGroup, Catalogue, CategoryKey, Model, Pencil, PriceMap, Spec } from './schema'
 
 export interface SelectedOptions {
   memory?: string
@@ -10,14 +10,14 @@ export interface SelectedOptions {
   applePencil?: string
   magicKeyboard?: boolean
   nanoTexture?: boolean
-  appleCare?: boolean
+  appleCare?: string
   band?: { material: string; style: string; color: string }
 }
 
 export interface AvailableOptions {
   colors: string[]
   specs: Spec[]
-  appleCarePrice: number | undefined
+  appleCareTiers: AppleCareTier[]
   memoryOptions?: string[]
   storageOptions?: string[]
   chargerOptions?: string[]
@@ -66,9 +66,14 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
     return getModelConfiguration(category, modelName)?.specs.find(spec => spec.name === specName)
   }
 
-  function getAppleCarePrice(category: string, modelName: string, specName?: string): number | undefined {
-    if (!specName) return undefined
-    return getSpecConfiguration(category, modelName, specName)?.appleCare[0]?.price
+  function getAppleCareTiers(category: string, modelName: string, specName?: string): AppleCareTier[] {
+    if (!specName) return []
+    return getSpecConfiguration(category, modelName, specName)?.appleCare ?? []
+  }
+
+  function appleCareTierPrice(category: string, modelName: string, specName: string | undefined, tierName: string | undefined): number {
+    if (!tierName) return 0
+    return getAppleCareTiers(category, modelName, specName).find(t => t.name === tierName)?.price ?? 0
   }
 
   function getAvailableOptions(category: string, modelName: string, specName?: string, selectedStorage?: string): AvailableOptions | null {
@@ -79,7 +84,7 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
     const result: AvailableOptions = {
       colors: spec?.colors ?? model.colors,
       specs: model.specs,
-      appleCarePrice: getAppleCarePrice(category, modelName, specName),
+      appleCareTiers: getAppleCareTiers(category, modelName, specName),
     }
     if (!spec) return result
 
@@ -155,7 +160,7 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
       }
     }
 
-    if (selected.appleCare) total += spec.appleCare[0]?.price ?? 0
+    total += appleCareTierPrice(category, modelName, specName, selected.appleCare)
 
     return total
   }
@@ -175,7 +180,7 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
       offered(item.applePencil, options.applePencilOptions?.map(p => p.pencilType)) &&
       (!item.magicKeyboard || options.magicKeyboardPrice !== undefined) &&
       (!item.nanoTexture || !!options.nanoTextureAvailable) &&
-      (!item.appleCare || options.appleCarePrice !== undefined) &&
+      (!item.appleCare || options.appleCareTiers.some(t => t.name === item.appleCare)) &&
       (!item.band ||
         (!!bandStyle &&
           bandStyle.bandColor.includes(item.band.color) &&
@@ -197,7 +202,7 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
       appleCare: item.appleCare,
       band: item.band,
     })
-    const appleCare = item.appleCare ? (getAppleCarePrice(item.category, item.model, item.specs) ?? 0) : 0
+    const appleCare = appleCareTierPrice(item.category, item.model, item.specs, item.appleCare)
     const discountValue = Math.round((estimatedPrice - appleCare) * 0.17 * 100) / 100
     return { estimatedPrice, discountValue }
   }
@@ -208,7 +213,7 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
     getSpecConfiguration,
     getAvailableOptions,
     calculatePrice,
-    getAppleCarePrice,
+    getAppleCareTiers,
     isOffered,
     priceBasketItem,
   }
