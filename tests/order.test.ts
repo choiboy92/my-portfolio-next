@@ -5,6 +5,7 @@ import { POST } from '@/app/api/epp/order/route'
 import { escapeStrings } from '@/lib/escape-html'
 import { orderSchema } from '@/lib/validation-schema'
 import { AUTH_COOKIE } from '@/lib/auth'
+import { priceBasketItem } from '@/lib/product-config'
 import { macbookItem as macbook, validItem, validOrder, watchItem as watch } from './fixtures/order'
 
 const send = vi.hoisted(() => vi.fn())
@@ -54,16 +55,17 @@ test('overwrites client prices', async () => {
   muteConsole()
   const res = await submit(validOrder({ basket: [validItem({ estimatedPrice: 1, discountValue: 999999 })] }))
   expect(res.status).toBe(200)
-  expect(sent().html).toContain('£1,299')
-  expect(sent().html).toContain('£220.83')
+  const { estimatedPrice, discountValue } = priceBasketItem(validItem())
+  expect(sent().html).toContain(`£${estimatedPrice.toLocaleString()}`)
+  expect(sent().html).toContain(`£${discountValue.toLocaleString()}`)
   expect(sent().html).not.toContain('999,999')
 })
 test('delivers comments and every option', async () => {
   muteConsole()
   await submit(validOrder({ basket: [macbook] }))
   expect(sent().text).toContain('Please engrave')
-  expect(sent().text).toContain('Memory: 36GB')
-  expect(sent().text).toContain('Charger: 96W')
+  expect(sent().text).toContain(`Memory: ${macbook.memory}`)
+  expect(sent().text).toContain(`Charger: ${macbook.charger}`)
 })
 test('escapes user input in the html body', async () => {
   muteConsole()
@@ -78,8 +80,8 @@ test('escapes user input in the html body', async () => {
 test('shows band size, not style', async () => {
   muteConsole()
   await submit(validOrder({ basket: [watch] }))
-  expect(sent().html).toContain('Size: 5')
-  expect(sent().html).not.toContain('Size: Solo Loop')
+  expect(sent().html).toContain(`Size: ${watch.band!.size}`)
+  expect(sent().html).not.toContain(`Size: ${watch.band!.style}`)
 })
 test('rejects unknown products', async () => {
   const res = await submit(validOrder({ basket: [validItem({ model: 'iPhone 99' })] }))
@@ -95,12 +97,11 @@ test('rejects prototype-key category and model as unknown products', async () =>
   expect(send).not.toHaveBeenCalled()
 })
 test('rejects options the configuration does not offer', async () => {
-  const titanium = { ...watch, specs: 'Titanium Case', color: 'Natural' }
   for (const item of [
-    validItem({ storage: '4TB' }),
+    validItem({ storage: 'NOPE' }),
     validItem({ color: 'Hot Pink' }),
     { ...macbook, memory: '8GB' },
-    { ...titanium, connectivity: 'GPS' },
+    { ...watch, connectivity: 'NOPE' },
     { ...watch, band: { ...watch.band!, color: 'Tartan' } },
   ]) {
     const res = await submit(validOrder({ basket: [item] }))

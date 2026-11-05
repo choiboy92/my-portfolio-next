@@ -217,11 +217,6 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                   <SelectItem key={model.key} value={model.key}>
                                     <div className="flex flex-col">
                                       <span>{model.config.displayName}</span>
-                                      {model.config.category && (
-                                        <span className="text-xs text-muted-foreground">
-                                          {model.config.category}
-                                        </span>
-                                      )}
                                     </div>
                                   </SelectItem>
                                 ))}
@@ -322,7 +317,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select memory" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.memoryOptions.map((memory: string) => (
+                                      {availableOptions.memoryOptions!.map((memory: string) => (
                                         <SelectItem key={memory} value={memory}>
                                           {memory}
                                         </SelectItem>
@@ -349,7 +344,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select storage" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.storageOptions.map((storage: string) => (
+                                      {availableOptions.storageOptions!.map((storage: string) => (
                                         <SelectItem key={storage} value={storage}>
                                           {storage}
                                         </SelectItem>
@@ -374,7 +369,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select charger" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.chargerOptions.map((charger: string) => (
+                                      {availableOptions.chargerOptions!.map((charger: string) => (
                                         <SelectItem key={charger} value={charger}>
                                           {charger}
                                         </SelectItem>
@@ -399,7 +394,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select connectivity" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.connectivityOptions.map((conn: string) => (
+                                      {availableOptions.connectivityOptions!.map((conn: string) => (
                                         <SelectItem key={conn} value={conn}>
                                           {conn}
                                         </SelectItem>
@@ -424,7 +419,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select size" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.sizeOptions.map((size: string) => (
+                                      {availableOptions.sizeOptions!.map((size: string) => (
                                         <SelectItem key={size} value={size}>
                                           {size}
                                         </SelectItem>
@@ -449,7 +444,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select Apple Pencil" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.applePencilOptions.map((pencil: Pencil) => (
+                                      {availableOptions.applePencilOptions!.map((pencil: Pencil) => (
                                         <SelectItem key={pencil.pencilType} value={pencil.pencilType}>
                                           {pencil.pencilType} (+{'\u00A3'}{pencil.price})
                                         </SelectItem>
@@ -488,7 +483,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                         <SelectValue placeholder="Select band material" />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        {availableOptions.bandOptions.map((bandGroup: any, groupIndex: number) => (
+                                        {availableOptions.bandOptions!.map((bandGroup: any, groupIndex: number) => (
                                           <SelectItem 
                                             key={bandGroup.material || `material-${groupIndex}`} 
                                             value={bandGroup.material || `material-${groupIndex}`}
@@ -511,7 +506,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                     name="band.style"
                                     control={control}
                                     render={({ field }) => {
-                                      const selectedMaterialGroup = availableOptions.bandOptions.find(
+                                      const selectedMaterialGroup = availableOptions.bandOptions!.find(
                                         (group: any) => group.material === watch('band.material')
                                       )
                                       
@@ -557,7 +552,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                     name="band.color"
                                     control={control}
                                     render={({ field }) => {
-                                      const selectedMaterialGroup = availableOptions.bandOptions.find(
+                                      const selectedMaterialGroup = availableOptions.bandOptions!.find(
                                         (group: any) => group.material === watch('band.material')
                                       )
                                       const selectedStyleObj = selectedMaterialGroup?.style.find(
@@ -606,7 +601,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                     name="band.size"
                                     control={control}
                                     render={({ field }) => {
-                                      const selectedMaterialGroup = availableOptions.bandOptions.find(
+                                      const selectedMaterialGroup = availableOptions.bandOptions!.find(
                                         (group: any) => group.material === watch('band.material')
                                       )
                                       const selectedStyleObj = selectedMaterialGroup?.style.find(
@@ -829,7 +824,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                   <div className="flex justify-between">
                                     <span className="text-portfolio-muted">AppleCare+</span>
                                     <span className="text-portfolio-text">
-                                      +{'\u00A3'}{availableOptions.appleCarePrice}
+                                      +{'\u00A3'}{availableOptions?.appleCarePrice}
                                     </span>
                                   </div>
                                 )}
