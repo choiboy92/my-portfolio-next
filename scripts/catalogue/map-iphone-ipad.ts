@@ -6,6 +6,7 @@ import type { MappedModel, MapResult, Page, PublishedPrice } from './types'
 export type IPadAccessories = {
   pencils: Record<string, Pencil[]>
   magicKeyboard: Record<string, number>
+  warnings: string[]
 }
 
 type Sku = {
@@ -195,13 +196,16 @@ function pageSlug(page: Page): string | undefined {
 
 type AccessoryItem = { name: string; price: number; language?: string }
 
-function accessoryItems(block: string): AccessoryItem[] {
+function accessoryItems(block: string, label: string, warnings: string[]): AccessoryItem[] {
   const out: AccessoryItem[] = []
   const starts = [...block.matchAll(/"value":\{"name":"([^"]*)"/g)]
   starts.forEach((m, i) => {
     const chunk = block.slice(m.index, starts[i + 1]?.index ?? block.length)
     const amount = chunk.match(/"raw_amount":"([\d.]+)"/)?.[1]
-    if (amount === undefined) return
+    if (amount === undefined) {
+      warnings.push(`${label}: accessory "${normaliseLabel(m[1].replace(/&nbsp;/g, ' '))}" has no price and was skipped`)
+      return
+    }
     out.push({
       name: normaliseLabel(m[1].replace(/&nbsp;/g, ' ')),
       price: Number(amount),
@@ -224,12 +228,13 @@ function accessoryBlocks(html: string): { key: string; block: string }[] {
 export function parseIPadAccessories(pages: Page[]): IPadAccessories {
   const pencils: Record<string, Pencil[]> = {}
   const magicKeyboard: Record<string, number> = {}
+  const warnings: string[] = []
   for (const page of pages) {
     const slug = pageSlug(page)
     if (!slug) continue
     const modelKey = slugToModelKey(slug)
     for (const { key, block } of accessoryBlocks(page.html)) {
-      const items = accessoryItems(block)
+      const items = accessoryItems(block, `${modelKey} ${key}`, warnings)
       if (/pencil/i.test(key)) {
         for (const item of items) {
           const list = (pencils[modelKey] ??= [])
@@ -237,13 +242,16 @@ export function parseIPadAccessories(pages: Page[]): IPadAccessories {
         }
       } else if (/keyboard/i.test(key)) {
         const uk = items.filter(i => i.language === 'enuk')
-        if (uk.length === 0) continue
+        if (uk.length === 0) {
+          warnings.push(`${modelKey} ${key}: no British English (enuk) keyboard entry`)
+          continue
+        }
         const size = key.match(/_(\d+)inch$/)?.[1]
         magicKeyboard[size ? `${modelKey}:${size}inch` : modelKey] = Math.min(...uk.map(i => i.price))
       }
     }
   }
-  return { pencils, magicKeyboard }
+  return { pencils, magicKeyboard, warnings }
 }
 
 const NO_PENCIL: Pencil = { pencilType: 'None', price: 0 }
@@ -251,7 +259,7 @@ const NO_PENCIL: Pencil = { pencilType: 'None', price: 0 }
 export function mapIPad(pages: Page[], accessories: IPadAccessories, previous: Category): MapResult {
   const models: MappedModel[] = []
   const unmapped: string[] = []
-  const warnings: string[] = []
+  const warnings: string[] = [...accessories.warnings]
   const knownPencilPrices = new Map<string, number>()
   for (const list of Object.values(accessories.pencils)) for (const p of list) knownPencilPrices.set(p.pencilType, p.price)
 
@@ -282,6 +290,7 @@ export function mapIPad(pages: Page[], accessories: IPadAccessories, previous: C
         if (pencilList.length > 0) spec.applePencil = [NO_PENCIL, ...pencilList]
         const keyboard = accessories.magicKeyboard[size ? `${family}:${size}inch` : family] ?? (fresh ? undefined : previousSpec?.magicKeyboard)
         if (keyboard !== undefined) spec.magicKeyboard = keyboard
+        else if (fresh && size) warnings.push(`No Magic Keyboard found for ${spec.name}`)
         return spec
       })
       .sort((a, b) => a.price - b.price)

@@ -196,6 +196,32 @@ describe('parseIPadAccessories', () => {
     ])
   })
 
+  it('warns when a keyboard slot has no British English entry', () => {
+    const html = ipadProPage.html.replaceAll('"key":"enuk"', '"key":"xx"')
+    const odd = parseIPadAccessories([{ ...ipadProPage, html }])
+    expect(odd.magicKeyboard).toEqual({})
+    expect(odd.warnings.join()).toContain('acc_magickeyboard_11inch: no British English (enuk)')
+    expect(odd.warnings.join()).toContain('acc_magickeyboard_13inch: no British English (enuk)')
+    const mapped = mapIPad([ipadProPage], odd, emptyPrevious)
+    expect(mapped.warnings.join()).toContain('No Magic Keyboard found for 11-inch iPad Pro')
+    expect(mapped.warnings.join()).toContain('acc_magickeyboard_11inch: no British English (enuk)')
+  })
+
+  it('warns when an accessory item has no price', () => {
+    const html = ipadProPage.html.replaceAll('"raw_amount"', '"raw_missing"')
+    const odd = parseIPadAccessories([{ ...ipadProPage, html }])
+    expect(odd.pencils['iPad Pro']).toBeUndefined()
+    expect(odd.warnings.join()).toContain('accessory "Apple Pencil Pro" has no price')
+  })
+
+  it('warns when a sized spec finds no keyboard while pencils exist', () => {
+    const html = ipadProPage.html.replace('window.pageLevelData["acc_magickeyboard_13inch"]', 'window.pageLevelData["gone_magickeyboard_13inch"]')
+    const mapped = mapIPad([ipadProPage], parseIPadAccessories([{ ...ipadProPage, html }]), emptyPrevious)
+    expect(mapped.warnings).toEqual(['No Magic Keyboard found for 13-inch iPad Pro'])
+    expect(mapped.models[0].model.specs[0].magicKeyboard).toBe(299)
+    expect(mapped.models[0].model.specs[1].magicKeyboard).toBeUndefined()
+  })
+
   it('picks the British English keyboard by size slot', () => {
     expect(accessories.magicKeyboard).toEqual({
       'iPad Pro:11inch': 299,
