@@ -49,6 +49,11 @@ function filterAtLeast(options: PriceMap | undefined, minimum: string | undefine
   return Object.keys(options).filter(option => parse(option) >= minValue)
 }
 
+function bandSizeOfferedForCase(byCase: Record<string, string[]>, caseSize: string | undefined, bandSize: string): boolean {
+  if (!caseSize || !Object.hasOwn(byCase, caseSize)) return false
+  return byCase[caseSize].includes(bandSize)
+}
+
 export function makeCatalogueHelpers(catalogue: Catalogue) {
   function getModelConfigurations(category: string): Array<{ key: string; config: Model }> | undefined {
     if (!Object.hasOwn(catalogue.categories, category)) return undefined
@@ -185,6 +190,7 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
         (!!bandStyle &&
           bandStyle.bandColor.includes(item.band.color) &&
           offered(item.band.size, bandStyle.bandSizeOptions) &&
+          (!bandStyle.bandSizesByCase || !item.band.size || bandSizeOfferedForCase(bandStyle.bandSizesByCase, item.size, item.band.size)) &&
           (!bandStyle.caseSizes || (!!item.size && bandStyle.caseSizes.includes(item.size)))))
     )
   }

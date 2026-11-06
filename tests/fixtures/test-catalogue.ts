@@ -85,7 +85,16 @@ export const testCatalogue: Catalogue = {
                 { material: 'Rubber', style: [{ styleName: 'Solo Loop', price: 0, bandColor: ['Black'], bandSizeOptions: ['5'] }] },
                 {
                   material: 'Textile',
-                  style: [{ styleName: 'Magnetic Link', price: 50, bandColor: ['Navy'], bandSizeOptions: ['S/M'], caseSizes: ['46mm'] }],
+                  style: [
+                    { styleName: 'Magnetic Link', price: 50, bandColor: ['Navy'], bandSizeOptions: ['S/M'], caseSizes: ['46mm'] },
+                    {
+                      styleName: 'Braided Solo Loop',
+                      price: 50,
+                      bandColor: ['Navy'],
+                      bandSizeOptions: ['5', '11'],
+                      bandSizesByCase: { '42mm': ['5'], '46mm': ['5', '11'] },
+                    },
+                  ],
                 },
               ],
               appleCare: [],

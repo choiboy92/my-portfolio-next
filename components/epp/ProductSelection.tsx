@@ -527,7 +527,9 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                             <SelectValue placeholder="Select band style" />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            {selectedMaterialGroup?.style.map((style: any, styleIndex: number) => (
+                                            {selectedMaterialGroup?.style
+                                              .filter((style: any) => !style.caseSizes || style.caseSizes.includes(watch('size')))
+                                              .map((style: any, styleIndex: number) => (
                                               <SelectItem 
                                                 key={style.styleName || `style-${styleIndex}`} 
                                                 value={style.styleName || `style-${styleIndex}`}
@@ -614,8 +616,11 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                         (style: any) => style.styleName === watch('band.style')
                                       )
                                       
+                                      const bandSizes: string[] | undefined =
+                                        selectedStyleObj?.bandSizesByCase?.[watch('size') ?? ''] ?? selectedStyleObj?.bandSizeOptions
+
                                       // Some bands don't have size options
-                                      if (!selectedStyleObj?.bandSizeOptions || selectedStyleObj.bandSizeOptions.length === 0) {
+                                      if (!bandSizes || bandSizes.length === 0) {
                                         return (
                                           <div className="text-sm text-portfolio-muted p-3 bg-portfolio-card rounded border border-portfolio-border">
                                             No size selection needed for this band style
@@ -629,7 +634,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                             <SelectValue placeholder="Select band size" />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            {selectedStyleObj.bandSizeOptions.map((size: string, sizeIndex: number) => (
+                                            {bandSizes.map((size: string, sizeIndex: number) => (
                                               <SelectItem key={size || `size-${sizeIndex}`} value={size}>
                                                 <div className="flex items-center justify-between w-full">
                                                   <span>{size}</span>

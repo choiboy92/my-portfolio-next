@@ -21,6 +21,7 @@ const bandStyleSchema = z.object({
   price: z.number(),
   bandColor: z.array(z.string()),
   bandSizeOptions: z.array(z.string()).optional(),
+  bandSizesByCase: z.record(z.string(), z.array(z.string())).optional(),
   caseSizes: z.array(z.string()).optional(),
 })
 

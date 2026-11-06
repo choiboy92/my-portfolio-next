@@ -41,6 +41,16 @@ test('isOffered accepts valid items and rejects unsupported ones', () => {
   expect(isOffered({ ...phone, category: 'toString' })).toBe(false)
   expect(isOffered({ ...watch, size: '42mm' })).toBe(false)
 })
+test('isOffered limits band sizes to those offered for the selected case size', () => {
+  const braided = (size: string, bandSize: string): BasketItemFormData => ({
+    ...watch,
+    size,
+    band: { material: 'Textile', style: 'Braided Solo Loop', color: 'Navy', size: bandSize },
+  })
+  expect(isOffered(braided('46mm', '11'))).toBe(true)
+  expect(isOffered(braided('42mm', '5'))).toBe(true)
+  expect(isOffered(braided('42mm', '11'))).toBe(false)
+})
 test.each([
   ['Annual', 'AppleCare+ with Theft and Loss (Annual)', 1128.99],
   ['Monthly', 'AppleCare+ with Theft and Loss (Monthly)', 1011.99],
