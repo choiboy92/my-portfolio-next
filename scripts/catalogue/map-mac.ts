@@ -1,7 +1,7 @@
 import type { Model, Spec } from '@/lib/catalogue/schema'
 import type { SelectedOptions } from '@/lib/catalogue/helpers'
 import { extractKeyedJson, MissingDataError, normaliseLabel, parsePounds } from './extract'
-import { FetchFailedError, type Fetcher } from './http'
+import type { Fetcher } from './http'
 import type { MappedModel, MapResult, Page, PublishedPrice } from './types'
 
 export type MacDeltas = Record<string, Record<string, Record<string, number>>>
@@ -180,15 +180,31 @@ export function macFollowUpRequest(request: MacDeltaRequest, groups: OptionDelta
   return undefined
 }
 
-function mergeFollowUp(target: OptionDeltas, extra: OptionDeltas, changed: string, label: string, warnings: string[]): void {
+function mergeFollowUp(target: OptionDeltas, extra: OptionDeltas, changed: string): boolean {
+  let additive = true
   for (const [group, values] of Object.entries(extra)) {
     if (group === changed) continue
     const into = (target[group] ??= {})
     for (const [value, delta] of Object.entries(values)) {
       if (!(value in into)) into[value] = delta
-      else if (into[value] !== delta) warnings.push(`${label}: ${group} ${value} is +£${into[value]} before and +£${delta} after leaving the standard configuration`)
+      else if (into[value] !== delta) additive = false
     }
   }
+  return additive
+}
+
+export function readSelected(response: unknown): Record<string, string[]> {
+  const body = isRecord(response) ? response.body : undefined
+  const options = isRecord(body) && isRecord(body.options) ? body.options : {}
+  const out: Record<string, string[]> = {}
+  for (const [group, data] of Object.entries(options)) {
+    const compatible = isRecord(data) && isRecord(data.compatibleOptions) ? data.compatibleOptions : {}
+    const selected = Object.entries(compatible)
+      .filter(([, o]) => isRecord(o) && o.isSelected === true)
+      .map(([v]) => v)
+    if (selected.length > 0) out[group] = selected
+  }
+  return out
 }
 
 export function macOptionLabel(group: string, value: string, raw?: string): string {
@@ -308,7 +324,7 @@ function amountOf(b: Bootstrap, product: Product): number | undefined {
   return typeof amount === 'number' || typeof amount === 'string' ? parsePounds(amount) : undefined
 }
 
-export function buildMacModels(bootstrap: unknown, deltas: MacDeltas, url: string): MapResult {
+export function buildMacModels(bootstrap: unknown, deltas: MacDeltas, url: string, held: Record<string, string> = {}): MapResult {
   const b = readBootstrap(bootstrap, url)
   const chipKey = chipKeyOf(b, url)
   const line = productLine(url)
@@ -316,12 +332,12 @@ export function buildMacModels(bootstrap: unknown, deltas: MacDeltas, url: strin
   const dimensions = new Set(b.products.flatMap(p => Object.keys(p.dimensions)))
   const unmapped: string[] = []
   const warnings: string[] = []
-  const models = new Map<string, { specs: Spec[]; products: Product[]; published: PublishedPrice[] }>()
+  const models = new Map<string, { specs: Spec[]; products: Product[]; published: PublishedPrice[]; priced: Set<string> }>()
 
   for (const cfg of standardConfigs(b, chipKey)) {
     const size = sizeLabel(b, cfg.size)
     const modelKey = size ? `${line} ${size}` : line
-    const entry = models.get(modelKey) ?? { specs: [], products: [], published: [] }
+    const entry = models.get(modelKey) ?? { specs: [], products: [], published: [], priced: new Set<string>() }
     models.set(modelKey, entry)
     entry.products.push(...cfg.products)
 
@@ -380,6 +396,11 @@ export function buildMacModels(bootstrap: unknown, deltas: MacDeltas, url: strin
       warnings.push(`${label}: no upgrade prices for ${name}; spec skipped`)
       continue
     }
+    for (const group of Object.keys(groups)) entry.priced.add(group)
+    if (held[cfg.key]) {
+      warnings.push(`${modelKey} / ${name}: ${held[cfg.key]} — spec held back`)
+      continue
+    }
     if (price === undefined) {
       warnings.push(`${label}: no base price for ${name}; spec skipped`)
       continue
@@ -421,9 +442,17 @@ export function buildMacModels(bootstrap: unknown, deltas: MacDeltas, url: strin
 
   const out: MappedModel[] = []
   for (const [key, entry] of models) {
-    if (entry.specs.length === 0) {
-      warnings.push(`${key}: no spec could be priced; model skipped`)
+    if (entry.specs.length === 0 && entry.published.length === 0) {
+      warnings.push(`${key}: nothing could be read; model skipped`)
       continue
+    }
+    if (entry.specs.length === 0) warnings.push(`${key}: no spec could be priced; published prices kept so the model is held back`)
+    if (entry.priced.size > 0) {
+      for (const [group, display] of Object.entries(b.configDisplayValues)) {
+        if (dimensions.has(group) || entry.priced.has(group)) continue
+        const values = Array.isArray(display?.variantOrder) ? display.variantOrder : []
+        if (values.length > 0) unmapped.push(`${key}: ${group} — ${values.join(', ')} (no price)`)
+      }
     }
     const model: Model = {
       displayName: key,
@@ -448,42 +477,49 @@ function needsFollowUp(b: Bootstrap, key: string, groups: OptionDeltas): boolean
   return Object.entries(groups).some(([g, values]) => !dimensions.has(g) && Object.keys(values).length === 1)
 }
 
-async function fetchDeltas(fetcher: Fetcher, request: MacDeltaRequest): Promise<OptionDeltas> {
-  return readUpdateConfig(await fetcher.json(request.url), request.url)
+async function fetchUpdate(fetcher: Fetcher, request: MacDeltaRequest): Promise<{ deltas: OptionDeltas; selected: Record<string, string[]> }> {
+  const response = await fetcher.json(request.url)
+  return { deltas: readUpdateConfig(response, request.url), selected: readSelected(response) }
 }
+
+function chipMismatch(rep: Product | undefined, chipKey: string, selected: Record<string, string[]>): string | undefined {
+  if (!rep) return undefined
+  for (const group of [chipKey, CHIP]) {
+    const expected = rep.dimensions[group]
+    const got = selected[group]
+    if (expected && got && !got.includes(expected)) return `update-config selected chip ${got.join(', ')} instead of ${expected}`
+  }
+  return undefined
+}
+
+const hasUpgrade = (groups: OptionDeltas, group: string) => Object.values(groups[group] ?? {}).some(d => d > 0)
 
 export async function mapMac(page: Page, fetcher: Fetcher): Promise<MapResult> {
   const bootstrap = extractKeyedJson(page.html, page.url, 'productSelectionData')
   const updateConfigUrl = extractUpdateConfigUrl(page.html, page.url)
   const b = readBootstrap(bootstrap, page.url)
-  const warnings: string[] = []
+  const chipKey = chipKeyOf(b, page.url)
   const deltas: MacDeltas = {}
+  const held: Record<string, string> = {}
 
   for (const request of macDeltaRequests(bootstrap, { updateConfigUrl })) {
-    let groups: OptionDeltas
-    try {
-      groups = await fetchDeltas(fetcher, request)
-    } catch (err) {
-      if (!(err instanceof FetchFailedError)) throw err
-      warnings.push(`Update-config request failed for ${request.key}: ${err.message}`)
-      continue
-    }
-    if (needsFollowUp(b, request.key, groups)) {
-      const followUp = macFollowUpRequest(request, groups)
-      if (!followUp) {
-        warnings.push(`${request.key}: preconfigured standard config may hide charger options and no other option could reveal them`)
-      } else {
-        try {
-          mergeFollowUp(groups, await fetchDeltas(fetcher, followUp), followUp.dimension, request.key, warnings)
-        } catch (err) {
-          if (!(err instanceof FetchFailedError)) throw err
-          warnings.push(`${request.key}: could not leave the preconfigured standard config, so charger options may be incomplete: ${err.message}`)
-        }
-      }
-    }
+    const rep = b.products.find(p => p.priceKey === request.key)
+    const first = await fetchUpdate(fetcher, request)
+    const groups = first.deltas
     deltas[request.key] = groups
+    let reason = chipMismatch(rep, chipKey, first.selected)
+    const crossCheck = hasUpgrade(groups, MEMORY) && hasUpgrade(groups, STORAGE)
+    if (!reason && (crossCheck || needsFollowUp(b, request.key, groups))) {
+      const followUp = macFollowUpRequest(request, groups)
+      if (followUp) {
+        const second = await fetchUpdate(fetcher, followUp)
+        reason = chipMismatch(rep, chipKey, second.selected)
+        if (!reason && !mergeFollowUp(groups, second.deltas, followUp.dimension)) reason = 'non-additive memory×storage pricing'
+      }
+      if (!reason && needsFollowUp(b, request.key, groups)) reason = 'charger options still hidden after leaving the preconfigured configuration'
+    }
+    if (reason) held[request.key] = reason
   }
 
-  const result = buildMacModels(bootstrap, deltas, page.url)
-  return { models: result.models, unmapped: result.unmapped, warnings: [...warnings, ...result.warnings] }
+  return buildMacModels(bootstrap, deltas, page.url, held)
 }
