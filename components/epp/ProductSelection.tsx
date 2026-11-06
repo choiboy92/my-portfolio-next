@@ -420,7 +420,14 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                 name="size"
                                 control={control}
                                 render={({ field }) => (
-                                  <Select onValueChange={field.onChange} value={field.value}>
+                                  <Select onValueChange={(value) => {
+                                    field.onChange(value)
+                                    if (watch('band.material')) {
+                                      setValue('band.style', '')
+                                      setValue('band.color', '')
+                                      setValue('band.size', '')
+                                    }
+                                  }} value={field.value}>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Select size" />
                                     </SelectTrigger>
