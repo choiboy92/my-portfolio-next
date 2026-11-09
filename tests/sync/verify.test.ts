@@ -61,6 +61,35 @@ describe('selfCheck', () => {
     expect(result.failures.length).toBeGreaterThan(0)
   })
 
+  it('fails a model with specs but nothing published', () => {
+    const mapped = phone(999)
+    mapped.published = []
+    const result = selfCheck([mapped])
+    expect(result.passed).toEqual([])
+    expect(result.failures.map(f => f.label)).toEqual(['Phone X / Phone X: no Apple-published price to verify'])
+  })
+
+  it('fails a model where one spec has no published price', () => {
+    const mapped = phone(999)
+    mapped.model = { ...mapped.model, specs: [...mapped.model.specs, { ...mapped.model.specs[0], name: 'Phone Y' }] }
+    const result = selfCheck([mapped])
+    expect(result.passed).toEqual([])
+    expect(result.failures.map(f => f.spec)).toEqual(['Phone Y'])
+  })
+
+  it('compares in whole pence', () => {
+    const mapped = phone(999.1)
+    mapped.published = [{ spec: 'Phone X', label: 'sum', options: { storage: '512GB' }, price: 1299.1 }]
+    expect(selfCheck([mapped]).failures).toEqual([])
+  })
+
+  it('lists every failure for a held-back model', () => {
+    const bad = phone(999, 1099)
+    bad.published.push({ spec: 'Ghost', label: 'ghost', options: {}, price: 5 })
+    const { warnings } = assembleCatalogue(testCatalogue, resultsFor({ iPhone: [bad] }), { bootstrap: false })
+    expect(warnings[0]).toContain('512GB expected £1399, got £1299; ghost expected £5, got £0')
+  })
+
   it('fails a model with no specs and nothing published', () => {
     const mapped = phone(999)
     mapped.model = { ...mapped.model, specs: [] }
@@ -76,7 +105,7 @@ describe('assembleCatalogue', () => {
     const results = resultsFor({ iPhone: [phone(999, 1099)] })
     const { catalogue, warnings } = assembleCatalogue(testCatalogue, results, { bootstrap: false })
     expect(catalogue.categories.iPhone.models['Phone X']).toEqual(testCatalogue.categories.iPhone.models['Phone X'])
-    expect(warnings).toContain('⚠️ Phone X: kept last-merged entry — 512GB expected £1399, got £1299')
+    expect(warnings).toContain('⚠️ Phone X: kept last-merged entry — 512GB expected £1399, got £1299 (last-merged data, not re-verified against Apple today)')
   })
 
   it('leaves out a new failing model with a warning', () => {

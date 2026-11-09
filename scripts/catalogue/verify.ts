@@ -44,12 +44,14 @@ function checkModel(mapped: MappedModel): SelfCheckFailure[] {
   for (const published of mapped.published) {
     const known = mapped.model.specs.some(spec => spec.name === published.spec)
     const actual = known ? calculatePrice(mapped.category, mapped.key, published.spec, published.options) : 0
-    if (!known || actual !== published.price) {
+    if (!known || Math.round(actual * 100) !== Math.round(published.price * 100)) {
       failures.push({ ...base, spec: published.spec, label: published.label, expected: published.price, actual })
     }
   }
-  if (mapped.model.specs.length === 0 && failures.length === 0) {
-    failures.push({ ...base, spec: '', label: 'no specs', expected: 0, actual: 0 })
+  for (const spec of mapped.model.specs) {
+    if (!mapped.published.some(published => published.spec === spec.name)) {
+      failures.push({ ...base, spec: spec.name, label: `${mapped.key} / ${spec.name}: no Apple-published price to verify`, expected: 0, actual: 0 })
+    }
   }
   return failures
 }
@@ -102,11 +104,13 @@ export function assembleCatalogue(
         models[mapped.key] = mapped.model
         continue
       }
-      const failure = failures.find(f => f.model === mapped.key)!
-      const detail = failure.spec === '' ? failure.label : `${failure.label} expected ${pounds(failure.expected)}, got ${pounds(failure.actual)}`
+      const detail = failures
+        .filter(f => f.model === mapped.key)
+        .map(f => (f.expected === 0 && f.actual === 0 ? f.label : `${f.label} expected ${pounds(f.expected)}, got ${pounds(f.actual)}`))
+        .join('; ')
       if (Object.hasOwn(prevCategory.models, mapped.key)) {
         models[mapped.key] = prevCategory.models[mapped.key]
-        warnings.push(`⚠️ ${mapped.key}: kept last-merged entry — ${detail}`)
+        warnings.push(`⚠️ ${mapped.key}: kept last-merged entry — ${detail} (last-merged data, not re-verified against Apple today)`)
       } else {
         warnings.push(`⚠️ ${mapped.key}: new product held back — ${detail}`)
       }
