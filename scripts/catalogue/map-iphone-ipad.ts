@@ -1,5 +1,5 @@
 import type { Category, Model, Pencil, Spec } from '@/lib/catalogue/schema'
-import type { SelectedOptions } from '@/lib/catalogue/helpers'
+import { skuKey, type SelectedOptions } from '@/lib/catalogue/helpers'
 import { extractAnalyticsProducts, normaliseLabel } from './extract'
 import type { MappedModel, MapResult, Page, PublishedPrice } from './types'
 
@@ -112,10 +112,18 @@ function buildSpec(skus: Sku[], warnings: string[]): { spec: Spec; size?: string
   const constraints: NonNullable<Spec['constraints']> = { minStorage }
   if (minNano) constraints.minStorageForNanotexture = minNano
 
+  const partNumbers: Record<string, string> = {}
+  for (const s of [...skus].sort((a, b) => (a.part < b.part ? -1 : a.part > b.part ? 1 : 0))) {
+    const key = skuKey({ color: s.color, storage: s.storage, connectivity: s.connectivity, nanoTexture: s.nano })
+    if (Object.hasOwn(partNumbers, key)) warnings.push(`${base.spec}: Apple lists more than one part number for ${key}; kept ${partNumbers[key]}`)
+    else partNumbers[key] = s.part
+  }
+
   const spec: Spec = {
     name: base.spec,
     price: base.price,
     partNumber: base.part,
+    partNumbers,
     colors: [...new Set(skus.map(s => s.color))].sort(),
     constraints,
     storageOptions,

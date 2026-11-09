@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { makeCatalogueHelpers } from '@/lib/catalogue/helpers'
+import { makeCatalogueHelpers, skuKey } from '@/lib/catalogue/helpers'
 import { CATALOGUE_NOTICE, parseCatalogue, type Category } from '@/lib/catalogue/schema'
 import { extractAnalyticsProducts, MissingDataError, normaliseLabel } from '@/scripts/catalogue/extract'
 import { mapIPad, mapIPhone, parseIPadAccessories } from '@/scripts/catalogue/map-iphone-ipad'
@@ -78,6 +78,15 @@ describe('mapIPhone', () => {
     }
   })
 
+  it('records the part number of every SKU by colour and storage', () => {
+    const skus = extractAnalyticsProducts(iphonePage.html, iphonePage.url)
+    const parts = model.specs.flatMap(s => Object.values(s.partNumbers ?? {}))
+    expect(parts.sort()).toEqual(skus.map(p => p.partNumber).sort())
+    const max = model.specs.find(s => s.name === 'iPhone 18 Pro Max')!
+    expect(max.partNumbers![skuKey({ color: 'Burgundy', storage: '1TB' })]).toBe('MJY04QN/A')
+    expect(max.partNumbers![skuKey({ color: 'Burgundy', storage: '1TB' })]).not.toBe(max.partNumber)
+  })
+
   it('sends unparseable names to unmapped', () => {
     const html = iphonePage.html.replace(/iPhone\s18\sPro 1TB Black/, 'iPhone 18 Pro Mystery Black')
     const odd = mapIPhone([{ ...iphonePage, html }])
@@ -119,6 +128,17 @@ describe('mapIPad', () => {
       expect(spec.appleCare).toEqual([])
     }
     expect(spec11.partNumber).toBe('MDWK4KN/A')
+  })
+
+  it('records the part number of every SKU by colour, storage, connectivity and glass', () => {
+    const skus = extractAnalyticsProducts(ipadProPage.html, ipadProPage.url)
+    const parts = model.specs.flatMap(s => Object.values(s.partNumbers ?? {}))
+    expect(parts).toHaveLength(48)
+    expect(parts.sort()).toEqual(skus.map(p => p.partNumber).sort())
+    expect(spec11.partNumbers![skuKey({ color: 'Space Black', storage: '256GB', connectivity: 'Wi-Fi' })]).toBe(spec11.partNumber)
+    const nano = Object.keys(spec11.partNumbers!).filter(k => k.endsWith('|nano'))
+    expect(nano.length).toBeGreaterThan(0)
+    expect(nano.every(k => /\|(1TB|2TB)\|/.test(k))).toBe(true)
   })
 
   it('takes Pencil and Magic Keyboard prices from the accessory slots', () => {

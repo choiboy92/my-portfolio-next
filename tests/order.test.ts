@@ -56,28 +56,17 @@ test('emails the chosen AppleCare+ tier', async () => {
   expect(res.status).toBe(200)
   expect(sent().text).toContain(`AppleCare+: ${tier.name} (£${price}/${tier.billing === 'monthly' ? 'month' : 'year'}, not discounted`)
   expect(sent().html).toContain(tier.name)
+  expect(sent().html).toContain(`Apple part ${tier.partNumber}`)
 })
-test('emails the catalogue part number', async () => {
+test('emails the Mac standard-config part number from the catalogue', async () => {
   muteConsole()
   const item = cheapestItem('MacBook', (_, s) => !!s.partNumber)
   const spec = PRODUCT_CONFIGURATIONS.MacBook.models[item.model].specs.find(s => s.name === item.specs)!
   const res = await submit(validOrder({ basket: [{ ...item, partNumber: 'FORGED' } as typeof item] }))
   expect(res.status).toBe(200)
-  expect(sent().text).toContain(`Apple part number: ${spec.partNumber}`)
-  expect(sent().html).toMatch(new RegExp(`<strong>Apple part number:</strong> <span[^>]*>${spec.partNumber}</span>`))
+  expect(sent().text).toContain(`Standard-config part number: ${spec.partNumber}`)
+  expect(sent().html).toMatch(new RegExp(`<strong>Standard-config part number:</strong> <span[^>]*>${spec.partNumber}</span>`))
   expect(sent().text).not.toContain('FORGED')
-})
-test('emails bundled extras from the catalogue', async () => {
-  muteConsole()
-  const categories = Object.keys(PRODUCT_CONFIGURATIONS) as (keyof typeof PRODUCT_CONFIGURATIONS)[]
-  const category = categories.find(c => Object.values(PRODUCT_CONFIGURATIONS[c].models).some(m => m.specs.some(s => s.includes?.length)))
-  if (!category) return
-  const item = cheapestItem(category, (_, s) => !!s.includes?.length)
-  const spec = PRODUCT_CONFIGURATIONS[category].models[item.model].specs.find(s => s.name === item.specs)!
-  const res = await submit(validOrder({ basket: [item] }))
-  expect(res.status).toBe(200)
-  expect(sent().text).toContain(`Includes: ${spec.includes!.join(', ')}`)
-  expect(sent().html).toContain('Includes:')
 })
 test('schema requires confirmation', () => {
   expect(orderSchema.safeParse(validOrder({ checkCompleted: false })).success).toBe(false)

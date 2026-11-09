@@ -2,7 +2,7 @@ import type { Catalogue, Model, Spec } from '@/lib/catalogue/schema'
 
 type Info = { warnings: string[]; unmapped: string[]; requestCount: number; date: string }
 
-const OTHER_FIELDS = ['colors', 'partNumber', 'includes', 'constraints'] as const
+const OTHER_FIELDS = ['colors', 'partNumber', 'partNumbers', 'includes', 'constraints'] as const
 
 const money = (n: number | undefined) =>
   n === undefined ? '£—' : `£${n.toLocaleString('en-GB', { maximumFractionDigits: 2 })}`

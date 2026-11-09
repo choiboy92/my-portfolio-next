@@ -30,6 +30,12 @@ export interface AvailableOptions {
   magicKeyboardPrice?: number
 }
 
+export type SkuSelection = { color: string; storage?: string; connectivity?: string; nanoTexture?: boolean }
+
+export function skuKey(item: SkuSelection): string {
+  return `${item.color}|${item.storage ?? ''}|${item.connectivity ?? ''}|${item.nanoTexture ? 'nano' : ''}`
+}
+
 function parseStorageSize(size: string): number {
   const match = size.match(/(\d+)(GB|TB)/i)
   if (!match) return 0

@@ -5,6 +5,8 @@ import { z } from 'zod'
 import { isAuthenticated } from '@/lib/auth'
 import { escapeStrings } from '@/lib/escape-html'
 import { formatAppleCarePrice } from '@/lib/catalogue/format'
+import { skuKey } from '@/lib/catalogue/helpers'
+import type { AppleCareTier } from '@/lib/catalogue/schema'
 import { getAppleCareTiers, getSpecConfiguration, isOffered, priceBasketItem } from '@/lib/product-config'
 import { OrderFormData, orderSchema } from '@/lib/validation-schema'
 
@@ -15,14 +17,25 @@ function generateOrderId(): string {
   return `EPP-${timestamp}-${random}`.toUpperCase()
 }
 
-// ✅ Enhanced format order data for email with all new fields
-type SpecExtras = { partNumber?: string; includes: string[] }
+type SpecExtras = { part?: { label: string; value: string }; includes: string[]; appleCare?: AppleCareTier }
 
 function lookupSpecExtras(basket: OrderFormData['basket']): SpecExtras[] {
   return basket.map(item => {
     const spec = getSpecConfiguration(item.category, item.model, item.specs ?? '')
-    return { partNumber: spec?.partNumber, includes: spec?.includes ?? [] }
+    const exact = spec?.partNumbers?.[skuKey(item)]
+    const part = exact
+      ? { label: 'Apple part number', value: exact }
+      : item.category === 'MacBook' && spec?.partNumber
+        ? { label: 'Standard-config part number', value: spec.partNumber }
+        : undefined
+    const appleCare = item.appleCare ? getAppleCareTiers(item.category, item.model, item.specs).find(t => t.name === item.appleCare) : undefined
+    return { part, includes: spec?.includes ?? [], appleCare }
   })
+}
+
+function appleCareDetail(name: string, tier: AppleCareTier | undefined): string {
+  if (!tier) return name
+  return `${tier.name} (${formatAppleCarePrice(tier)}, not discounted${tier.partNumber ? `, Apple part ${tier.partNumber}` : ''})`
 }
 
 function formatOrderEmail(orderData: OrderFormData, orderId: string, extras: SpecExtras[]): { text: string; html: string } {
@@ -45,8 +58,8 @@ function formatOrderEmail(orderData: OrderFormData, orderId: string, extras: Spe
     
     if (item.storage) itemLine += `\n   • Storage: ${item.storage}`
     if (item.specs) itemLine += `\n   • Configuration: ${item.specs}`
-    const { partNumber, includes } = extras[index]
-    if (partNumber) itemLine += `\n   • Apple part number: ${partNumber}`
+    const { part, includes, appleCare } = extras[index]
+    if (part) itemLine += `\n   • ${part.label}: ${part.value}`
     if (includes.length) itemLine += `\n   • Includes: ${includes.join(', ')}`
     if (item.memory) itemLine += `\n   • Memory: ${item.memory}`
     if (item.charger) itemLine += `\n   • Charger: ${item.charger}`
@@ -66,11 +79,7 @@ function formatOrderEmail(orderData: OrderFormData, orderId: string, extras: Spe
     if (item.magicKeyboard) itemLine += `\n   • Magic Keyboard: Yes`
     if (item.nanoTexture) itemLine += `\n   • Nano-texture Glass: Yes`
     
-    if (item.appleCare) {
-      const tier = getAppleCareTiers(item.category, item.model, item.specs).find(t => t.name === item.appleCare)
-      const detail = tier ? ` (${formatAppleCarePrice(tier)}, not discounted${tier.partNumber ? `, Apple part ${tier.partNumber}` : ''})` : ''
-      itemLine += `\n   • AppleCare+: ${item.appleCare}${detail}`
-    }
+    if (item.appleCare) itemLine += `\n   • AppleCare+: ${appleCareDetail(item.appleCare, appleCare)}`
     if (item.tradeIn?.hasTradeIn) {
       itemLine += `\n   • Trade-in: ${item.tradeIn.model || 'Device'}`
       if (item.tradeIn.serialNumber) {
@@ -174,7 +183,7 @@ function formatOrderEmail(orderData: OrderFormData, orderId: string, extras: Spe
                 <div><strong>Color:</strong> <span style="color: #6c757d;">${item.color}</span></div>
                 ${item.storage ? `<div><strong>Storage:</strong> <span style="color: #6c757d;">${item.storage}</span></div>` : ''}
                 ${item.specs ? `<div><strong>Configuration:</strong> <span style="color: #6c757d;">${item.specs}</span></div>` : ''}
-                ${extras[index].partNumber ? `<div><strong>Apple part number:</strong> <span style="color: #6c757d;">${extras[index].partNumber}</span></div>` : ''}
+                ${extras[index].part ? `<div><strong>${extras[index].part.label}:</strong> <span style="color: #6c757d;">${extras[index].part.value}</span></div>` : ''}
                 ${extras[index].includes.length ? `<div><strong>Includes:</strong> <span style="color: #6c757d;">${extras[index].includes.join(', ')}</span></div>` : ''}
                 ${item.memory ? `<div><strong>Memory:</strong> <span style="color: #6c757d;">${item.memory}</span></div>` : ''}
                 ${item.charger ? `<div><strong>Charger:</strong> <span style="color: #6c757d;">${item.charger}</span></div>` : ''}
@@ -200,7 +209,7 @@ function formatOrderEmail(orderData: OrderFormData, orderId: string, extras: Spe
 
               <!-- Additional Services -->
               <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
-                ${item.appleCare ? `<span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">🛡️ ${item.appleCare}</span>` : ''}
+                ${item.appleCare ? `<span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">🛡️ ${appleCareDetail(item.appleCare, extras[index].appleCare)}</span>` : ''}
                 ${item.tradeIn?.hasTradeIn ? `<span style="background: #17a2b8; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">🔄 Trade-in</span>` : ''}
               </div>
 

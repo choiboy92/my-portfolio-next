@@ -36,6 +36,7 @@ const specSchema = z
     price: z.number().positive(),
     appleCare: z.array(appleCareTierSchema),
     partNumber: z.string().optional(),
+    partNumbers: z.record(z.string(), z.string()).optional(),
     includes: z.array(z.string()).optional(),
     colors: z.array(z.string()).optional(),
     constraints: z
