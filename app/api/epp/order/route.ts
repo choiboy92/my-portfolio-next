@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { isAuthenticated } from '@/lib/auth'
 import { escapeStrings } from '@/lib/escape-html'
 import { formatAppleCarePrice } from '@/lib/catalogue/format'
-import { getAppleCareTiers, isOffered, priceBasketItem } from '@/lib/product-config'
+import { getAppleCareTiers, getSpecConfiguration, isOffered, priceBasketItem } from '@/lib/product-config'
 import { OrderFormData, orderSchema } from '@/lib/validation-schema'
 
 // Generate order ID
@@ -16,7 +16,16 @@ function generateOrderId(): string {
 }
 
 // ✅ Enhanced format order data for email with all new fields
-function formatOrderEmail(orderData: OrderFormData, orderId: string): { text: string; html: string } {
+type SpecExtras = { partNumber?: string; includes: string[] }
+
+function lookupSpecExtras(basket: OrderFormData['basket']): SpecExtras[] {
+  return basket.map(item => {
+    const spec = getSpecConfiguration(item.category, item.model, item.specs ?? '')
+    return { partNumber: spec?.partNumber, includes: spec?.includes ?? [] }
+  })
+}
+
+function formatOrderEmail(orderData: OrderFormData, orderId: string, extras: SpecExtras[]): { text: string; html: string } {
   const { basket, delivery } = orderData
   const contact = delivery.contact
   
@@ -36,6 +45,9 @@ function formatOrderEmail(orderData: OrderFormData, orderId: string): { text: st
     
     if (item.storage) itemLine += `\n   • Storage: ${item.storage}`
     if (item.specs) itemLine += `\n   • Configuration: ${item.specs}`
+    const { partNumber, includes } = extras[index]
+    if (partNumber) itemLine += `\n   • Apple part number: ${partNumber}`
+    if (includes.length) itemLine += `\n   • Includes: ${includes.join(', ')}`
     if (item.memory) itemLine += `\n   • Memory: ${item.memory}`
     if (item.charger) itemLine += `\n   • Charger: ${item.charger}`
     if (item.size) itemLine += `\n   • Size: ${item.size}`
@@ -162,6 +174,8 @@ function formatOrderEmail(orderData: OrderFormData, orderId: string): { text: st
                 <div><strong>Color:</strong> <span style="color: #6c757d;">${item.color}</span></div>
                 ${item.storage ? `<div><strong>Storage:</strong> <span style="color: #6c757d;">${item.storage}</span></div>` : ''}
                 ${item.specs ? `<div><strong>Configuration:</strong> <span style="color: #6c757d;">${item.specs}</span></div>` : ''}
+                ${extras[index].partNumber ? `<div><strong>Apple part number:</strong> <span style="color: #6c757d;">${extras[index].partNumber}</span></div>` : ''}
+                ${extras[index].includes.length ? `<div><strong>Includes:</strong> <span style="color: #6c757d;">${extras[index].includes.join(', ')}</span></div>` : ''}
                 ${item.memory ? `<div><strong>Memory:</strong> <span style="color: #6c757d;">${item.memory}</span></div>` : ''}
                 ${item.charger ? `<div><strong>Charger:</strong> <span style="color: #6c757d;">${item.charger}</span></div>` : ''}
                 ${item.size ? `<div><strong>Size:</strong> <span style="color: #6c757d;">${item.size}</span></div>` : ''}
@@ -344,13 +358,15 @@ export async function POST(request: NextRequest) {
 
     const orderId = generateOrderId()
 
+    const extras = lookupSpecExtras(order.basket)
+
     const resend = new Resend(process.env.RESEND_API_KEY)
     const emailResult = await resend.emails.send({
       from: process.env.EMAIL_FROM!,
       to: [process.env.EMAIL_TO!],
       subject: `🍎 New Apple EPP Order ${orderId} - ${order.delivery.contact.email}`,
-      text: formatOrderEmail(order, orderId).text,
-      html: formatOrderEmail(escapeStrings(order), orderId).html
+      text: formatOrderEmail(order, orderId, extras).text,
+      html: formatOrderEmail(escapeStrings(order), orderId, escapeStrings(extras)).html
     })
 
     if (emailResult.error) {
