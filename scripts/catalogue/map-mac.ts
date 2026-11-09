@@ -361,7 +361,13 @@ function representativePart(b: Bootstrap, cfg: StandardConfig): string | undefin
   return candidates[0]?.part
 }
 
-export function buildMacModels(bootstrap: unknown, deltas: MacDeltas, url: string, held: Record<string, string> = {}): MapResult {
+export function buildMacModels(
+  bootstrap: unknown,
+  deltas: MacDeltas,
+  url: string,
+  held: Record<string, string> = {},
+  limited: Set<string> = new Set(),
+): MapResult {
   const b = readBootstrap(bootstrap, url)
   const chipKey = chipKeyOf(b, url)
   const line = productLine(url)
@@ -473,6 +479,9 @@ export function buildMacModels(bootstrap: unknown, deltas: MacDeltas, url: strin
     if (memory) spec.memoryOptions = memory.options
     if (storage) spec.storageOptions = storage.options
     if (charger) spec.chargerOptions = charger.options
+    if (charger && limited.has(cfg.key)) {
+      warnings.push(`${modelKey} / ${name}: charger options limited to ${Object.keys(charger.options).join(', ')} — check Apple`)
+    }
     if (nanoTexture !== undefined) spec.nanoTexture = nanoTexture
     entry.specs.push(spec)
   }
@@ -537,23 +546,33 @@ async function followUp(
   base: string,
   chipKey: string,
   dimensions: Set<string>,
-): Promise<string | undefined> {
+): Promise<{ reason?: string; limited: boolean }> {
   const hidden = chargersHidden(cfg.rep, groups)
   const products = hidden ? cfg.products.filter(p => p.dimensions[FINISH] === cfg.rep.dimensions[FINISH]) : [cfg.rep]
+  const merge = (deltas: OptionDeltas, dimension: string) =>
+    mergeFollowUp(groups, deltas, dimension, dimensions) ? undefined : 'non-additive memory×storage pricing'
   let reason: string | undefined
+  let stillHidden: { deltas: OptionDeltas; dimension: string } | undefined
   for (const product of products) {
     const request = macFollowUpRequest(chipRequest(base, cfg.key, product, chipKey), groups)
-    if (!request) return undefined
+    if (!request) return { limited: hidden }
     const second = await fetchUpdate(fetcher, request)
-    reason = chipMismatch(cfg.rep, chipKey, second.selected)
-    if (reason) continue
-    if (hidden && chargersHidden(cfg.rep, second.deltas)) {
-      reason = 'charger options still hidden after leaving the preconfigured configuration'
+    const mismatch = chipMismatch(cfg.rep, chipKey, second.selected)
+    if (mismatch) {
+      reason = mismatch
       continue
     }
-    return mergeFollowUp(groups, second.deltas, request.dimension, dimensions) ? undefined : 'non-additive memory×storage pricing'
+    if (hidden && chargersHidden(cfg.rep, second.deltas)) {
+      stillHidden ??= { deltas: second.deltas, dimension: request.dimension }
+      continue
+    }
+    return { reason: merge(second.deltas, request.dimension), limited: false }
   }
-  return reason
+  if (stillHidden) {
+    const nonAdditive = merge(stillHidden.deltas, stillHidden.dimension)
+    return nonAdditive ? { reason: nonAdditive, limited: false } : { limited: true }
+  }
+  return { reason, limited: false }
 }
 
 export async function mapMac(page: Page, fetcher: Fetcher): Promise<MapResult> {
@@ -564,6 +583,7 @@ export async function mapMac(page: Page, fetcher: Fetcher): Promise<MapResult> {
   const dimensions = new Set(b.products.flatMap(p => Object.keys(p.dimensions)))
   const deltas: MacDeltas = {}
   const held: Record<string, string> = {}
+  const limited = new Set<string>()
 
   for (const cfg of standardConfigs(b, chipKey)) {
     const request = chipRequest(updateConfigUrl, cfg.key, cfg.rep, chipKey)
@@ -573,10 +593,12 @@ export async function mapMac(page: Page, fetcher: Fetcher): Promise<MapResult> {
     let reason = chipMismatch(cfg.rep, chipKey, first.selected)
     const crossCheck = hasUpgrade(groups, MEMORY) && hasUpgrade(groups, STORAGE)
     if (!reason && (crossCheck || chargersHidden(cfg.rep, groups))) {
-      reason = await followUp(fetcher, cfg, groups, updateConfigUrl, chipKey, dimensions)
+      const outcome = await followUp(fetcher, cfg, groups, updateConfigUrl, chipKey, dimensions)
+      reason = outcome.reason
+      if (outcome.limited) limited.add(cfg.key)
     }
     if (reason) held[cfg.key] = reason
   }
 
-  return buildMacModels(bootstrap, deltas, page.url, held)
+  return buildMacModels(bootstrap, deltas, page.url, held, limited)
 }

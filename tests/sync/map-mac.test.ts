@@ -419,13 +419,25 @@ describe('mapMac', () => {
     expect(result.warnings).toContain('MacBook Air 15" / M5 10-Core CPU 10-Core GPU: update-config selected chip 10-8 instead of 10-10 — spec held back')
   })
 
-  it('holds back a spec whose chargers stay hidden after leaving the BTR config', async () => {
+  it('emits a spec whose chargers stay hidden after leaving the BTR config and warns', async () => {
     const hidden = editedFollowUp(body => {
       body.options['power_adapter-wattage'].compatibleOptions = { '0w': { priceDelta: '0_0' } }
     })
     const result = await mapMac(mba15, fakeFetcher(served([mbaChip, hidden])))
+    expect(specOf(result, 'MacBook Air 15"', 'M5 10-Core CPU 10-Core GPU')?.chargerOptions).toEqual({ 'No Power Adapter': 0 })
+    expect(result.warnings).toContain('MacBook Air 15" / M5 10-Core CPU 10-Core GPU: charger options limited to No Power Adapter — check Apple')
+    expect(result.warnings.some(w => w.includes('held back'))).toBe(false)
+  })
+
+  it('still holds back a hidden-charger spec whose follow-up is not additive', async () => {
+    const coupled = editedFollowUp(body => {
+      body.options['power_adapter-wattage'].compatibleOptions = { '0w': { priceDelta: '0_0' } }
+      body.options['storage-dimensionCapacity'].compatibleOptions['1tb'].priceDelta = '200_00'
+      body.prices['200_00'] = { amount: 200 }
+    })
+    const result = await mapMac(mba15, fakeFetcher(served([mbaChip, coupled])))
     expect(result.models[0].model.specs).toEqual([])
-    expect(result.warnings.some(w => w.includes('charger options still hidden') && w.endsWith('spec held back'))).toBe(true)
+    expect(result.warnings).toContain('MacBook Air 15" / M5 10-Core CPU 10-Core GPU: non-additive memory×storage pricing — spec held back')
   })
 
   it('fails when a chip request still fails after retries', async () => {
@@ -478,13 +490,32 @@ describe('mapMac on live Apple UK responses', () => {
     expect(specOf(result, 'MacBook Air 15"', 'M5 10-Core CPU 10-Core GPU')?.chargerOptions).toEqual({ 'No Power Adapter': 0, '40W': 39, '35W': 59, '70W': 59 })
   })
 
-  it('holds back when every colour keeps the chargers hidden', async () => {
+  it('emits with a warning when every colour keeps the chargers hidden', async () => {
     const first = saved('mac-live-mba-15-10-10.json').response
     const hidden = saved('mac-live-mba-15-starlight-memory-24gb.json').response
     const fetcher = fakeFetcher(url => (url.includes('uv.memory-dimensionMemory') ? hidden : first))
     const result = await mapMac(mba15, fetcher)
-    expect(result.models[0].model.specs).toEqual([])
-    expect(result.warnings).toContain('MacBook Air 15" / M5 10-Core CPU 10-Core GPU: charger options still hidden after leaving the preconfigured configuration — spec held back')
+    expect(specOf(result, 'MacBook Air 15"', 'M5 10-Core CPU 10-Core GPU')).toMatchObject({
+      memoryOptions: { '16GB': 0, '24GB': 200, '32GB': 400 },
+      chargerOptions: { 'No Power Adapter': 0 },
+    })
+    expect(result.warnings).toContain('MacBook Air 15" / M5 10-Core CPU 10-Core GPU: charger options limited to No Power Adapter — check Apple')
+  })
+
+  it('emits MacBook Pro 14" M6, whose chargers stay single in every colour, with a warning', async () => {
+    const mbp14M6 = subsetPage(
+      pages.mbp,
+      p => p.dimensions['chassis-dimensionScreensize'] === '14inch' && p.dimensions['processor-dimensionChip-cpuCoreCount-gpuCoreCount'] === 'm6-12-12',
+    )
+    const fetcher = fakeFetcher(served([saved('mac-live-mbp-14-m6-12-12.json'), saved('mac-live-mbp-14-m6-12-12-memory-24gb.json')]))
+    const result = await mapMac(mbp14M6, fetcher)
+    expect(result.warnings.some(w => w.includes('held back'))).toBe(false)
+    expect(result.warnings).toContain('MacBook Pro 14" / M6 12-Core CPU 12-Core GPU: charger options limited to No Power Adapter — check Apple')
+    expect(specOf(result, 'MacBook Pro 14"', 'M6 12-Core CPU 12-Core GPU')).toMatchObject({
+      memoryOptions: { '16GB': 0, '24GB': 200, '32GB': 400 },
+      storageOptions: { '1TB': 0, '2TB': 500, '4TB': 1500 },
+      chargerOptions: { 'No Power Adapter': 0 },
+    })
   })
 
   it('emits a fixed preconfigured model that offers no same-chip upgrade', async () => {
@@ -492,6 +523,7 @@ describe('mapMac on live Apple UK responses', () => {
     const result = await mapMac(mba13Base, fetcher)
     expect(fetcher.requested).toHaveLength(1)
     expect(result.warnings.filter(w => w.includes('held back'))).toEqual([])
+    expect(result.warnings).toContain('MacBook Air 13" / M5 10-Core CPU 8-Core GPU: charger options limited to No Power Adapter — check Apple')
     expect(specOf(result, 'MacBook Air 13"', 'M5 10-Core CPU 8-Core GPU')).toMatchObject({
       price: 1299,
       memoryOptions: { '16GB': 0 },
