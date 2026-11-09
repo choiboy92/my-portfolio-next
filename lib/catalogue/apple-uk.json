@@ -106,7 +106,7 @@
                   "partNumber": "SHP53ZM/A"
                 }
               ],
-              "partNumber": "MJXP4QN/A",
+              "partNumber": "MJXN4QN/A",
               "colors": [
                 "Black",
                 "Burgundy",
@@ -151,7 +151,7 @@
                   "partNumber": "SX4Q2ZM/A"
                 }
               ],
-              "partNumber": "MG2M4QN/A",
+              "partNumber": "MG2L4QN/A",
               "colors": [
                 "Cloud White",
                 "Light Gold",
@@ -196,7 +196,7 @@
                   "partNumber": "SX4L2ZM/A"
                 }
               ],
-              "partNumber": "MG6L4QN/A",
+              "partNumber": "MG6J4QN/A",
               "colors": [
                 "Black",
                 "Lavender",
@@ -239,7 +239,7 @@
                   "partNumber": "SD8N3ZM/A"
                 }
               ],
-              "partNumber": "MHRW4QN/A",
+              "partNumber": "MHRV4QN/A",
               "colors": [
                 "Black",
                 "Soft Pink",
@@ -282,7 +282,7 @@
                   "partNumber": "SRGH2ZM/A"
                 }
               ],
-              "partNumber": "MYE93QN/A",
+              "partNumber": "MYE73QN/A",
               "colors": [
                 "Black",
                 "Pink",
@@ -382,7 +382,7 @@
                   "partNumber": "SXUJ2ZM/A"
                 }
               ],
-              "partNumber": "MDYK4KN/A",
+              "partNumber": "MDYJ4KN/A",
               "colors": [
                 "Silver",
                 "Space Black"
@@ -499,7 +499,7 @@
                   "partNumber": "SD913ZM/A"
                 }
               ],
-              "partNumber": "MH5Q4KN/A",
+              "partNumber": "MH5N4KN/A",
               "colors": [
                 "Blue",
                 "Purple",
@@ -563,7 +563,7 @@
                   "partNumber": "SW4V2ZM/A"
                 }
               ],
-              "partNumber": "MD4A4KN/A",
+              "partNumber": "MD3Y4KN/A",
               "colors": [
                 "Blue",
                 "Pink",
@@ -825,17 +825,16 @@
           ],
           "specs": [
             {
-              "name": "M4 10-Core CPU 10-Core GPU 16GB Unified Memory",
-              "price": 1599,
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
+              "name": "M6 12-Core CPU 12-Core GPU",
+              "price": 1999,
+              "appleCare": [],
+              "partNumber": "MHWT4B/A",
+              "colors": [
+                "Space Black",
+                "Silver"
               ],
               "constraints": {
-                "minStorage": "512GB",
+                "minStorage": "1TB",
                 "minMemory": "16GB"
               },
               "memoryOptions": {
@@ -844,25 +843,36 @@
                 "32GB": 400
               },
               "storageOptions": {
-                "512GB": 0,
-                "1TB": 200,
-                "2TB": 600
+                "1TB": 0,
+                "2TB": 500,
+                "4TB": 1500
               },
               "chargerOptions": {
-                "70W": 0,
-                "96W": 20
+                "No Power Adapter": 0
               },
               "nanoTexture": 150
             },
             {
-              "name": "M4 10-Core CPU 10-Core GPU 24GB Unified Memory",
-              "price": 1999,
+              "name": "M5 Pro 15-Core CPU 16-Core GPU",
+              "price": 2499,
               "appleCare": [
                 {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
+                  "name": "AppleCare+ (Monthly)",
+                  "price": 9.99,
+                  "billing": "monthly",
+                  "partNumber": "SD423ZM/A"
+                },
+                {
+                  "name": "AppleCare+ (Annual)",
+                  "price": 99.99,
+                  "billing": "annual",
+                  "partNumber": "SD3X3ZM/A"
                 }
+              ],
+              "partNumber": "MGDN4B/A",
+              "colors": [
+                "Space Black",
+                "Silver"
               ],
               "constraints": {
                 "minStorage": "1TB",
@@ -870,61 +880,40 @@
               },
               "memoryOptions": {
                 "24GB": 0,
-                "32GB": 200
+                "48GB": 600
               },
               "storageOptions": {
                 "1TB": 0,
-                "2TB": 400
+                "2TB": 500,
+                "4TB": 1500
               },
               "chargerOptions": {
-                "70W": 0,
-                "96W": 20
+                "No Power Adapter": 0,
+                "70W": 59,
+                "96W": 79
               },
               "nanoTexture": 150
             },
             {
-              "name": "M4 Pro 12-Core CPU 16-Core GPU 24GB Unified Memory",
-              "price": 1999,
+              "name": "M5 Pro 18-Core CPU 20-Core GPU",
+              "price": 2699,
               "appleCare": [
                 {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
+                  "name": "AppleCare+ (Monthly)",
+                  "price": 9.99,
+                  "billing": "monthly",
+                  "partNumber": "SD423ZM/A"
+                },
+                {
+                  "name": "AppleCare+ (Annual)",
+                  "price": 99.99,
+                  "billing": "annual",
+                  "partNumber": "SD3X3ZM/A"
                 }
               ],
-              "constraints": {
-                "minStorage": "512GB",
-                "minMemory": "24GB"
-              },
-              "memoryOptions": {
-                "24GB": 0,
-                "36GB": 200,
-                "48GB": 400,
-                "64GB": 600,
-                "128GB": 1400
-              },
-              "storageOptions": {
-                "512GB": 0,
-                "1TB": 200,
-                "2TB": 600,
-                "4TB": 1200,
-                "8TB": 2400
-              },
-              "chargerOptions": {
-                "70W": 0,
-                "96W": 20
-              },
-              "nanoTexture": 150
-            },
-            {
-              "name": "M4 Pro 14-Core CPU 20-Core GPU 24GB Unified Memory",
-              "price": 2399,
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
+              "colors": [
+                "Space Black",
+                "Silver"
               ],
               "constraints": {
                 "minStorage": "1TB",
@@ -932,52 +921,98 @@
               },
               "memoryOptions": {
                 "24GB": 0,
-                "36GB": 200,
-                "48GB": 400,
-                "64GB": 600,
-                "128GB": 1400
+                "48GB": 600,
+                "64GB": 1000
               },
               "storageOptions": {
                 "1TB": 0,
-                "2TB": 400,
-                "4TB": 1000,
-                "8TB": 2200
+                "2TB": 500,
+                "4TB": 1500
               },
               "chargerOptions": {
-                "70W": 0,
-                "96W": 20
+                "No Power Adapter": 0,
+                "96W": 79
               },
               "nanoTexture": 150
             },
             {
-              "name": "M4 Max 14-Core CPU 32-Core GPU 36GB Unified Memory",
-              "price": 3199,
+              "name": "M5 Max 18-Core CPU 32-Core GPU",
+              "price": 4099,
               "appleCare": [
                 {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
+                  "name": "AppleCare+ (Monthly)",
+                  "price": 9.99,
+                  "billing": "monthly",
+                  "partNumber": "SD423ZM/A"
+                },
+                {
+                  "name": "AppleCare+ (Annual)",
+                  "price": 99.99,
+                  "billing": "annual",
+                  "partNumber": "SD3X3ZM/A"
                 }
               ],
+              "partNumber": "MGDQ4B/A",
+              "colors": [
+                "Space Black",
+                "Silver"
+              ],
               "constraints": {
-                "minStorage": "1TB",
+                "minStorage": "2TB",
                 "minMemory": "36GB"
               },
               "memoryOptions": {
-                "36GB": 0,
-                "48GB": 200,
-                "64GB": 400,
-                "128GB": 1200
+                "36GB": 0
               },
               "storageOptions": {
-                "1TB": 0,
-                "2TB": 400,
+                "2TB": 0,
                 "4TB": 1000,
-                "8TB": 2200
+                "8TB": 3000
               },
               "chargerOptions": {
-                "70W": 0,
-                "96W": 20
+                "No Power Adapter": 0,
+                "96W": 79
+              },
+              "nanoTexture": 150
+            },
+            {
+              "name": "M5 Max 18-Core CPU 40-Core GPU",
+              "price": 4699,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ (Monthly)",
+                  "price": 9.99,
+                  "billing": "monthly",
+                  "partNumber": "SD423ZM/A"
+                },
+                {
+                  "name": "AppleCare+ (Annual)",
+                  "price": 99.99,
+                  "billing": "annual",
+                  "partNumber": "SD3X3ZM/A"
+                }
+              ],
+              "colors": [
+                "Space Black",
+                "Silver"
+              ],
+              "constraints": {
+                "minStorage": "2TB",
+                "minMemory": "48GB"
+              },
+              "memoryOptions": {
+                "48GB": 0,
+                "64GB": 400,
+                "128GB": 2000
+              },
+              "storageOptions": {
+                "2TB": 0,
+                "4TB": 1000,
+                "8TB": 3000
+              },
+              "chargerOptions": {
+                "No Power Adapter": 0,
+                "96W": 79
               },
               "nanoTexture": 150
             }
@@ -1194,6 +1229,101 @@
               "chargerOptions": {
                 "No Power Adapter": 0,
                 "96W": 79
+              },
+              "nanoTexture": 150
+            }
+          ]
+        },
+        "MacBook Pro Proled XDR 16\"": {
+          "displayName": "MacBook Pro Proled XDR 16\"",
+          "colors": [
+            "Space Black",
+            "Silver"
+          ],
+          "specs": [
+            {
+              "name": "M5 Pro 18-Core CPU 20-Core GPU",
+              "price": 3399,
+              "appleCare": [],
+              "partNumber": "MJ2W4B/A",
+              "colors": [
+                "Space Black",
+                "Silver"
+              ],
+              "constraints": {
+                "minStorage": "1TB",
+                "minMemory": "24GB"
+              },
+              "memoryOptions": {
+                "24GB": 0,
+                "48GB": 600,
+                "64GB": 1000
+              },
+              "storageOptions": {
+                "1TB": 0,
+                "2TB": 500,
+                "4TB": 1500
+              },
+              "chargerOptions": {
+                "No Power Adapter": 0
+              },
+              "nanoTexture": 150
+            },
+            {
+              "name": "M5 Max 18-Core CPU 32-Core GPU",
+              "price": 4799,
+              "appleCare": [],
+              "partNumber": "MJ2X4B/A",
+              "colors": [
+                "Space Black",
+                "Silver"
+              ],
+              "constraints": {
+                "minStorage": "2TB",
+                "minMemory": "36GB"
+              },
+              "memoryOptions": {
+                "36GB": 0
+              },
+              "storageOptions": {
+                "2TB": 0,
+                "4TB": 1000,
+                "8TB": 3000,
+                "16TB": 7000
+              },
+              "chargerOptions": {
+                "No Power Adapter": 0,
+                "140W": 99
+              },
+              "nanoTexture": 150
+            },
+            {
+              "name": "M5 Max 18-Core CPU 40-Core GPU",
+              "price": 5399,
+              "appleCare": [],
+              "partNumber": "MJ2Y4B/A",
+              "colors": [
+                "Space Black",
+                "Silver"
+              ],
+              "constraints": {
+                "minStorage": "2TB",
+                "minMemory": "48GB"
+              },
+              "memoryOptions": {
+                "48GB": 0,
+                "64GB": 400,
+                "128GB": 2000
+              },
+              "storageOptions": {
+                "2TB": 0,
+                "4TB": 1000,
+                "8TB": 3000,
+                "16TB": 7000
+              },
+              "chargerOptions": {
+                "No Power Adapter": 0,
+                "140W": 99
               },
               "nanoTexture": 150
             }
@@ -2327,7 +2457,7 @@
           ],
           "specs": [
             {
-              "name": "Apple Watch Ultra 4",
+              "name": "Titanium Case",
               "price": 749,
               "appleCare": [],
               "colors": [
@@ -2342,7 +2472,7 @@
                   "material": "Strap",
                   "style": [
                     {
-                      "styleName": "Alpine Loop For outdoor adventure and hiking.",
+                      "styleName": "Alpine Loop",
                       "price": 0,
                       "bandColor": [
                         "Burgundy",
@@ -2356,7 +2486,7 @@
                       ]
                     },
                     {
-                      "styleName": "Trail Loop For all sports and workouts.",
+                      "styleName": "Trail Loop",
                       "price": 0,
                       "bandColor": [
                         "Burgundy",
@@ -2369,7 +2499,7 @@
                       ]
                     },
                     {
-                      "styleName": "Ocean Band For water sports and recreational diving.",
+                      "styleName": "Ocean Band",
                       "price": 0,
                       "bandColor": [
                         "Translucent Black",
@@ -2378,7 +2508,7 @@
                       ]
                     },
                     {
-                      "styleName": "Titanium Milanese Loop Designed for the ocean, yet elegant for any occasion.",
+                      "styleName": "Titanium Milanese Loop",
                       "price": 100,
                       "bandColor": [
                         "Natural"
