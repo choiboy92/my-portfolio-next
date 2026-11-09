@@ -1,7 +1,7 @@
-import { appendFileSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { parseCatalogue } from '@/lib/catalogue/schema'
 import { createFetcher } from './catalogue/http'
-import { writeOutputs } from './catalogue/output'
+import { finishRun } from './catalogue/output'
 import { runSync } from './catalogue/run'
 
 type Args = { out: string; summary?: string; bootstrap: boolean }
@@ -27,10 +27,12 @@ async function main(): Promise<void> {
   const fetcher = createFetcher()
   const result = await runSync({ fetcher, previous, bootstrap: args.bootstrap, date: new Date().toISOString().slice(0, 10) })
 
-  writeOutputs(result, { out: args.out, summary: args.summary }, text => process.stdout.write(text))
-
-  const githubOutput = process.env.GITHUB_OUTPUT
-  if (githubOutput) appendFileSync(githubOutput, `changed=${result.changed}\n`)
+  process.exitCode = finishRun(
+    result,
+    { out: args.out, summary: args.summary },
+    { GITHUB_OUTPUT: process.env.GITHUB_OUTPUT, GITHUB_STEP_SUMMARY: process.env.GITHUB_STEP_SUMMARY },
+    { stdout: text => process.stdout.write(text), stderr: text => process.stderr.write(text) },
+  )
 }
 
 main().catch((err: unknown) => {

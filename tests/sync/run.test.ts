@@ -144,6 +144,31 @@ describe('runSync', () => {
     expect(second.catalogue).toEqual(first.catalogue)
   })
 
+  const IPHONE = `${SHOP}/buy-iphone/iphone-18-pro`
+  const mispriced = (html: string) =>
+    html.replace(/"fullPrice":(\d+)\.0(},"category":"iphone","name":"[^"]*1TB Burgundy")/g, (_, price: string, rest: string) => `"fullPrice":${Number(price) + 1}.0${rest}`)
+
+  it('lists a published model that can no longer be verified as kept from the last merge', async () => {
+    const first = await runSync({ fetcher: fakeFetcher(), previous: testCatalogue, bootstrap: true, date: DATE })
+    const pages = basePages()
+    pages.set(IPHONE, mispriced(pages.get(IPHONE)!))
+    const second = await runSync({ fetcher: fakeFetcher(pages), previous: first.catalogue, bootstrap: false, date: DATE })
+    expect(second.changed).toBe(false)
+    expect(second.keptLastMerged).toEqual(['iPhone 18 Pro & Pro Max'])
+    expect(second.warnings.some(w => w.startsWith('⚠️ iPhone 18 Pro & Pro Max: kept last-merged entry'))).toBe(true)
+  })
+
+  it('does not list a held-back new product as kept from the last merge', async () => {
+    const first = await runSync({ fetcher: fakeFetcher(), previous: testCatalogue, bootstrap: true, date: DATE })
+    const pages = basePages()
+    pages.set(`${SHOP}/buy-iphone/iphone-air`, mispriced(pages.get(IPHONE)!.replace(/iPhone([ \u00a0])18/g, (_, space: string) => `iPhone${space}19`)))
+    const second = await runSync({ fetcher: fakeFetcher(pages), previous: first.catalogue, bootstrap: false, date: DATE })
+    expect(second.changed).toBe(false)
+    expect(second.keptLastMerged).toEqual([])
+    expect(second.warnings.some(w => w.startsWith('⚠️ iPhone 19 Pro & Pro Max: new product held back'))).toBe(true)
+    expect(second.summary).toContain('iPhone 19 Pro & Pro Max: new product held back')
+  })
+
   it('rejects with MissingDataError when the iPhone page lacks its data blob', async () => {
     const pages = basePages()
     const url = `${SHOP}/buy-iphone/iphone-18-pro`

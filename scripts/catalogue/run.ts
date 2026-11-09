@@ -21,6 +21,8 @@ export type SyncResult = {
   catalogue: Catalogue
   changed: boolean
   summary: string
+  warnings: string[]
+  keptLastMerged: string[]
 }
 
 const CATEGORIES = Object.keys(LANDING_PAGES) as CategoryKey[]
@@ -103,11 +105,12 @@ export async function runSync(deps: SyncDeps): Promise<SyncResult> {
 
   const assembled = assembleCatalogue(previous, results, { bootstrap })
   const changed = !catalogueEquals(previous, assembled.catalogue)
+  const warnings = [...new Set([...discoveryWarnings, ...assembled.warnings, ...appleCare.warnings])]
   const summary = summarizeChanges(previous, assembled.catalogue, {
-    warnings: [...new Set([...discoveryWarnings, ...assembled.warnings, ...appleCare.warnings])],
+    warnings,
     unmapped: [...new Set([...assembled.unmapped, ...appleCare.unmapped])],
     requestCount: fetcher.requestCount,
     date,
   })
-  return { catalogue: assembled.catalogue, changed, summary }
+  return { catalogue: assembled.catalogue, changed, summary, warnings, keptLastMerged: assembled.keptLastMerged }
 }

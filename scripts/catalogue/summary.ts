@@ -109,6 +109,12 @@ function categoryMap(c: Catalogue) {
 
 const list = (lines: string[]) => (lines.length ? lines.join('\n') : 'None')
 
+const WARNINGS_HEADING = '## ⚠️ Warnings'
+
+export function warningsSection(warnings: string[]): string {
+  return `${WARNINGS_HEADING}\n${list(warnings.map(w => `- ${w}`))}\n`
+}
+
 export function summarizeChanges(previous: Catalogue, next: Catalogue, info: Info): string {
   const added: string[] = []
   const removed: string[] = []
@@ -161,7 +167,7 @@ export function summarizeChanges(previous: Catalogue, next: Catalogue, info: Inf
   }
 
   const sections: [string, string][] = [
-    ['## ⚠️ Warnings', list(info.warnings.map(w => `- ${w}`))],
+    [WARNINGS_HEADING, list(info.warnings.map(w => `- ${w}`))],
     ['## 🆕 New products', list(added)],
     ['## 🗑️ Removed products', list(removed)],
     ['## 💷 Price changes', list(prices)],

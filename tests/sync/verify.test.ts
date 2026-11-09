@@ -103,18 +103,20 @@ describe('selfCheck', () => {
 describe('assembleCatalogue', () => {
   it('replaces a failing model with its previous entry and warns', () => {
     const results = resultsFor({ iPhone: [phone(999, 1099)] })
-    const { catalogue, warnings } = assembleCatalogue(testCatalogue, results, { bootstrap: false })
+    const { catalogue, warnings, keptLastMerged } = assembleCatalogue(testCatalogue, results, { bootstrap: false })
     expect(catalogue.categories.iPhone.models['Phone X']).toEqual(testCatalogue.categories.iPhone.models['Phone X'])
     expect(warnings).toContain('⚠️ Phone X: kept last-merged entry — 512GB expected £1399, got £1299 (last-merged data, not re-verified against Apple today)')
+    expect(keptLastMerged).toEqual(['Phone X'])
   })
 
   it('leaves out a new failing model with a warning', () => {
     const bad = phone(999, 1099)
     bad.key = 'Phone New'
     const results = resultsFor({ iPhone: [phone(999), bad] })
-    const { catalogue, warnings } = assembleCatalogue(testCatalogue, results, { bootstrap: false })
+    const { catalogue, warnings, keptLastMerged } = assembleCatalogue(testCatalogue, results, { bootstrap: false })
     expect(Object.keys(catalogue.categories.iPhone.models)).toEqual(['Phone X'])
     expect(warnings).toContain('⚠️ Phone New: new product held back — 512GB expected £1399, got £1299')
+    expect(keptLastMerged).toEqual([])
   })
 
   function mixed(yPublished: number): MappedModel {
