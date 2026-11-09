@@ -55,7 +55,7 @@ function parseIPadSku(name: string, part: string, price: number): Sku | null {
     name,
     part,
     price,
-    spec: size ? `${size}-inch ${family}` : 'default',
+    spec: size ? `${size}-inch ${family}` : family,
     family,
     storage,
     connectivity,

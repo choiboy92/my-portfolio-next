@@ -232,3 +232,14 @@ describe('parseIPadAccessories', () => {
     })
   })
 })
+
+describe('mapIPad on a live unsized model', () => {
+  const mini = page('ipad-ipad-mini-live.html', 'https://www.apple.com/uk/shop/buy-ipad/ipad-mini')
+
+  it('names the single spec after the model', () => {
+    const result = mapIPad([mini], parseIPadAccessories([mini]), emptyPrevious)
+    expect(result.models.map(m => m.key)).toEqual(['iPad mini'])
+    expect(result.models[0].model.specs.map(s => s.name)).toEqual(['iPad mini'])
+    expect(result.models[0].published.every(p => p.spec === 'iPad mini')).toBe(true)
+  })
+})
