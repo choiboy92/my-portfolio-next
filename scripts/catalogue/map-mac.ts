@@ -133,17 +133,19 @@ function updateConfigBase(pageLevelData: unknown): string {
 
 const param = (prefix: 'sv' | 'uv', key: string, value: string) => `&${prefix}.${key}=${encodeURIComponent(value)}`
 
+function chipRequest(base: string, key: string, product: Product, chipKey: string): MacDeltaRequest {
+  let url = base
+  for (const [dim, value] of Object.entries(product.dimensions)) if (dim !== chipKey) url += param('sv', dim, value)
+  if ('keyboard' in (product.productConfiguration ?? {})) url += param('sv', KEYBOARD, 'gbr')
+  url += param('uv', chipKey, product.dimensions[chipKey])
+  return { key, dimension: chipKey, url }
+}
+
 export function macDeltaRequests(bootstrap: unknown, pageLevelData: unknown): MacDeltaRequest[] {
   const base = updateConfigBase(pageLevelData)
   const b = readBootstrap(bootstrap, base)
   const chipKey = chipKeyOf(b, base)
-  return standardConfigs(b, chipKey).map(cfg => {
-    let url = base
-    for (const [dim, value] of Object.entries(cfg.rep.dimensions)) if (dim !== chipKey) url += param('sv', dim, value)
-    if ('keyboard' in (cfg.rep.productConfiguration ?? {})) url += param('sv', KEYBOARD, 'gbr')
-    url += param('uv', chipKey, cfg.chip)
-    return { key: cfg.key, dimension: chipKey, url }
-  })
+  return standardConfigs(b, chipKey).map(cfg => chipRequest(base, cfg.key, cfg.rep, chipKey))
 }
 
 export function readUpdateConfig(response: unknown, url: string): OptionDeltas {
@@ -180,12 +182,19 @@ export function macFollowUpRequest(request: MacDeltaRequest, groups: OptionDelta
   return undefined
 }
 
-function mergeFollowUp(target: OptionDeltas, extra: OptionDeltas, changed: string): boolean {
+function mergeFollowUp(target: OptionDeltas, extra: OptionDeltas, changed: string, dimensions: Set<string>): boolean {
   let additive = true
   for (const [group, values] of Object.entries(extra)) {
-    if (group === changed) continue
+    if (dimensions.has(group) && group !== FINISH) continue
     const into = (target[group] ??= {})
-    for (const [value, delta] of Object.entries(values)) {
+    let shift = 0
+    if (group === changed) {
+      const base = Object.keys(into).find(v => into[v] === 0 && v in values)
+      if (base === undefined) continue
+      shift = values[base]
+    }
+    for (const [value, raw] of Object.entries(values)) {
+      const delta = parsePounds(raw - shift)
       if (!(value in into)) into[value] = delta
       else if (into[value] !== delta) additive = false
     }
@@ -470,11 +479,10 @@ export function extractUpdateConfigUrl(html: string, url: string): string {
   return new URL(m[1], url).toString()
 }
 
-function needsFollowUp(b: Bootstrap, key: string, groups: OptionDeltas): boolean {
-  const rep = b.products.find(p => p.priceKey === key)
+function chargersHidden(rep: Product | undefined, groups: OptionDeltas): boolean {
   if (!rep || rep.type === 'CONFIGURABLE') return false
-  const dimensions = new Set(Object.keys(rep.dimensions))
-  return Object.entries(groups).some(([g, values]) => !dimensions.has(g) && Object.keys(values).length === 1)
+  const power = findGroup(groups, 'power_adapter-')
+  return power !== undefined && Object.keys(groups[power]).length === 1
 }
 
 async function fetchUpdate(fetcher: Fetcher, request: MacDeltaRequest): Promise<{ deltas: OptionDeltas; selected: Record<string, string[]> }> {
@@ -494,31 +502,52 @@ function chipMismatch(rep: Product | undefined, chipKey: string, selected: Recor
 
 const hasUpgrade = (groups: OptionDeltas, group: string) => Object.values(groups[group] ?? {}).some(d => d > 0)
 
+async function followUp(
+  fetcher: Fetcher,
+  cfg: StandardConfig,
+  groups: OptionDeltas,
+  base: string,
+  chipKey: string,
+  dimensions: Set<string>,
+): Promise<string | undefined> {
+  const hidden = chargersHidden(cfg.rep, groups)
+  const products = hidden ? cfg.products.filter(p => p.dimensions[FINISH] === cfg.rep.dimensions[FINISH]) : [cfg.rep]
+  let reason: string | undefined
+  for (const product of products) {
+    const request = macFollowUpRequest(chipRequest(base, cfg.key, product, chipKey), groups)
+    if (!request) return undefined
+    const second = await fetchUpdate(fetcher, request)
+    reason = chipMismatch(cfg.rep, chipKey, second.selected)
+    if (reason) continue
+    if (hidden && chargersHidden(cfg.rep, second.deltas)) {
+      reason = 'charger options still hidden after leaving the preconfigured configuration'
+      continue
+    }
+    return mergeFollowUp(groups, second.deltas, request.dimension, dimensions) ? undefined : 'non-additive memory×storage pricing'
+  }
+  return reason
+}
+
 export async function mapMac(page: Page, fetcher: Fetcher): Promise<MapResult> {
   const bootstrap = extractKeyedJson(page.html, page.url, 'productSelectionData')
   const updateConfigUrl = extractUpdateConfigUrl(page.html, page.url)
   const b = readBootstrap(bootstrap, page.url)
   const chipKey = chipKeyOf(b, page.url)
+  const dimensions = new Set(b.products.flatMap(p => Object.keys(p.dimensions)))
   const deltas: MacDeltas = {}
   const held: Record<string, string> = {}
 
-  for (const request of macDeltaRequests(bootstrap, { updateConfigUrl })) {
-    const rep = b.products.find(p => p.priceKey === request.key)
+  for (const cfg of standardConfigs(b, chipKey)) {
+    const request = chipRequest(updateConfigUrl, cfg.key, cfg.rep, chipKey)
     const first = await fetchUpdate(fetcher, request)
     const groups = first.deltas
-    deltas[request.key] = groups
-    let reason = chipMismatch(rep, chipKey, first.selected)
+    deltas[cfg.key] = groups
+    let reason = chipMismatch(cfg.rep, chipKey, first.selected)
     const crossCheck = hasUpgrade(groups, MEMORY) && hasUpgrade(groups, STORAGE)
-    if (!reason && (crossCheck || needsFollowUp(b, request.key, groups))) {
-      const followUp = macFollowUpRequest(request, groups)
-      if (followUp) {
-        const second = await fetchUpdate(fetcher, followUp)
-        reason = chipMismatch(rep, chipKey, second.selected)
-        if (!reason && !mergeFollowUp(groups, second.deltas, followUp.dimension)) reason = 'non-additive memory×storage pricing'
-      }
-      if (!reason && needsFollowUp(b, request.key, groups)) reason = 'charger options still hidden after leaving the preconfigured configuration'
+    if (!reason && (crossCheck || chargersHidden(cfg.rep, groups))) {
+      reason = await followUp(fetcher, cfg, groups, updateConfigUrl, chipKey, dimensions)
     }
-    if (reason) held[request.key] = reason
+    if (reason) held[cfg.key] = reason
   }
 
   return buildMacModels(bootstrap, deltas, page.url, held)

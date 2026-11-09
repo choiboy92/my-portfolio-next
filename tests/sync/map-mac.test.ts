@@ -438,3 +438,63 @@ describe('mapMac', () => {
     await expect(mapMac(pages.studio, empty)).rejects.toBeInstanceOf(MissingDataError)
   })
 })
+
+describe('mapMac on live Apple UK responses', () => {
+  const mbp14Max40 = subsetPage(
+    pages.mbp,
+    p => p.dimensions['chassis-dimensionScreensize'] === '14inch' && p.dimensions['processor-dimensionChip-cpuCoreCount-gpuCoreCount'] === 'm5max-18-40',
+  )
+  const mba13Base = subsetPage(pages.mba, p => p.dimensions['chassis-dimensionScreensize'] === '13inch' && p.dimensions['processor-cpuCoreCount-gpuCoreCount'] === '10-8')
+  const colourOf = (url: string) => new URL(url, 'https://www.apple.com').searchParams.get('sv.chassis-dimensionColor')
+  const mbpLive = () => fakeFetcher(served([saved('mac-live-mbp-14-m5max-18-40.json'), saved('mac-live-mbp-14-m5max-18-40-memory-64gb.json')]))
+
+  it('ignores the chip group when cross-checking memory against storage', async () => {
+    const result = await mapMac(mbp14Max40, mbpLive())
+    expect(result.warnings.filter(w => w.includes('held back'))).toEqual([])
+    expect(specOf(result, 'MacBook Pro 14"', 'M5 Max 18-Core CPU 40-Core GPU')).toMatchObject({
+      memoryOptions: { '48GB': 0, '64GB': 400, '128GB': 2000 },
+      storageOptions: { '2TB': 0, '4TB': 1000, '8TB': 3000 },
+    })
+  })
+
+  it('tries the next colour when a follow-up lands on another preconfigured model', async () => {
+    const first = saved('mac-live-mba-15-10-10.json').response
+    const hidden = saved('mac-live-mba-15-starlight-memory-24gb.json').response
+    const revealed = saved('mac-live-mba-15-silver-memory-24gb.json').response
+    let followUps = 0
+    const fetcher = fakeFetcher(url => {
+      if (!url.includes('uv.memory-dimensionMemory')) return first
+      followUps++
+      return followUps === 1 ? hidden : revealed
+    })
+    const result = await mapMac(mba15, fetcher)
+    const colours = fetcher.requested.filter(u => u.includes('uv.memory')).map(colourOf)
+    expect(colours).toHaveLength(2)
+    expect(new Set(colours).size).toBe(2)
+    expect(result.warnings.filter(w => w.includes('held back'))).toEqual([])
+    expect(specOf(result, 'MacBook Air 15"', 'M5 10-Core CPU 10-Core GPU')?.chargerOptions).toEqual({ 'No Power Adapter': 0, '40W': 39, '35W': 59, '70W': 59 })
+  })
+
+  it('holds back when every colour keeps the chargers hidden', async () => {
+    const first = saved('mac-live-mba-15-10-10.json').response
+    const hidden = saved('mac-live-mba-15-starlight-memory-24gb.json').response
+    const fetcher = fakeFetcher(url => (url.includes('uv.memory-dimensionMemory') ? hidden : first))
+    const result = await mapMac(mba15, fetcher)
+    expect(result.models[0].model.specs).toEqual([])
+    expect(result.warnings).toContain('MacBook Air 15" / M5 10-Core CPU 10-Core GPU: charger options still hidden after leaving the preconfigured configuration — spec held back')
+  })
+
+  it('emits a fixed preconfigured model that offers no same-chip upgrade', async () => {
+    const fetcher = fakeFetcher(served([saved('mac-live-mba-13-10-8.json')]))
+    const result = await mapMac(mba13Base, fetcher)
+    expect(fetcher.requested).toHaveLength(1)
+    expect(result.warnings.filter(w => w.includes('held back'))).toEqual([])
+    expect(specOf(result, 'MacBook Air 13"', 'M5 10-Core CPU 8-Core GPU')).toMatchObject({
+      price: 1299,
+      memoryOptions: { '16GB': 0 },
+      storageOptions: { '512GB': 0 },
+      chargerOptions: { 'No Power Adapter': 0 },
+    })
+  })
+
+})
