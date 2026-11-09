@@ -81,11 +81,17 @@ function connectionLabel(b: Bootstrap, value: string): string {
   return lead || value
 }
 
+const MATERIAL_NAMES: Record<string, string> = { aluminum: 'Aluminium', aluminium: 'Aluminium', titanium: 'Titanium', ceramic: 'Ceramic' }
+
 function materialLabel(b: Bootstrap, value: string): string {
   const h = header(b, MATERIAL, value)
   const div = h?.match(/<div[^>]*>([\s\S]*?)<\/div>/)
   const text = div ? plain(div[1]) : h ? plain(h) : ''
-  return text || value
+  return text || MATERIAL_NAMES[value] || value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function specNameOf(b: Bootstrap, material: string, name: string): string {
+  return material ? `${materialLabel(b, material)} Case` : name
 }
 
 function colourLabel(b: Bootstrap, value: string): string {
@@ -110,9 +116,11 @@ function amountOf(b: Bootstrap, priceKey: string): number | undefined {
 
 function readRows(b: Bootstrap, name: string, unmapped: string[], warnings: string[]): Row[] {
   const rows: Row[] = []
+  const used = (key: string) => b.products.some(p => p.dimensions?.[key] !== undefined)
+  const required = [SIZE, ...[MATERIAL, CONNECTION].filter(used)]
   for (const product of b.products) {
     const d = product.dimensions ?? {}
-    const missing = [SIZE, MATERIAL, CONNECTION].filter(k => !d[k])
+    const missing = required.filter(k => !d[k])
     if (missing.length > 0) {
       unmapped.push(`${name}: product ${product.part} has no ${missing.join(', ')}`)
       continue
@@ -122,7 +130,7 @@ function readRows(b: Bootstrap, name: string, unmapped: string[], warnings: stri
       warnings.push(`${name}: no price for ${product.priceKey}`)
       continue
     }
-    rows.push({ product, size: d[SIZE], material: d[MATERIAL], connection: d[CONNECTION], price })
+    rows.push({ product, size: d[SIZE], material: d[MATERIAL] ?? '', connection: d[CONNECTION] ?? '', price })
   }
   const extra = new Map<string, Set<string>>()
   for (const p of b.products) {
@@ -154,16 +162,32 @@ type Selection = {
   prices: Record<string, number>
 }
 
+function ungroupedName(sectionHeader: unknown): string {
+  const lead = typeof sectionHeader === 'string' ? /<span[^>]*>([\s\S]*?)<\/span>/.exec(sectionHeader)?.[1] : undefined
+  return (lead && plain(lead).replace(/[.:]+$/, '')) || 'Strap'
+}
+
+function bySortOrder(items: Record<string, unknown>): string[] {
+  const order = (key: string) => {
+    const item = items[key]
+    return isRecord(item) && typeof item.sortOrder === 'number' ? item.sortOrder : Infinity
+  }
+  return Object.keys(items).sort((x, y) => order(x) - order(y) || (x < y ? -1 : x > y ? 1 : 0))
+}
+
 function readSelection(response: unknown, url: string): Selection {
   const body = bodyOf(response, url, 'band-selection body')
-  if (!Array.isArray(body.groups) || !isRecord(body.items) || !isRecord(body.itemPrices) || body.groups.length === 0) {
-    throw new MissingDataError(url, 'band-selection groups, items and itemPrices')
+  if (!isRecord(body.items) || !isRecord(body.itemPrices) || Object.keys(body.items).length === 0) {
+    throw new MissingDataError(url, 'band-selection items and itemPrices')
   }
-  const groups = body.groups.filter(isRecord).map(g => {
-    const data = isRecord(g.additionalData) ? g.additionalData : {}
-    const name = normaliseLabel(String(data.sectionHeader ?? g.id ?? ''))
-    return { name, items: Array.isArray(g.items) ? g.items.map(String) : [] }
-  })
+  const grouped = Array.isArray(body.groups) && body.groups.length > 0
+  const groups = grouped
+    ? (body.groups as unknown[]).filter(isRecord).map(g => {
+        const data = isRecord(g.additionalData) ? g.additionalData : {}
+        const name = normaliseLabel(String(data.sectionHeader ?? g.id ?? ''))
+        return { name, items: Array.isArray(g.items) ? g.items.map(String) : [] }
+      })
+    : [{ name: ungroupedName(body.sectionHeader), items: bySortOrder(body.items) }]
   const items: Selection['items'] = {}
   for (const [style, raw] of Object.entries(body.items)) {
     if (!isRecord(raw)) continue
@@ -247,7 +271,7 @@ function specPricing(b: Bootstrap, rows: Row[]): Pricing | undefined {
   const sizeOptions: Record<string, number> = {}
   for (const s of sortByOrder(b, SIZE, bySize.keys())) sizeOptions[sizeLabel(b, s)] = (bySize.get(s) as number) - base
   const connectivityOptions: Record<string, number> = {}
-  for (const c of sortByOrder(b, CONNECTION, byConn.keys())) connectivityOptions[connectionLabel(b, c)] = (byConn.get(c) as number) - base
+  for (const c of sortByOrder(b, CONNECTION, byConn.keys())) if (c) connectivityOptions[connectionLabel(b, c)] = (byConn.get(c) as number) - base
   return { price: base, sizeOptions, connectivityOptions }
 }
 
@@ -351,18 +375,18 @@ export function buildWatchModels(bootstrap: unknown, bandPrices: unknown, url: s
   const specs: Spec[] = []
   const materials = sortByOrder(b, MATERIAL, rows.map(r => r.material))
   for (const material of materials) {
-    const specName = `${materialLabel(b, material)} Case`
+    const specName = specNameOf(b, material, name)
     const mine = rows.filter(r => r.material === material)
     for (const r of mine) {
       const id = `${material}|${r.size}|${r.connection}`
       if (seen.has(id)) continue
       seen.add(id)
       const size = sizeLabel(b, r.size)
-      const connectivity = connectionLabel(b, r.connection)
+      const connectivity = r.connection ? connectionLabel(b, r.connection) : undefined
       published.push({
         spec: specName,
-        label: `${name} ${specName} ${size} ${connectivity} (${r.product.priceKey})`,
-        options: { size, connectivity },
+        label: `${name} ${specName} ${size}${connectivity ? ` ${connectivity}` : ''} (${r.product.priceKey})`,
+        options: connectivity ? { size, connectivity } : { size },
         price: r.price,
       })
     }
@@ -378,8 +402,8 @@ export function buildWatchModels(bootstrap: unknown, bandPrices: unknown, url: s
       price: pricing.price,
       appleCare: [],
       sizeOptions: pricing.sizeOptions,
-      connectivityOptions: pricing.connectivityOptions,
     }
+    if (Object.keys(pricing.connectivityOptions).length > 0) spec.connectivityOptions = pricing.connectivityOptions
     if (colours.length > 0) spec.colors = colours
     if (bandOptions.length > 0) spec.bandOptions = structuredClone(bandOptions)
     specs.push(spec)
@@ -402,6 +426,9 @@ export function buildWatchModels(bootstrap: unknown, bandPrices: unknown, url: s
 }
 
 export async function mapWatch(page: Page, fetcher: Fetcher): Promise<MapResult> {
+  if (/\/buy-watch\/apple-watch-hermes/.test(page.url)) {
+    return { models: [], unmapped: [], warnings: [`${page.url}: Apple Watch Hermès is not mapped (its product name and case dimensions do not identify it apart from the standard models); skipped`] }
+  }
   const bootstrap = extractKeyedJson(page.html, page.url, 'productSelectionData')
   const b = readBootstrap(bootstrap, page.url)
   const name = pageName(page.html, page.url)

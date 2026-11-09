@@ -261,3 +261,52 @@ describe('mapWatch', () => {
     expect(warnings.some(w => w.includes('bandSelectionBootstrap'))).toBe(true)
   })
 })
+
+describe('mapWatch on live Apple UK pages', () => {
+  const ultraUrl = 'https://www.apple.com/uk/shop/buy-watch/apple-watch-ultra/apple-watch-ultra-4-gps-cellular-49mm-titanium-case'
+  const ultraBands = JSON.parse(fx('watch-apple-watch-ultra-bands.json')) as Record<string, unknown>
+
+  function servedByPath(responses: Record<string, unknown>): Fetcher & { requested: string[] } {
+    const requested: string[] = []
+    return {
+      requested,
+      async text(url: string): Promise<string> {
+        throw new FetchFailedError(url, 'text not served')
+      },
+      async json<T = unknown>(url: string): Promise<T> {
+        requested.push(url)
+        const hit = responses[url.replace('https://www.apple.com', '')]
+        if (hit === undefined) throw new FetchFailedError(url, 'no fixture for this request')
+        return hit as T
+      },
+      get requestCount() {
+        return requested.length
+      },
+    }
+  }
+
+  it('maps Ultra, whose cases have no material or connection dimension and whose straps are ungrouped', async () => {
+    const result = await mapWatch({ url: ultraUrl, html: fx('watch-apple-watch-ultra.html') }, servedByPath(ultraBands))
+    expect(result.warnings).toEqual([])
+    expect(result.models.map(m => m.key)).toEqual(['Apple Watch Ultra 4'])
+    const [spec] = result.models[0].model.specs
+    expect(spec).toMatchObject({ name: 'Apple Watch Ultra 4', price: 749, sizeOptions: { '49mm': 0 } })
+    expect(spec.connectivityOptions).toBeUndefined()
+    expect(spec.bandOptions?.map(g => g.material)).toEqual(['Strap'])
+    expect(spec.bandOptions?.[0].style.length).toBe(4)
+    expect(spec.bandOptions?.[0].style.some(s => s.price > 0)).toBe(true)
+  })
+
+  it('names the SE aluminium case with the British spelling', async () => {
+    const se: Page = { url: 'https://www.apple.com/uk/shop/buy-watch/apple-watch-se', html: fx('watch-apple-watch-se.html').replace('window.pageLevelData.bandSelectionBootstrap =', 'window.pageLevelData.somethingElse =') }
+    const result = await mapWatch(se, servedByPath({}))
+    expect(new Set(result.models[0].published.map(p => p.spec))).toEqual(new Set(['Aluminium Case']))
+  })
+
+  it('skips Hermès pages with a warning', async () => {
+    const url = 'https://www.apple.com/uk/shop/buy-watch/apple-watch-hermes'
+    const result = await mapWatch({ url, html: '' }, servedByPath({}))
+    expect(result.models).toEqual([])
+    expect(result.warnings).toEqual([`${url}: Apple Watch Hermès is not mapped (its product name and case dimensions do not identify it apart from the standard models); skipped`])
+  })
+})
