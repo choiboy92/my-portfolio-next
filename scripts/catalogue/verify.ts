@@ -104,10 +104,17 @@ export function assembleCatalogue(
         models[mapped.key] = mapped.model
         continue
       }
-      const detail = failures
-        .filter(f => f.model === mapped.key)
-        .map(f => (f.expected === 0 && f.actual === 0 ? f.label : `${f.label} expected ${pounds(f.expected)}, got ${pounds(f.actual)}`))
-        .join('; ')
+      const mine = failures.filter(f => f.model === mapped.key)
+      const describe = (list: SelfCheckFailure[]) =>
+        list.map(f => (f.expected === 0 && f.actual === 0 ? f.label : `${f.label} expected ${pounds(f.expected)}, got ${pounds(f.actual)}`)).join('; ')
+      const failedSpecs = new Set(mine.map(f => f.spec))
+      const passing = failedSpecs.has('') ? [] : mapped.model.specs.filter(spec => !failedSpecs.has(spec.name))
+      if (passing.length > 0) {
+        models[mapped.key] = { ...mapped.model, specs: passing }
+        warnings.push(`⚠️ ${mapped.key}: ${failedSpecs.size} spec(s) held back — ${describe(mine)}; shipped the rest`)
+        continue
+      }
+      const detail = describe(mine)
       if (Object.hasOwn(prevCategory.models, mapped.key)) {
         models[mapped.key] = prevCategory.models[mapped.key]
         warnings.push(`⚠️ ${mapped.key}: kept last-merged entry — ${detail} (last-merged data, not re-verified against Apple today)`)

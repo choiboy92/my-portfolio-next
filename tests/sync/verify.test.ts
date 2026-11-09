@@ -117,6 +117,43 @@ describe('assembleCatalogue', () => {
     expect(warnings).toContain('⚠️ Phone New: new product held back — 512GB expected £1399, got £1299')
   })
 
+  function mixed(yPublished: number): MappedModel {
+    const base = phone(999)
+    const x = base.model.specs[0]
+    const y = { ...x, name: 'Phone Y', price: 1099 }
+    return {
+      ...base,
+      model: { ...base.model, specs: [x, y] },
+      published: [...base.published, { spec: 'Phone Y', label: 'Y 512GB', options: { storage: '512GB' }, price: yPublished }],
+    }
+  }
+
+  it('ships the passing specs of a partly failing model and warns about the rest', () => {
+    const results = resultsFor({ iPhone: [mixed(1300)] })
+    const { catalogue, warnings } = assembleCatalogue(testCatalogue, results, { bootstrap: false })
+    const model = catalogue.categories.iPhone.models['Phone X']
+    expect(model.specs.map(s => s.name)).toEqual(['Phone X'])
+    expect(model.specs[0].price).toBe(999)
+    expect(warnings).toContain('⚠️ Phone X: 1 spec(s) held back — Y 512GB expected £1300, got £1399; shipped the rest')
+    expect(warnings.some(w => w.includes('kept last-merged entry'))).toBe(false)
+  })
+
+  it('drops published prices of a spec the mapper held and ships the rest', () => {
+    const base = phone(999)
+    base.published.push({ spec: 'Phone Held', label: 'held 1TB', options: { storage: '1TB' }, price: 1499 })
+    const { catalogue, warnings } = assembleCatalogue(testCatalogue, resultsFor({ iPhone: [base] }), { bootstrap: false })
+    expect(catalogue.categories.iPhone.models['Phone X'].specs.map(s => s.name)).toEqual(['Phone X'])
+    expect(warnings).toContain('⚠️ Phone X: 1 spec(s) held back — held 1TB expected £1499, got £0; shipped the rest')
+  })
+
+  it('still falls back to the last-merged entry when every spec fails', () => {
+    const bad = mixed(1300)
+    bad.published[0] = { ...bad.published[0], price: 1 }
+    const { catalogue, warnings } = assembleCatalogue(testCatalogue, resultsFor({ iPhone: [bad] }), { bootstrap: false })
+    expect(catalogue.categories.iPhone.models['Phone X']).toEqual(testCatalogue.categories.iPhone.models['Phone X'])
+    expect(warnings.some(w => w.startsWith('⚠️ Phone X: kept last-merged entry'))).toBe(true)
+  })
+
   it('holds back a model with specs [] rather than emitting it', () => {
     const empty = phone(999)
     empty.key = 'Phone New'
