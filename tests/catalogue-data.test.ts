@@ -22,6 +22,19 @@ function expectedPrice(spec: Spec, item: ReturnType<typeof cheapestItem>) {
   )
 }
 
+describe('generated catalogue', () => {
+  const specsOf = (category: CategoryKey) => Object.values(PRODUCT_CONFIGURATIONS[category].models).flatMap(m => m.specs)
+
+  test.each(['iPhone', 'iPad', 'MacBook'] as CategoryKey[])('%s has Apple part numbers', category => {
+    expect(specsOf(category).some(spec => typeof spec.partNumber === 'string' && spec.partNumber.length > 0)).toBe(true)
+  })
+
+  test('Apple Watch has a priced band style', () => {
+    const priced = specsOf('Apple Watch').some(spec => spec.bandOptions?.some(group => group.style.some(style => style.price > 0)))
+    expect(priced).toBe(true)
+  })
+})
+
 describe.each(categories)('%s', category => {
   const models = Object.entries(PRODUCT_CONFIGURATIONS[category].models)
 

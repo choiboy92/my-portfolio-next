@@ -5,187 +5,297 @@
       "category": "iPhone",
       "appleCareAvailable": true,
       "models": {
-        "iPhone 17 Pro & Pro Max": {
-          "displayName": "iPhone 17 Pro & Pro Max",
+        "iPhone Duo": {
+          "displayName": "iPhone Duo",
           "colors": [
-            "Silver",
-            "Cosmic Orange",
-            "Deep Blue"
+            "Night Sky",
+            "Star White"
           ],
           "specs": [
             {
-              "name": "iPhone 17 Pro",
-              "price": 1099,
+              "name": "iPhone Duo",
+              "price": 1999,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 16.99,
+                  "billing": "monthly",
+                  "partNumber": "SHPG3ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 169.99,
+                  "billing": "annual",
+                  "partNumber": "SHPH3ZM/A"
+                }
+              ],
+              "partNumber": "MK2D4QN/A",
+              "colors": [
+                "Night Sky",
+                "Star White"
+              ],
               "constraints": {
                 "minStorage": "256GB"
               },
               "storageOptions": {
                 "256GB": 0,
                 "512GB": 200,
-                "1TB": 400
-              },
+                "1TB": 600,
+                "2TB": 1200
+              }
+            }
+          ]
+        },
+        "iPhone 18 Pro & Pro Max": {
+          "displayName": "iPhone 18 Pro & Pro Max",
+          "colors": [
+            "Black",
+            "Burgundy",
+            "Glacier",
+            "Silver"
+          ],
+          "specs": [
+            {
+              "name": "iPhone 18 Pro",
+              "price": 1199,
               "appleCare": [
                 {
-                  "name": "AppleCare+",
-                  "price": 179,
-                  "billing": "annual"
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 12.99,
+                  "billing": "monthly",
+                  "partNumber": "SHNP3ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 129.99,
+                  "billing": "annual",
+                  "partNumber": "SHNQ3ZM/A"
                 }
-              ]
+              ],
+              "partNumber": "MJRP4QN/A",
+              "colors": [
+                "Black",
+                "Burgundy",
+                "Glacier",
+                "Silver"
+              ],
+              "constraints": {
+                "minStorage": "256GB"
+              },
+              "storageOptions": {
+                "256GB": 0,
+                "512GB": 200,
+                "1TB": 600,
+                "2TB": 1200
+              }
             },
             {
-              "name": "iPhone 17 Pro Max",
-              "price": 1199,
+              "name": "iPhone 18 Pro Max",
+              "price": 1299,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 12.99,
+                  "billing": "monthly",
+                  "partNumber": "SHP43ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 129.99,
+                  "billing": "annual",
+                  "partNumber": "SHP53ZM/A"
+                }
+              ],
+              "partNumber": "MJXP4QN/A",
+              "colors": [
+                "Black",
+                "Burgundy",
+                "Glacier",
+                "Silver"
+              ],
               "constraints": {
                 "minStorage": "256GB"
               },
               "storageOptions": {
                 "256GB": 0,
                 "512GB": 200,
-                "1TB": 400,
-                "2TB": 800
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 179,
-                  "billing": "annual"
-                }
-              ]
+                "1TB": 600,
+                "2TB": 1200
+              }
             }
           ]
         },
         "iPhone Air": {
           "displayName": "iPhone Air",
           "colors": [
-            "Sky Blue",
-            "Light Gold",
             "Cloud White",
+            "Light Gold",
+            "Sky Blue",
             "Space Black"
           ],
           "specs": [
             {
               "name": "iPhone Air",
-              "price": 999,
+              "price": 1099,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 11.99,
+                  "billing": "monthly",
+                  "partNumber": "SX432ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 119.99,
+                  "billing": "annual",
+                  "partNumber": "SX4Q2ZM/A"
+                }
+              ],
+              "partNumber": "MG2M4QN/A",
+              "colors": [
+                "Cloud White",
+                "Light Gold",
+                "Sky Blue",
+                "Space Black"
+              ],
               "constraints": {
                 "minStorage": "256GB"
               },
               "storageOptions": {
                 "256GB": 0,
                 "512GB": 200,
-                "1TB": 400
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 179,
-                  "billing": "annual"
-                }
-              ]
+                "1TB": 600
+              }
             }
           ]
         },
         "iPhone 17": {
           "displayName": "iPhone 17",
           "colors": [
+            "Black",
             "Lavender",
-            "Sage",
             "Mist Blue",
-            "White",
-            "Black"
+            "Sage",
+            "White"
           ],
           "specs": [
             {
               "name": "iPhone 17",
-              "price": 799,
+              "price": 899,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 9.49,
+                  "billing": "monthly",
+                  "partNumber": "SX3Y2ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 94.99,
+                  "billing": "annual",
+                  "partNumber": "SX4L2ZM/A"
+                }
+              ],
+              "partNumber": "MG6L4QN/A",
+              "colors": [
+                "Black",
+                "Lavender",
+                "Mist Blue",
+                "Sage",
+                "White"
+              ],
               "constraints": {
                 "minStorage": "256GB"
               },
               "storageOptions": {
                 "256GB": 0,
                 "512GB": 200
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 129,
-                  "billing": "annual"
-                }
-              ]
+              }
             }
           ]
         },
-        "iPhone 16 & 16 Plus": {
-          "displayName": "iPhone 16 & 16 Plus",
+        "iPhone 17e": {
+          "displayName": "iPhone 17e",
           "colors": [
-            "Ultramarine",
-            "Teal",
+            "Black",
+            "Soft Pink",
+            "White"
+          ],
+          "specs": [
+            {
+              "name": "iPhone 17e",
+              "price": 699,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 7.99,
+                  "billing": "monthly",
+                  "partNumber": "SD8K3ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 79.99,
+                  "billing": "annual",
+                  "partNumber": "SD8N3ZM/A"
+                }
+              ],
+              "partNumber": "MHRW4QN/A",
+              "colors": [
+                "Black",
+                "Soft Pink",
+                "White"
+              ],
+              "constraints": {
+                "minStorage": "256GB"
+              },
+              "storageOptions": {
+                "256GB": 0,
+                "512GB": 200
+              }
+            }
+          ]
+        },
+        "iPhone 16": {
+          "displayName": "iPhone 16",
+          "colors": [
+            "Black",
             "Pink",
-            "White",
-            "Black"
+            "Teal",
+            "Ultramarine",
+            "White"
           ],
           "specs": [
             {
               "name": "iPhone 16",
-              "price": 699,
+              "price": 799,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 9.49,
+                  "billing": "monthly",
+                  "partNumber": "SNLJ2ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 94.99,
+                  "billing": "annual",
+                  "partNumber": "SRGH2ZM/A"
+                }
+              ],
+              "partNumber": "MYE93QN/A",
+              "colors": [
+                "Black",
+                "Pink",
+                "Teal",
+                "Ultramarine",
+                "White"
+              ],
               "constraints": {
                 "minStorage": "128GB"
               },
               "storageOptions": {
                 "128GB": 0
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 159,
-                  "billing": "annual"
-                }
-              ]
-            },
-            {
-              "name": "iPhone 16 Plus",
-              "price": 799,
-              "constraints": {
-                "minStorage": "128GB"
-              },
-              "storageOptions": {
-                "128GB": 0,
-                "256GB": 100
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 159,
-                  "billing": "annual"
-                }
-              ]
-            }
-          ]
-        },
-        "iPhone 16e": {
-          "displayName": "iPhone 16e",
-          "colors": [
-            "Black",
-            "White"
-          ],
-          "specs": [
-            {
-              "name": "iPhone 16e",
-              "price": 599,
-              "constraints": {
-                "minStorage": "128GB"
-              },
-              "storageOptions": {
-                "128GB": 0,
-                "256GB": 100,
-                "512GB": 300
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 99,
-                  "billing": "annual"
-                }
-              ]
+              }
             }
           ]
         }
@@ -204,7 +314,26 @@
           "specs": [
             {
               "name": "11-inch iPad Pro",
-              "price": 999,
+              "price": 1199,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 9.49,
+                  "billing": "monthly",
+                  "partNumber": "SXU72ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 94.99,
+                  "billing": "annual",
+                  "partNumber": "SXUG2ZM/A"
+                }
+              ],
+              "partNumber": "MDWK4KN/A",
+              "colors": [
+                "Silver",
+                "Space Black"
+              ],
               "constraints": {
                 "minStorage": "256GB",
                 "minStorageForNanotexture": "1TB"
@@ -213,13 +342,14 @@
                 "256GB": 0,
                 "512GB": 200,
                 "1TB": 600,
-                "2TB": 1000
+                "2TB": 1100
               },
               "connectivityOptions": {
                 "Wi-Fi": 0,
                 "Wi-Fi + Cellular": 200
               },
               "nanoTexture": 100,
+              "magicKeyboard": 299,
               "applePencil": [
                 {
                   "pencilType": "None",
@@ -232,20 +362,31 @@
                 {
                   "pencilType": "Apple Pencil (USB-C)",
                   "price": 79
-                }
-              ],
-              "magicKeyboard": 299,
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 149,
-                  "billing": "annual"
                 }
               ]
             },
             {
               "name": "13-inch iPad Pro",
-              "price": 1299,
+              "price": 1499,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 10.49,
+                  "billing": "monthly",
+                  "partNumber": "SXU82ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 104.99,
+                  "billing": "annual",
+                  "partNumber": "SXUJ2ZM/A"
+                }
+              ],
+              "partNumber": "MDYK4KN/A",
+              "colors": [
+                "Silver",
+                "Space Black"
+              ],
               "constraints": {
                 "minStorage": "256GB",
                 "minStorageForNanotexture": "1TB"
@@ -254,13 +395,14 @@
                 "256GB": 0,
                 "512GB": 200,
                 "1TB": 600,
-                "2TB": 1000
+                "2TB": 1100
               },
               "connectivityOptions": {
                 "Wi-Fi": 0,
                 "Wi-Fi + Cellular": 200
               },
               "nanoTexture": 100,
+              "magicKeyboard": 349,
               "applePencil": [
                 {
                   "pencilType": "None",
@@ -273,14 +415,6 @@
                 {
                   "pencilType": "Apple Pencil (USB-C)",
                   "price": 79
-                }
-              ],
-              "magicKeyboard": 349,
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 169,
-                  "billing": "annual"
                 }
               ]
             }
@@ -289,15 +423,36 @@
         "iPad Air": {
           "displayName": "iPad Air",
           "colors": [
-            "Space Gray",
             "Blue",
             "Purple",
+            "Space Gray",
             "Starlight"
           ],
           "specs": [
             {
               "name": "11-inch iPad Air",
-              "price": 599,
+              "price": 749,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 5.99,
+                  "billing": "monthly",
+                  "partNumber": "SD8T3ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 59.99,
+                  "billing": "annual",
+                  "partNumber": "SD903ZM/A"
+                }
+              ],
+              "partNumber": "MH304KN/A",
+              "colors": [
+                "Blue",
+                "Purple",
+                "Space Gray",
+                "Starlight"
+              ],
               "constraints": {
                 "minStorage": "128GB"
               },
@@ -305,12 +460,13 @@
                 "128GB": 0,
                 "256GB": 100,
                 "512GB": 300,
-                "1TB": 500
+                "1TB": 600
               },
               "connectivityOptions": {
                 "Wi-Fi": 0,
                 "Wi-Fi + Cellular": 150
               },
+              "magicKeyboard": 269,
               "applePencil": [
                 {
                   "pencilType": "None",
@@ -323,20 +479,33 @@
                 {
                   "pencilType": "Apple Pencil (USB-C)",
                   "price": 79
-                }
-              ],
-              "magicKeyboard": 269,
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 79,
-                  "billing": "annual"
                 }
               ]
             },
             {
               "name": "13-inch iPad Air",
-              "price": 799,
+              "price": 949,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 6.99,
+                  "billing": "monthly",
+                  "partNumber": "SD8U3ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 69.99,
+                  "billing": "annual",
+                  "partNumber": "SD913ZM/A"
+                }
+              ],
+              "partNumber": "MH5Q4KN/A",
+              "colors": [
+                "Blue",
+                "Purple",
+                "Space Gray",
+                "Starlight"
+              ],
               "constraints": {
                 "minStorage": "128GB"
               },
@@ -344,12 +513,13 @@
                 "128GB": 0,
                 "256GB": 100,
                 "512GB": 300,
-                "1TB": 500
+                "1TB": 600
               },
               "connectivityOptions": {
                 "Wi-Fi": 0,
                 "Wi-Fi + Cellular": 150
               },
+              "magicKeyboard": 299,
               "applePencil": [
                 {
                   "pencilType": "None",
@@ -362,14 +532,6 @@
                 {
                   "pencilType": "Apple Pencil (USB-C)",
                   "price": 79
-                }
-              ],
-              "magicKeyboard": 299,
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 99,
-                  "billing": "annual"
                 }
               ]
             }
@@ -378,15 +540,36 @@
         "iPad": {
           "displayName": "iPad",
           "colors": [
-            "Silver",
             "Blue",
             "Pink",
+            "Silver",
             "Yellow"
           ],
           "specs": [
             {
-              "name": "default",
-              "price": 329,
+              "name": "iPad",
+              "price": 429,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 4.99,
+                  "billing": "monthly",
+                  "partNumber": "SW4U2ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 49.99,
+                  "billing": "annual",
+                  "partNumber": "SW4V2ZM/A"
+                }
+              ],
+              "partNumber": "MD4A4KN/A",
+              "colors": [
+                "Blue",
+                "Pink",
+                "Silver",
+                "Yellow"
+              ],
               "constraints": {
                 "minStorage": "128GB"
               },
@@ -399,6 +582,7 @@
                 "Wi-Fi": 0,
                 "Wi-Fi + Cellular": 150
               },
+              "magicKeyboard": 249,
               "applePencil": [
                 {
                   "pencilType": "None",
@@ -409,16 +593,8 @@
                   "price": 79
                 },
                 {
-                  "pencilType": "Apple Pencil (1st Gen)",
+                  "pencilType": "Apple Pencil (1st Generation)",
                   "price": 99
-                }
-              ],
-              "magicKeyboard": 249,
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 69,
-                  "billing": "annual"
                 }
               ]
             }
@@ -427,17 +603,35 @@
         "iPad mini": {
           "displayName": "iPad mini",
           "colors": [
-            "Space Gray",
-            "Blue",
-            "Purple",
+            "Midnight",
             "Starlight"
           ],
           "specs": [
             {
-              "name": "default",
-              "price": 499,
+              "name": "iPad mini",
+              "price": 699,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 5.99,
+                  "billing": "monthly",
+                  "partNumber": "SGYD3ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 59.99,
+                  "billing": "annual",
+                  "partNumber": "SGY83ZM/A"
+                }
+              ],
+              "partNumber": "MJ6F4KN/A",
+              "colors": [
+                "Midnight",
+                "Starlight"
+              ],
               "constraints": {
-                "minStorage": "128GB"
+                "minStorage": "128GB",
+                "minStorageForNanotexture": "256GB"
               },
               "storageOptions": {
                 "128GB": 0,
@@ -448,6 +642,7 @@
                 "Wi-Fi": 0,
                 "Wi-Fi + Cellular": 150
               },
+              "nanoTexture": 100,
               "applePencil": [
                 {
                   "pencilType": "None",
@@ -460,13 +655,6 @@
                 {
                   "pencilType": "Apple Pencil (USB-C)",
                   "price": 79
-                }
-              ],
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 69,
-                  "billing": "annual"
                 }
               ]
             }
@@ -478,142 +666,154 @@
       "category": "Macbook",
       "appleCareAvailable": true,
       "models": {
-        "MacBook Pro 16\"": {
-          "displayName": "MacBook Pro 16\"",
+        "MacBook Air 13\"": {
+          "displayName": "MacBook Air 13\"",
           "colors": [
-            "Space Black",
-            "Silver"
+            "Sky Blue",
+            "Silver",
+            "Starlight",
+            "Midnight"
           ],
           "specs": [
             {
-              "name": "M4 Pro 14-Core CPU 20-Core GPU 24GB Unified Memory",
-              "price": 2499,
+              "name": "M5 10-Core CPU 8-Core GPU",
+              "price": 1299,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ (Monthly)",
+                  "price": 6.99,
+                  "billing": "monthly",
+                  "partNumber": "SD303ZM/A"
+                },
+                {
+                  "name": "AppleCare+ (Annual)",
+                  "price": 69.99,
+                  "billing": "annual",
+                  "partNumber": "SD2V3ZM/A"
+                }
+              ],
+              "partNumber": "MDH74B/A",
+              "colors": [
+                "Sky Blue",
+                "Silver",
+                "Starlight",
+                "Midnight"
+              ],
               "constraints": {
                 "minStorage": "512GB",
-                "minMemory": "24GB"
+                "minMemory": "16GB"
               },
               "memoryOptions": {
-                "24GB": 0,
-                "36GB": 200,
-                "48GB": 400,
-                "64GB": 600,
-                "128GB": 1400
+                "16GB": 0
+              },
+              "storageOptions": {
+                "512GB": 0
+              },
+              "chargerOptions": {
+                "No Power Adapter": 0
+              }
+            },
+            {
+              "name": "M5 10-Core CPU 10-Core GPU",
+              "price": 1399,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ (Monthly)",
+                  "price": 6.99,
+                  "billing": "monthly",
+                  "partNumber": "SD303ZM/A"
+                },
+                {
+                  "name": "AppleCare+ (Annual)",
+                  "price": 69.99,
+                  "billing": "annual",
+                  "partNumber": "SD2V3ZM/A"
+                }
+              ],
+              "colors": [
+                "Sky Blue",
+                "Silver",
+                "Starlight",
+                "Midnight"
+              ],
+              "constraints": {
+                "minStorage": "512GB",
+                "minMemory": "16GB"
+              },
+              "memoryOptions": {
+                "16GB": 0,
+                "24GB": 200,
+                "32GB": 400
               },
               "storageOptions": {
                 "512GB": 0,
-                "1TB": 200,
-                "2TB": 600,
-                "4TB": 1200,
-                "8TB": 2400
+                "1TB": 300,
+                "2TB": 800,
+                "4TB": 1800
               },
               "chargerOptions": {
-                "70W": 0,
-                "96W": 20
-              },
-              "nanoTexture": 150,
+                "No Power Adapter": 0,
+                "40W": 39,
+                "35W": 59,
+                "70W": 59
+              }
+            }
+          ]
+        },
+        "MacBook Air 15\"": {
+          "displayName": "MacBook Air 15\"",
+          "colors": [
+            "Sky Blue",
+            "Silver",
+            "Starlight",
+            "Midnight"
+          ],
+          "specs": [
+            {
+              "name": "M5 10-Core CPU 10-Core GPU",
+              "price": 1499,
               "appleCare": [
                 {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
+                  "name": "AppleCare+ (Monthly)",
+                  "price": 7.99,
+                  "billing": "monthly",
+                  "partNumber": "SD313ZM/A"
+                },
+                {
+                  "name": "AppleCare+ (Annual)",
+                  "price": 79.99,
+                  "billing": "annual",
+                  "partNumber": "SD2W3ZM/A"
                 }
-              ]
-            },
-            {
-              "name": "M4 Pro 14-Core CPU 20-Core GPU 48GB Unified Memory",
-              "price": 2899,
+              ],
+              "partNumber": "MDV94B/A",
+              "colors": [
+                "Sky Blue",
+                "Silver",
+                "Starlight",
+                "Midnight"
+              ],
               "constraints": {
                 "minStorage": "512GB",
-                "minMemory": "36GB"
+                "minMemory": "16GB"
               },
               "memoryOptions": {
-                "36GB": 0,
-                "48GB": 0,
-                "64GB": 200,
-                "128GB": 1000
+                "16GB": 0,
+                "24GB": 200,
+                "32GB": 400
               },
               "storageOptions": {
                 "512GB": 0,
-                "1TB": 200,
-                "2TB": 600,
-                "4TB": 1200,
-                "8TB": 2400
+                "1TB": 300,
+                "2TB": 800,
+                "4TB": 1800
               },
               "chargerOptions": {
-                "70W": 0,
-                "96W": 20
-              },
-              "nanoTexture": 150,
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
-            },
-            {
-              "name": "M4 Max 14-Core CPU 32-Core GPU 36GB Unified Memory",
-              "price": 3499,
-              "constraints": {
-                "minStorage": "1TB",
-                "minMemory": "24GB"
-              },
-              "memoryOptions": {
-                "36GB": 0,
-                "48GB": 200,
-                "64GB": 400,
-                "128GB": 1200
-              },
-              "storageOptions": {
-                "1TB": 0,
-                "2TB": 400,
-                "4TB": 1000,
-                "8TB": 2200
-              },
-              "chargerOptions": {
-                "70W": 0,
-                "96W": 20
-              },
-              "nanoTexture": 150,
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
-            },
-            {
-              "name": "M4 Max 16-Core CPU 40-Core GPU 48GB Unified Memory",
-              "price": 3999,
-              "constraints": {
-                "minStorage": "1TB",
-                "minMemory": "48GB"
-              },
-              "memoryOptions": {
-                "48GB": 0,
-                "64GB": 200,
-                "128GB": 1000
-              },
-              "storageOptions": {
-                "1TB": 0,
-                "2TB": 400,
-                "4TB": 1000,
-                "8TB": 2200
-              },
-              "chargerOptions": {
-                "70W": 0,
-                "96W": 20
-              },
-              "nanoTexture": 150,
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
+                "No Power Adapter": 0,
+                "40W": 39,
+                "35W": 59,
+                "70W": 59
+              }
             }
           ]
         },
@@ -627,6 +827,13 @@
             {
               "name": "M4 10-Core CPU 10-Core GPU 16GB Unified Memory",
               "price": 1599,
+              "appleCare": [
+                {
+                  "name": "AppleCare+",
+                  "price": 199,
+                  "billing": "annual"
+                }
+              ],
               "constraints": {
                 "minStorage": "512GB",
                 "minMemory": "16GB"
@@ -645,18 +852,18 @@
                 "70W": 0,
                 "96W": 20
               },
-              "nanoTexture": 150,
+              "nanoTexture": 150
+            },
+            {
+              "name": "M4 10-Core CPU 10-Core GPU 24GB Unified Memory",
+              "price": 1999,
               "appleCare": [
                 {
                   "name": "AppleCare+",
                   "price": 199,
                   "billing": "annual"
                 }
-              ]
-            },
-            {
-              "name": "M4 10-Core CPU 10-Core GPU 24GB Unified Memory",
-              "price": 1999,
+              ],
               "constraints": {
                 "minStorage": "1TB",
                 "minMemory": "24GB"
@@ -673,18 +880,18 @@
                 "70W": 0,
                 "96W": 20
               },
-              "nanoTexture": 150,
+              "nanoTexture": 150
+            },
+            {
+              "name": "M4 Pro 12-Core CPU 16-Core GPU 24GB Unified Memory",
+              "price": 1999,
               "appleCare": [
                 {
                   "name": "AppleCare+",
                   "price": 199,
                   "billing": "annual"
                 }
-              ]
-            },
-            {
-              "name": "M4 Pro 12-Core CPU 16-Core GPU 24GB Unified Memory",
-              "price": 1999,
+              ],
               "constraints": {
                 "minStorage": "512GB",
                 "minMemory": "24GB"
@@ -707,18 +914,18 @@
                 "70W": 0,
                 "96W": 20
               },
-              "nanoTexture": 150,
+              "nanoTexture": 150
+            },
+            {
+              "name": "M4 Pro 14-Core CPU 20-Core GPU 24GB Unified Memory",
+              "price": 2399,
               "appleCare": [
                 {
                   "name": "AppleCare+",
                   "price": 199,
                   "billing": "annual"
                 }
-              ]
-            },
-            {
-              "name": "M4 Pro 14-Core CPU 20-Core GPU 24GB Unified Memory",
-              "price": 2399,
+              ],
               "constraints": {
                 "minStorage": "1TB",
                 "minMemory": "24GB"
@@ -740,18 +947,18 @@
                 "70W": 0,
                 "96W": 20
               },
-              "nanoTexture": 150,
+              "nanoTexture": 150
+            },
+            {
+              "name": "M4 Max 14-Core CPU 32-Core GPU 36GB Unified Memory",
+              "price": 3199,
               "appleCare": [
                 {
                   "name": "AppleCare+",
                   "price": 199,
                   "billing": "annual"
                 }
-              ]
-            },
-            {
-              "name": "M4 Max 14-Core CPU 32-Core GPU 36GB Unified Memory",
-              "price": 3199,
+              ],
               "constraints": {
                 "minStorage": "1TB",
                 "minMemory": "36GB"
@@ -772,238 +979,322 @@
                 "70W": 0,
                 "96W": 20
               },
-              "nanoTexture": 150,
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
+              "nanoTexture": 150
             }
           ]
         },
-        "MacBook Air 15\"": {
-          "displayName": "MacBook Air 15\"",
+        "MacBook Pro 16\"": {
+          "displayName": "MacBook Pro 16\"",
           "colors": [
-            "Starlight",
-            "Silver",
-            "Sky Blue",
-            "Midnight"
+            "Space Black",
+            "Silver"
           ],
           "specs": [
             {
-              "name": "M4 10-Core CPU 10-Core GPU 16GB Unified Memory",
-              "price": 1199,
+              "name": "M5 Pro 18-Core CPU 20-Core GPU",
+              "price": 2999,
+              "appleCare": [],
+              "partNumber": "MGE44B/A",
+              "colors": [
+                "Space Black",
+                "Silver"
+              ],
               "constraints": {
-                "minStorage": "256GB",
-                "minMemory": "16GB"
-              },
-              "memoryOptions": {
-                "16GB": 0,
-                "24GB": 200,
-                "32GB": 400
-              },
-              "storageOptions": {
-                "256GB": 0,
-                "512GB": 200,
-                "1TB": 400,
-                "2TB": 800
-              },
-              "chargerOptions": {
-                "35W Dual": 0,
-                "70W": 0
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
-            },
-            {
-              "name": "M4 10-Core CPU 10-Core GPU 24GB Unified Memory",
-              "price": 1599,
-              "constraints": {
-                "minStorage": "512GB",
-                "minMemory": "16GB"
-              },
-              "memoryOptions": {
-                "25GB": 0,
-                "32GB": 200
-              },
-              "storageOptions": {
-                "512GB": 0,
-                "1TB": 200,
-                "2TB": 600
-              },
-              "chargerOptions": {
-                "35W Dual": 0,
-                "70W": 0
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
-            }
-          ]
-        },
-        "MacBook Air 13\"": {
-          "displayName": "MacBook Air 13\"",
-          "colors": [
-            "Starlight",
-            "Silver",
-            "Sky Blue",
-            "Midnight"
-          ],
-          "specs": [
-            {
-              "name": "M4 10-Core CPU 8-Core GPU 16GB Unified Memory",
-              "price": 999,
-              "constraints": {
-                "minStorage": "256GB",
-                "minMemory": "16GB"
-              },
-              "memoryOptions": {
-                "16GB": 0,
-                "24GB": 200,
-                "32GB": 400
-              },
-              "storageOptions": {
-                "256GB": 0,
-                "512GB": 200,
-                "1TB": 400,
-                "2TB": 800
-              },
-              "chargerOptions": {
-                "30W": 0,
-                "35W Dual": 20,
-                "70W": 20
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
-            },
-            {
-              "name": "M4 10-Core CPU 10-Core GPU 16GB Unified Memory",
-              "price": 1199,
-              "constraints": {
-                "minStorage": "512GB",
-                "minMemory": "16GB"
-              },
-              "memoryOptions": {
-                "16GB": 0,
-                "24GB": 200,
-                "32GB": 400
-              },
-              "storageOptions": {
-                "512GB": 0,
-                "1TB": 200,
-                "2TB": 600
-              },
-              "chargerOptions": {
-                "35W Dual": 0,
-                "70W": 0
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
-            },
-            {
-              "name": "M4 10-Core CPU 10-Core GPU 24GB Unified Memory",
-              "price": 1399,
-              "constraints": {
-                "minStorage": "512GB",
+                "minStorage": "1TB",
                 "minMemory": "24GB"
               },
               "memoryOptions": {
                 "24GB": 0,
-                "32GB": 200
+                "48GB": 600,
+                "64GB": 1000
               },
               "storageOptions": {
-                "512GB": 0,
-                "1TB": 200,
-                "2TB": 600
+                "1TB": 0,
+                "2TB": 500,
+                "4TB": 1500
               },
               "chargerOptions": {
-                "35W Dual": 0,
-                "70W": 0
+                "No Power Adapter": 0,
+                "140W": 99
               },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
+              "nanoTexture": 150
+            },
+            {
+              "name": "M5 Max 18-Core CPU 32-Core GPU",
+              "price": 4399,
+              "appleCare": [],
+              "partNumber": "MGE74B/A",
+              "colors": [
+                "Space Black",
+                "Silver"
+              ],
+              "constraints": {
+                "minStorage": "2TB",
+                "minMemory": "36GB"
+              },
+              "memoryOptions": {
+                "36GB": 0
+              },
+              "storageOptions": {
+                "2TB": 0,
+                "4TB": 1000,
+                "8TB": 3000
+              },
+              "chargerOptions": {
+                "No Power Adapter": 0,
+                "140W": 99
+              },
+              "nanoTexture": 150
+            },
+            {
+              "name": "M5 Max 18-Core CPU 40-Core GPU",
+              "price": 4999,
+              "appleCare": [],
+              "colors": [
+                "Space Black",
+                "Silver"
+              ],
+              "constraints": {
+                "minStorage": "2TB",
+                "minMemory": "48GB"
+              },
+              "memoryOptions": {
+                "48GB": 0,
+                "64GB": 400,
+                "128GB": 2000
+              },
+              "storageOptions": {
+                "2TB": 0,
+                "4TB": 1000,
+                "8TB": 3000
+              },
+              "chargerOptions": {
+                "No Power Adapter": 0,
+                "140W": 99
+              },
+              "nanoTexture": 150
+            }
+          ]
+        },
+        "MacBook Pro Proled XDR 14\"": {
+          "displayName": "MacBook Pro Proled XDR 14\"",
+          "colors": [
+            "Space Black",
+            "Silver"
+          ],
+          "specs": [
+            {
+              "name": "M5 Pro 15-Core CPU 16-Core GPU",
+              "price": 2899,
+              "appleCare": [],
+              "partNumber": "MJ2G4B/A",
+              "colors": [
+                "Space Black",
+                "Silver"
+              ],
+              "constraints": {
+                "minStorage": "1TB",
+                "minMemory": "24GB"
+              },
+              "memoryOptions": {
+                "24GB": 0,
+                "48GB": 600
+              },
+              "storageOptions": {
+                "1TB": 0,
+                "2TB": 500,
+                "4TB": 1500
+              },
+              "chargerOptions": {
+                "No Power Adapter": 0,
+                "70W": 59,
+                "96W": 79
+              },
+              "nanoTexture": 150
+            },
+            {
+              "name": "M5 Pro 18-Core CPU 20-Core GPU",
+              "price": 3099,
+              "appleCare": [],
+              "colors": [
+                "Space Black",
+                "Silver"
+              ],
+              "constraints": {
+                "minStorage": "1TB",
+                "minMemory": "24GB"
+              },
+              "memoryOptions": {
+                "24GB": 0,
+                "48GB": 600,
+                "64GB": 1000
+              },
+              "storageOptions": {
+                "1TB": 0,
+                "2TB": 500,
+                "4TB": 1500
+              },
+              "chargerOptions": {
+                "No Power Adapter": 0,
+                "96W": 79
+              },
+              "nanoTexture": 150
+            },
+            {
+              "name": "M5 Max 18-Core CPU 32-Core GPU",
+              "price": 4499,
+              "appleCare": [],
+              "partNumber": "MJ2J4B/A",
+              "colors": [
+                "Space Black",
+                "Silver"
+              ],
+              "constraints": {
+                "minStorage": "2TB",
+                "minMemory": "36GB"
+              },
+              "memoryOptions": {
+                "36GB": 0
+              },
+              "storageOptions": {
+                "2TB": 0,
+                "4TB": 1000,
+                "8TB": 3000,
+                "16TB": 7000
+              },
+              "chargerOptions": {
+                "No Power Adapter": 0,
+                "96W": 79
+              },
+              "nanoTexture": 150
+            },
+            {
+              "name": "M5 Max 18-Core CPU 40-Core GPU",
+              "price": 5099,
+              "appleCare": [],
+              "colors": [
+                "Space Black",
+                "Silver"
+              ],
+              "constraints": {
+                "minStorage": "2TB",
+                "minMemory": "48GB"
+              },
+              "memoryOptions": {
+                "48GB": 0,
+                "64GB": 400,
+                "128GB": 2000
+              },
+              "storageOptions": {
+                "2TB": 0,
+                "4TB": 1000,
+                "8TB": 3000,
+                "16TB": 7000
+              },
+              "chargerOptions": {
+                "No Power Adapter": 0,
+                "96W": 79
+              },
+              "nanoTexture": 150
             }
           ]
         },
         "iMac": {
           "displayName": "iMac",
           "colors": [
-            "Silver",
             "Blue",
-            "Green",
-            "Pink",
-            "Yellow",
             "Purple",
+            "Pink",
             "Orange",
-            "Red"
+            "Yellow",
+            "Green",
+            "Silver"
           ],
           "specs": [
             {
-              "name": "M4 8-Core CPU 10-Core GPU 16GB Unified Memory",
-              "price": 1299,
+              "name": "M6 10-Core CPU 10-Core GPU",
+              "price": 1499,
+              "appleCare": [
+                {
+                  "name": "AppleCare+ (Monthly)",
+                  "price": 6.49,
+                  "billing": "monthly",
+                  "partNumber": "SGJU3ZM/A"
+                },
+                {
+                  "name": "AppleCare+ (Annual)",
+                  "price": 64.99,
+                  "billing": "annual",
+                  "partNumber": "SGJY3ZM/A"
+                }
+              ],
+              "partNumber": "MH064B/A",
+              "colors": [
+                "Blue",
+                "Purple",
+                "Pink",
+                "Orange",
+                "Yellow",
+                "Green",
+                "Silver"
+              ],
               "constraints": {
-                "minStorage": "256GB"
+                "minStorage": "256GB",
+                "minMemory": "16GB"
               },
               "memoryOptions": {
                 "16GB": 0,
                 "24GB": 200
               },
               "storageOptions": {
-                "256GB": 200,
-                "512GB": 400,
-                "1TB": 800
-              },
-              "chargerOptions": {
-                "30W": 0,
-                "67W": 0
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
+                "256GB": 0,
+                "512GB": 200,
+                "1TB": 500
+              }
             },
             {
-              "name": "M4 8-Core CPU 10-Core GPU 24GB Unified Memory",
-              "price": 1499,
-              "constraints": {
-                "minStorage": "512GB"
-              },
+              "name": "M6 12-Core CPU 12-Core GPU",
+              "price": 1699,
               "appleCare": [
                 {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
+                  "name": "AppleCare+ (Monthly)",
+                  "price": 6.49,
+                  "billing": "monthly",
+                  "partNumber": "SGJU3ZM/A"
+                },
+                {
+                  "name": "AppleCare+ (Annual)",
+                  "price": 64.99,
+                  "billing": "annual",
+                  "partNumber": "SGJY3ZM/A"
                 }
-              ]
+              ],
+              "partNumber": "MH114B/A",
+              "colors": [
+                "Blue",
+                "Purple",
+                "Pink",
+                "Orange",
+                "Yellow",
+                "Green",
+                "Silver"
+              ],
+              "constraints": {
+                "minStorage": "256GB",
+                "minMemory": "16GB"
+              },
+              "memoryOptions": {
+                "16GB": 0,
+                "24GB": 200,
+                "32GB": 400
+              },
+              "storageOptions": {
+                "256GB": 0,
+                "512GB": 200,
+                "1TB": 500,
+                "2TB": 1000
+              },
+              "nanoTexture": 200
             }
           ]
         },
@@ -1014,48 +1305,68 @@
           ],
           "specs": [
             {
-              "name": "M4 8-Core CPU 10-Core GPU 16GB Unified Memory",
-              "price": 699,
+              "name": "M6 12-Core CPU 12-Core GPU",
+              "price": 899,
+              "appleCare": [],
+              "partNumber": "MHQK4B/A",
               "constraints": {
-                "minStorage": "256GB"
+                "minStorage": "256GB",
+                "minMemory": "16GB"
               },
               "memoryOptions": {
                 "16GB": 0,
-                "24GB": 200
+                "24GB": 200,
+                "32GB": 400
               },
               "storageOptions": {
-                "256GB": 200,
-                "512GB": 400,
-                "1TB": 800
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
+                "256GB": 0,
+                "512GB": 200,
+                "1TB": 500,
+                "2TB": 1000
+              }
             },
             {
-              "name": "M4 8-Core CPU 10-Core GPU 24GB Unified Memory",
-              "price": 899,
+              "name": "M5 Pro 15-Core CPU 16-Core GPU",
+              "price": 1699,
+              "appleCare": [],
+              "partNumber": "MHQN4B/A",
               "constraints": {
-                "minStorage": "512GB"
+                "minStorage": "512GB",
+                "minMemory": "24GB"
               },
               "memoryOptions": {
-                "24GB": 0
+                "24GB": 0,
+                "48GB": 600,
+                "64GB": 1000
               },
               "storageOptions": {
                 "512GB": 0,
-                "1TB": 400
+                "1TB": 300,
+                "2TB": 800,
+                "4TB": 1800,
+                "8TB": 3800
+              }
+            },
+            {
+              "name": "M5 Pro 18-Core CPU 20-Core GPU",
+              "price": 1899,
+              "appleCare": [],
+              "constraints": {
+                "minStorage": "512GB",
+                "minMemory": "24GB"
               },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
+              "memoryOptions": {
+                "24GB": 0,
+                "48GB": 600,
+                "64GB": 1000
+              },
+              "storageOptions": {
+                "512GB": 0,
+                "1TB": 300,
+                "2TB": 800,
+                "4TB": 1800,
+                "8TB": 3800
+              }
             }
           ]
         },
@@ -1066,45 +1377,87 @@
           ],
           "specs": [
             {
-              "name": "M4 10-Core CPU 16-Core GPU 24GB Unified Memory",
-              "price": 1999,
+              "name": "M5 Max 18-Core CPU 32-Core GPU",
+              "price": 2499,
+              "appleCare": [],
+              "partNumber": "MHL64B/A",
               "constraints": {
-                "minStorage": "512GB"
+                "minStorage": "512GB",
+                "minMemory": "36GB"
               },
               "memoryOptions": {
-                "24GB": 0,
-                "48GB": 200
+                "36GB": 0
               },
               "storageOptions": {
-                "512GB": 200,
-                "1TB": 400,
-                "2TB": 800
-              },
-              "chargerOptions": {
-                "67W": 0,
-                "96W": 0
-              },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
+                "512GB": 0,
+                "1TB": 300,
+                "2TB": 800,
+                "4TB": 1800,
+                "8TB": 3800
+              }
             },
             {
-              "name": "M4 10-Core CPU 16-Core GPU 48GB Unified Memory",
-              "price": 2499,
+              "name": "M5 Max 18-Core CPU 40-Core GPU",
+              "price": 3099,
+              "appleCare": [],
               "constraints": {
-                "minStorage": "1TB"
+                "minStorage": "512GB",
+                "minMemory": "48GB"
               },
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 199,
-                  "billing": "annual"
-                }
-              ]
+              "memoryOptions": {
+                "48GB": 0,
+                "64GB": 400,
+                "128GB": 2000
+              },
+              "storageOptions": {
+                "512GB": 0,
+                "1TB": 300,
+                "2TB": 800,
+                "4TB": 1800,
+                "8TB": 3800
+              }
+            },
+            {
+              "name": "M5 Ultra 30-Core CPU 64-Core GPU",
+              "price": 5499,
+              "appleCare": [],
+              "partNumber": "MHL74B/A",
+              "constraints": {
+                "minStorage": "1TB",
+                "minMemory": "96GB"
+              },
+              "memoryOptions": {
+                "96GB": 0,
+                "256GB": 4000
+              },
+              "storageOptions": {
+                "1TB": 0,
+                "2TB": 500,
+                "4TB": 1500,
+                "8TB": 3500,
+                "16TB": 7500
+              }
+            },
+            {
+              "name": "M5 Ultra 36-Core CPU 80-Core GPU",
+              "price": 6799,
+              "appleCare": [],
+              "constraints": {
+                "minStorage": "1TB",
+                "minMemory": "96GB"
+              },
+              "memoryOptions": {
+                "96GB": 0,
+                "256GB": 4000,
+                "512GB": 15500
+              },
+              "storageOptions": {
+                "1TB": 0,
+                "2TB": 500,
+                "4TB": 1500,
+                "8TB": 3500,
+                "16TB": 7500
+              }
             }
           ]
         }
@@ -1114,26 +1467,49 @@
       "category": "Apple Watch",
       "appleCareAvailable": true,
       "models": {
-        "Apple Watch Series 11": {
-          "displayName": "Apple Watch Series 11",
-          "colors": [],
+        "Apple Watch Series 12": {
+          "displayName": "Apple Watch Series 12",
+          "colors": [
+            "Dark Bronze",
+            "Light Gold",
+            "Radiant Gold",
+            "Black",
+            "Space Grey",
+            "Natural",
+            "Pearl White",
+            "Night Blue"
+          ],
           "specs": [
             {
               "name": "Aluminium Case",
               "price": 369,
-              "colors": [
-                "Space Grey",
-                "Silver",
-                "Rose Gold",
-                "Jet Black"
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 4.99,
+                  "billing": "monthly",
+                  "partNumber": "SH3K3ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 49.99,
+                  "billing": "annual",
+                  "partNumber": "SH3F3ZM/A"
+                }
               ],
-              "sizeOptions": {
-                "42mm": 0,
-                "46mm": 30
-              },
+              "colors": [
+                "Dark Bronze",
+                "Light Gold",
+                "Black",
+                "Space Grey"
+              ],
               "connectivityOptions": {
                 "GPS": 0,
                 "GPS + Cellular": 100
+              },
+              "sizeOptions": {
+                "42mm": 0,
+                "46mm": 50
               },
               "bandOptions": [
                 {
@@ -1143,11 +1519,11 @@
                       "styleName": "Solo Loop",
                       "price": 0,
                       "bandColor": [
-                        "Neon Yellow",
-                        "Anchor Blue",
-                        "Green Grey",
-                        "Black",
-                        "Light Blush"
+                        "Burgundy",
+                        "Olive",
+                        "Navy Blue",
+                        "Wildflower Blue",
+                        "Black"
                       ],
                       "bandSizeOptions": [
                         "0",
@@ -1159,22 +1535,53 @@
                         "6",
                         "7",
                         "8",
-                        "9"
-                      ]
+                        "9",
+                        "10",
+                        "11",
+                        "12"
+                      ],
+                      "bandSizesByCase": {
+                        "42mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9"
+                        ],
+                        "46mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9",
+                          "10",
+                          "11",
+                          "12"
+                        ]
+                      }
                     },
                     {
                       "styleName": "Sport Band",
                       "price": 0,
                       "bandColor": [
-                        "Neon Yellow",
-                        "Anchor Blue",
-                        "Purple Fog",
-                        "Starlight",
+                        "Burgundy",
+                        "Olive",
+                        "Navy Blue",
+                        "Wildflower Blue",
+                        "Magenta",
                         "Black",
-                        "Light Blush",
-                        "Stone Grey",
-                        "Pride",
-                        "Black Unity"
+                        "Sand",
+                        "Pale Succulent"
                       ],
                       "bandSizeOptions": [
                         "S/M",
@@ -1185,11 +1592,11 @@
                       "styleName": "Nike Sport Band",
                       "price": 0,
                       "bandColor": [
-                        "Midnight Black",
-                        "Alpenglow Pink",
-                        "Blue Ribbon",
-                        "Veiled Grey",
-                        "Volt Splash"
+                        "After Dark Black",
+                        "Pavement Grey",
+                        "Chalk Calm",
+                        "Essential White",
+                        "Green Spark"
                       ],
                       "bandSizeOptions": [
                         "S/M",
@@ -1205,26 +1612,25 @@
                       "styleName": "Sport Loop",
                       "price": 0,
                       "bandColor": [
-                        "Neon Yellow",
-                        "Anchor Blue",
-                        "Purple Fog",
-                        "Forest",
-                        "Dark Grey",
-                        "Pride",
-                        "Black Unity"
-                      ],
-                      "bandSizeOptions": [
-                        "S/M",
-                        "M/L"
+                        "Burgundy",
+                        "Burgundy Plaid",
+                        "Olive",
+                        "Magenta",
+                        "Light Umber Plaid",
+                        "Chambray Blue",
+                        "Limestone",
+                        "Pride Edition",
+                        "Black Unity - Unity Rhythm"
                       ]
                     },
                     {
                       "styleName": "Magnetic Link",
                       "price": 50,
                       "bandColor": [
-                        "Caramel",
-                        "Sage Grey",
-                        "Navy"
+                        "Burgundy",
+                        "Midnight",
+                        "Wildflower Blue",
+                        "Camel"
                       ],
                       "bandSizeOptions": [
                         "S/M",
@@ -1233,29 +1639,34 @@
                     },
                     {
                       "styleName": "Modern Buckle",
-                      "price": 100,
+                      "price": 150,
                       "bandColor": [
-                        "Caramel",
-                        "Sage Grey",
-                        "Midnight Purple"
+                        "Navy Blue",
+                        "Mulberry",
+                        "Sage",
+                        "Camel"
                       ],
                       "bandSizeOptions": [
                         "Small",
                         "Medium",
                         "Large"
+                      ],
+                      "caseSizes": [
+                        "42mm"
                       ]
                     },
                     {
                       "styleName": "Braided Solo Loop",
                       "price": 50,
                       "bandColor": [
-                        "Turmeric",
-                        "Neon Yellow",
-                        "Anchor Blue",
-                        "Green Grey",
-                        "Midnight",
-                        "Pride",
-                        "Black Unity"
+                        "Burgundy",
+                        "Olive",
+                        "Navy Blue",
+                        "Wildflower Blue",
+                        "Magenta",
+                        "Black",
+                        "Pride Edition",
+                        "Black Unity - Unity Connection"
                       ],
                       "bandSizeOptions": [
                         "0",
@@ -1267,22 +1678,50 @@
                         "6",
                         "7",
                         "8",
-                        "9"
-                      ]
+                        "9",
+                        "10",
+                        "11",
+                        "12"
+                      ],
+                      "bandSizesByCase": {
+                        "42mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9"
+                        ],
+                        "46mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9",
+                          "10",
+                          "11",
+                          "12"
+                        ]
+                      }
                     },
                     {
                       "styleName": "Nike Sport Loop",
                       "price": 0,
                       "bandColor": [
-                        "Midnight Black",
-                        "Alpenglow Pink",
-                        "Blue Ribbon",
-                        "Veiled Grey",
-                        "Volt Splash"
-                      ],
-                      "bandSizeOptions": [
-                        "S/M",
-                        "M/L"
+                        "After Dark Black",
+                        "Pavement Grey",
+                        "Chalk Calm",
+                        "Essential White",
+                        "Green Spark"
                       ]
                     }
                   ]
@@ -1294,45 +1733,61 @@
                       "styleName": "Milanese Loop",
                       "price": 50,
                       "bandColor": [
-                        "Natural",
-                        "Gold",
-                        "Slate"
-                      ]
+                        "Dark Bronze",
+                        "Radiant Gold",
+                        "Natural"
+                      ],
+                      "bandSizeOptions": [
+                        "S/M",
+                        "M/L"
+                      ],
+                      "bandSizesByCase": {
+                        "42mm": [],
+                        "46mm": [
+                          "S/M",
+                          "M/L"
+                        ]
+                      }
                     },
                     {
                       "styleName": "Link Bracelet",
                       "price": 250,
                       "bandColor": [
-                        "Natural",
-                        "Gold",
-                        "Slate"
+                        "Radiant Gold",
+                        "Natural"
                       ]
                     }
                   ]
-                }
-              ],
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 79,
-                  "billing": "annual"
                 }
               ]
             },
             {
               "name": "Titanium Case",
               "price": 649,
-              "sizeOptions": {
-                "42mm": 0,
-                "46mm": 50
-              },
+              "appleCare": [
+                {
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 4.99,
+                  "billing": "monthly",
+                  "partNumber": "SH3K3ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 49.99,
+                  "billing": "annual",
+                  "partNumber": "SH3F3ZM/A"
+                }
+              ],
               "colors": [
-                "Natural",
-                "Slate",
-                "Gold"
+                "Radiant Gold",
+                "Natural"
               ],
               "connectivityOptions": {
                 "GPS + Cellular": 0
+              },
+              "sizeOptions": {
+                "42mm": 0,
+                "46mm": 50
               },
               "bandOptions": [
                 {
@@ -1342,11 +1797,11 @@
                       "styleName": "Solo Loop",
                       "price": 0,
                       "bandColor": [
-                        "Neon Yellow",
-                        "Anchor Blue",
-                        "Green Grey",
-                        "Black",
-                        "Light Blush"
+                        "Burgundy",
+                        "Olive",
+                        "Navy Blue",
+                        "Wildflower Blue",
+                        "Black"
                       ],
                       "bandSizeOptions": [
                         "0",
@@ -1358,22 +1813,53 @@
                         "6",
                         "7",
                         "8",
-                        "9"
-                      ]
+                        "9",
+                        "10",
+                        "11",
+                        "12"
+                      ],
+                      "bandSizesByCase": {
+                        "42mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9"
+                        ],
+                        "46mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9",
+                          "10",
+                          "11",
+                          "12"
+                        ]
+                      }
                     },
                     {
                       "styleName": "Sport Band",
                       "price": 0,
                       "bandColor": [
-                        "Neon Yellow",
-                        "Anchor Blue",
-                        "Purple Fog",
-                        "Starlight",
+                        "Burgundy",
+                        "Olive",
+                        "Navy Blue",
+                        "Wildflower Blue",
+                        "Magenta",
                         "Black",
-                        "Light Blush",
-                        "Stone Grey",
-                        "Pride",
-                        "Black Unity"
+                        "Sand",
+                        "Pale Succulent"
                       ],
                       "bandSizeOptions": [
                         "S/M",
@@ -1384,11 +1870,11 @@
                       "styleName": "Nike Sport Band",
                       "price": 0,
                       "bandColor": [
-                        "Midnight Black",
-                        "Alpenglow Pink",
-                        "Blue Ribbon",
-                        "Veiled Grey",
-                        "Volt Splash"
+                        "After Dark Black",
+                        "Pavement Grey",
+                        "Chalk Calm",
+                        "Essential White",
+                        "Green Spark"
                       ],
                       "bandSizeOptions": [
                         "S/M",
@@ -1404,26 +1890,25 @@
                       "styleName": "Sport Loop",
                       "price": 0,
                       "bandColor": [
-                        "Neon Yellow",
-                        "Anchor Blue",
-                        "Purple Fog",
-                        "Forest",
-                        "Dark Grey",
-                        "Pride",
-                        "Black Unity"
-                      ],
-                      "bandSizeOptions": [
-                        "S/M",
-                        "M/L"
+                        "Burgundy",
+                        "Burgundy Plaid",
+                        "Olive",
+                        "Magenta",
+                        "Light Umber Plaid",
+                        "Chambray Blue",
+                        "Limestone",
+                        "Pride Edition",
+                        "Black Unity - Unity Rhythm"
                       ]
                     },
                     {
                       "styleName": "Magnetic Link",
                       "price": 50,
                       "bandColor": [
-                        "Caramel",
-                        "Sage Grey",
-                        "Navy"
+                        "Burgundy",
+                        "Midnight",
+                        "Wildflower Blue",
+                        "Camel"
                       ],
                       "bandSizeOptions": [
                         "S/M",
@@ -1432,29 +1917,34 @@
                     },
                     {
                       "styleName": "Modern Buckle",
-                      "price": 100,
+                      "price": 150,
                       "bandColor": [
-                        "Caramel",
-                        "Sage Grey",
-                        "Midnight Purple"
+                        "Navy Blue",
+                        "Mulberry",
+                        "Sage",
+                        "Camel"
                       ],
                       "bandSizeOptions": [
                         "Small",
                         "Medium",
                         "Large"
+                      ],
+                      "caseSizes": [
+                        "42mm"
                       ]
                     },
                     {
                       "styleName": "Braided Solo Loop",
                       "price": 50,
                       "bandColor": [
-                        "Turmeric",
-                        "Neon Yellow",
-                        "Anchor Blue",
-                        "Green Grey",
-                        "Midnight",
-                        "Pride",
-                        "Black Unity"
+                        "Burgundy",
+                        "Olive",
+                        "Navy Blue",
+                        "Wildflower Blue",
+                        "Magenta",
+                        "Black",
+                        "Pride Edition",
+                        "Black Unity - Unity Connection"
                       ],
                       "bandSizeOptions": [
                         "0",
@@ -1466,22 +1956,50 @@
                         "6",
                         "7",
                         "8",
-                        "9"
-                      ]
+                        "9",
+                        "10",
+                        "11",
+                        "12"
+                      ],
+                      "bandSizesByCase": {
+                        "42mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9"
+                        ],
+                        "46mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9",
+                          "10",
+                          "11",
+                          "12"
+                        ]
+                      }
                     },
                     {
                       "styleName": "Nike Sport Loop",
                       "price": 0,
                       "bandColor": [
-                        "Midnight Black",
-                        "Alpenglow Pink",
-                        "Blue Ribbon",
-                        "Veiled Grey",
-                        "Volt Splash"
-                      ],
-                      "bandSizeOptions": [
-                        "S/M",
-                        "M/L"
+                        "After Dark Black",
+                        "Pavement Grey",
+                        "Chalk Calm",
+                        "Essential White",
+                        "Green Spark"
                       ]
                     }
                   ]
@@ -1493,60 +2011,133 @@
                       "styleName": "Milanese Loop",
                       "price": 50,
                       "bandColor": [
-                        "Natural",
-                        "Gold",
-                        "Slate"
-                      ]
+                        "Dark Bronze",
+                        "Radiant Gold",
+                        "Natural"
+                      ],
+                      "bandSizeOptions": [
+                        "S/M",
+                        "M/L"
+                      ],
+                      "bandSizesByCase": {
+                        "42mm": [],
+                        "46mm": [
+                          "S/M",
+                          "M/L"
+                        ]
+                      }
                     },
                     {
                       "styleName": "Link Bracelet",
                       "price": 250,
                       "bandColor": [
-                        "Natural",
-                        "Gold",
-                        "Slate"
+                        "Radiant Gold",
+                        "Natural"
                       ]
                     }
                   ]
                 }
-              ],
+              ]
+            },
+            {
+              "name": "Ceramic Case",
+              "price": 849,
               "appleCare": [
                 {
-                  "name": "AppleCare+",
-                  "price": 79,
-                  "billing": "annual"
+                  "name": "AppleCare+ with Theft and Loss (Monthly)",
+                  "price": 4.99,
+                  "billing": "monthly",
+                  "partNumber": "SH3K3ZM/A"
+                },
+                {
+                  "name": "AppleCare+ with Theft and Loss (Annual)",
+                  "price": 49.99,
+                  "billing": "annual",
+                  "partNumber": "SH3F3ZM/A"
                 }
-              ]
-            }
-          ]
-        },
-        "Apple Watch Ultra 3": {
-          "displayName": "Apple Watch Ultra 3",
-          "colors": [
-            "Natural",
-            "Black"
-          ],
-          "specs": [
-            {
-              "name": "default",
-              "price": 749,
-              "sizeOptions": {
-                "49mm": 0
-              },
+              ],
+              "colors": [
+                "Pearl White",
+                "Night Blue"
+              ],
               "connectivityOptions": {
                 "GPS + Cellular": 0
               },
+              "sizeOptions": {
+                "42mm": 0,
+                "46mm": 50
+              },
               "bandOptions": [
                 {
-                  "material": "default",
+                  "material": "Rubber",
                   "style": [
                     {
-                      "styleName": "Trail Loop",
+                      "styleName": "Solo Loop",
                       "price": 0,
                       "bandColor": [
+                        "Burgundy",
+                        "Olive",
+                        "Navy Blue",
+                        "Wildflower Blue",
+                        "Black"
+                      ],
+                      "bandSizeOptions": [
+                        "0",
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9",
+                        "10",
+                        "11",
+                        "12"
+                      ],
+                      "bandSizesByCase": {
+                        "42mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9"
+                        ],
+                        "46mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9",
+                          "10",
+                          "11",
+                          "12"
+                        ]
+                      }
+                    },
+                    {
+                      "styleName": "Sport Band",
+                      "price": 0,
+                      "bandColor": [
+                        "Burgundy",
+                        "Olive",
+                        "Navy Blue",
+                        "Wildflower Blue",
+                        "Magenta",
                         "Black",
-                        "Green",
-                        "Blue"
+                        "Sand",
+                        "Pale Succulent"
                       ],
                       "bandSizeOptions": [
                         "S/M",
@@ -1554,21 +2145,209 @@
                       ]
                     },
                     {
-                      "styleName": "Ocean Band",
+                      "styleName": "Nike Sport Band",
                       "price": 0,
                       "bandColor": [
-                        "Neon Green",
-                        "Anchor Blue",
-                        "Black"
+                        "After Dark Black",
+                        "Pavement Grey",
+                        "Chalk Calm",
+                        "Essential White",
+                        "Green Spark"
+                      ],
+                      "bandSizeOptions": [
+                        "S/M",
+                        "M/L"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "material": "Textile",
+                  "style": [
+                    {
+                      "styleName": "Sport Loop",
+                      "price": 0,
+                      "bandColor": [
+                        "Burgundy",
+                        "Burgundy Plaid",
+                        "Olive",
+                        "Magenta",
+                        "Light Umber Plaid",
+                        "Chambray Blue",
+                        "Limestone",
+                        "Pride Edition",
+                        "Black Unity - Unity Rhythm"
                       ]
                     },
                     {
-                      "styleName": "Alpine Loop",
+                      "styleName": "Magnetic Link",
+                      "price": 50,
+                      "bandColor": [
+                        "Burgundy",
+                        "Midnight",
+                        "Wildflower Blue",
+                        "Camel"
+                      ],
+                      "bandSizeOptions": [
+                        "S/M",
+                        "M/L"
+                      ]
+                    },
+                    {
+                      "styleName": "Modern Buckle",
+                      "price": 150,
+                      "bandColor": [
+                        "Navy Blue",
+                        "Mulberry",
+                        "Sage",
+                        "Camel"
+                      ],
+                      "bandSizeOptions": [
+                        "Small",
+                        "Medium",
+                        "Large"
+                      ],
+                      "caseSizes": [
+                        "42mm"
+                      ]
+                    },
+                    {
+                      "styleName": "Braided Solo Loop",
+                      "price": 50,
+                      "bandColor": [
+                        "Burgundy",
+                        "Olive",
+                        "Navy Blue",
+                        "Wildflower Blue",
+                        "Magenta",
+                        "Black",
+                        "Pride Edition",
+                        "Black Unity - Unity Connection"
+                      ],
+                      "bandSizeOptions": [
+                        "0",
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9",
+                        "10",
+                        "11",
+                        "12"
+                      ],
+                      "bandSizesByCase": {
+                        "42mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9"
+                        ],
+                        "46mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9",
+                          "10",
+                          "11",
+                          "12"
+                        ]
+                      }
+                    },
+                    {
+                      "styleName": "Nike Sport Loop",
                       "price": 0,
                       "bandColor": [
-                        "Light Blue",
-                        "Terra Cotta",
-                        "Black"
+                        "After Dark Black",
+                        "Pavement Grey",
+                        "Chalk Calm",
+                        "Essential White",
+                        "Green Spark"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "material": "Stainless Steel",
+                  "style": [
+                    {
+                      "styleName": "Milanese Loop",
+                      "price": 50,
+                      "bandColor": [
+                        "Dark Bronze",
+                        "Radiant Gold",
+                        "Natural"
+                      ],
+                      "bandSizeOptions": [
+                        "S/M",
+                        "M/L"
+                      ],
+                      "bandSizesByCase": {
+                        "42mm": [],
+                        "46mm": [
+                          "S/M",
+                          "M/L"
+                        ]
+                      }
+                    },
+                    {
+                      "styleName": "Link Bracelet",
+                      "price": 250,
+                      "bandColor": [
+                        "Radiant Gold",
+                        "Natural"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "Apple Watch Ultra 4": {
+          "displayName": "Apple Watch Ultra 4",
+          "colors": [
+            "Black",
+            "Natural"
+          ],
+          "specs": [
+            {
+              "name": "Apple Watch Ultra 4",
+              "price": 749,
+              "appleCare": [],
+              "colors": [
+                "Black",
+                "Natural"
+              ],
+              "sizeOptions": {
+                "49mm": 0
+              },
+              "bandOptions": [
+                {
+                  "material": "Strap",
+                  "style": [
+                    {
+                      "styleName": "Alpine Loop For outdoor adventure and hiking.",
+                      "price": 0,
+                      "bandColor": [
+                        "Burgundy",
+                        "Dark Olive",
+                        "Desert"
                       ],
                       "bandSizeOptions": [
                         "Small",
@@ -1577,11 +2356,32 @@
                       ]
                     },
                     {
-                      "styleName": "Titanium Milanese Loop",
+                      "styleName": "Trail Loop For all sports and workouts.",
+                      "price": 0,
+                      "bandColor": [
+                        "Burgundy",
+                        "Dark Umber",
+                        "Sand"
+                      ],
+                      "bandSizeOptions": [
+                        "S/M",
+                        "M/L"
+                      ]
+                    },
+                    {
+                      "styleName": "Ocean Band For water sports and recreational diving.",
+                      "price": 0,
+                      "bandColor": [
+                        "Translucent Black",
+                        "Translucent Kelp",
+                        "Translucent Grey"
+                      ]
+                    },
+                    {
+                      "styleName": "Titanium Milanese Loop Designed for the ocean, yet elegant for any occasion.",
                       "price": 100,
                       "bandColor": [
-                        "Natural",
-                        "Black"
+                        "Natural"
                       ],
                       "bandSizeOptions": [
                         "Small",
@@ -1591,18 +2391,11 @@
                     }
                   ]
                 }
-              ],
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 99,
-                  "billing": "annual"
-                }
               ]
             }
           ]
         },
-        "Apple Watch SE": {
+        "Apple Watch SE 3": {
           "displayName": "Apple Watch SE 3",
           "colors": [
             "Midnight",
@@ -1610,15 +2403,20 @@
           ],
           "specs": [
             {
-              "name": "default",
+              "name": "Aluminium Case",
               "price": 219,
-              "sizeOptions": {
-                "40mm": 0,
-                "44mm": 30
-              },
+              "appleCare": [],
+              "colors": [
+                "Midnight",
+                "Starlight"
+              ],
               "connectivityOptions": {
                 "GPS": 0,
                 "GPS + Cellular": 70
+              },
+              "sizeOptions": {
+                "40mm": 0,
+                "44mm": 30
               },
               "bandOptions": [
                 {
@@ -1628,11 +2426,11 @@
                       "styleName": "Solo Loop",
                       "price": 0,
                       "bandColor": [
-                        "Neon Yellow",
-                        "Anchor Blue",
-                        "Green Grey",
-                        "Black",
-                        "Light Blush"
+                        "Burgundy",
+                        "Olive",
+                        "Navy Blue",
+                        "Wildflower Blue",
+                        "Black"
                       ],
                       "bandSizeOptions": [
                         "0",
@@ -1644,22 +2442,53 @@
                         "6",
                         "7",
                         "8",
-                        "9"
-                      ]
+                        "9",
+                        "10",
+                        "11",
+                        "12"
+                      ],
+                      "bandSizesByCase": {
+                        "40mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9"
+                        ],
+                        "44mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9",
+                          "10",
+                          "11",
+                          "12"
+                        ]
+                      }
                     },
                     {
                       "styleName": "Sport Band",
                       "price": 0,
                       "bandColor": [
-                        "Neon Yellow",
-                        "Anchor Blue",
-                        "Purple Fog",
-                        "Starlight",
+                        "Burgundy",
+                        "Olive",
+                        "Navy Blue",
+                        "Wildflower Blue",
+                        "Magenta",
                         "Black",
-                        "Light Blush",
-                        "Stone Grey",
-                        "Pride",
-                        "Black Unity"
+                        "Sand",
+                        "Pale Succulent"
                       ],
                       "bandSizeOptions": [
                         "S/M",
@@ -1670,11 +2499,11 @@
                       "styleName": "Nike Sport Band",
                       "price": 0,
                       "bandColor": [
-                        "Midnight Black",
-                        "Alpenglow Pink",
-                        "Blue Ribbon",
-                        "Veiled Grey",
-                        "Volt Splash"
+                        "After Dark Black",
+                        "Pavement Grey",
+                        "Chalk Calm",
+                        "Essential White",
+                        "Green Spark"
                       ],
                       "bandSizeOptions": [
                         "S/M",
@@ -1690,26 +2519,25 @@
                       "styleName": "Sport Loop",
                       "price": 0,
                       "bandColor": [
-                        "Neon Yellow",
-                        "Anchor Blue",
-                        "Purple Fog",
-                        "Forest",
-                        "Dark Grey",
-                        "Pride",
-                        "Black Unity"
-                      ],
-                      "bandSizeOptions": [
-                        "S/M",
-                        "M/L"
+                        "Burgundy",
+                        "Burgundy Plaid",
+                        "Olive",
+                        "Magenta",
+                        "Light Umber Plaid",
+                        "Chambray Blue",
+                        "Limestone",
+                        "Pride Edition",
+                        "Black Unity - Unity Rhythm"
                       ]
                     },
                     {
                       "styleName": "Magnetic Link",
                       "price": 50,
                       "bandColor": [
-                        "Caramel",
-                        "Sage Grey",
-                        "Navy"
+                        "Burgundy",
+                        "Midnight",
+                        "Wildflower Blue",
+                        "Camel"
                       ],
                       "bandSizeOptions": [
                         "S/M",
@@ -1718,29 +2546,34 @@
                     },
                     {
                       "styleName": "Modern Buckle",
-                      "price": 100,
+                      "price": 150,
                       "bandColor": [
-                        "Caramel",
-                        "Sage Grey",
-                        "Midnight Purple"
+                        "Navy Blue",
+                        "Mulberry",
+                        "Sage",
+                        "Camel"
                       ],
                       "bandSizeOptions": [
                         "Small",
                         "Medium",
                         "Large"
+                      ],
+                      "caseSizes": [
+                        "40mm"
                       ]
                     },
                     {
                       "styleName": "Braided Solo Loop",
                       "price": 50,
                       "bandColor": [
-                        "Turmeric",
-                        "Neon Yellow",
-                        "Anchor Blue",
-                        "Green Grey",
-                        "Midnight",
-                        "Pride",
-                        "Black Unity"
+                        "Burgundy",
+                        "Olive",
+                        "Navy Blue",
+                        "Wildflower Blue",
+                        "Magenta",
+                        "Black",
+                        "Pride Edition",
+                        "Black Unity - Unity Connection"
                       ],
                       "bandSizeOptions": [
                         "0",
@@ -1752,22 +2585,50 @@
                         "6",
                         "7",
                         "8",
-                        "9"
-                      ]
+                        "9",
+                        "10",
+                        "11",
+                        "12"
+                      ],
+                      "bandSizesByCase": {
+                        "40mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9"
+                        ],
+                        "44mm": [
+                          "0",
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7",
+                          "8",
+                          "9",
+                          "10",
+                          "11",
+                          "12"
+                        ]
+                      }
                     },
                     {
                       "styleName": "Nike Sport Loop",
                       "price": 0,
                       "bandColor": [
-                        "Midnight Black",
-                        "Alpenglow Pink",
-                        "Blue Ribbon",
-                        "Veiled Grey",
-                        "Volt Splash"
-                      ],
-                      "bandSizeOptions": [
-                        "S/M",
-                        "M/L"
+                        "After Dark Black",
+                        "Pavement Grey",
+                        "Chalk Calm",
+                        "Essential White",
+                        "Green Spark"
                       ]
                     }
                   ]
@@ -1779,28 +2640,31 @@
                       "styleName": "Milanese Loop",
                       "price": 50,
                       "bandColor": [
-                        "Natural",
-                        "Gold",
-                        "Slate"
-                      ]
+                        "Dark Bronze",
+                        "Radiant Gold",
+                        "Natural"
+                      ],
+                      "bandSizeOptions": [
+                        "S/M",
+                        "M/L"
+                      ],
+                      "bandSizesByCase": {
+                        "40mm": [],
+                        "44mm": [
+                          "S/M",
+                          "M/L"
+                        ]
+                      }
                     },
                     {
                       "styleName": "Link Bracelet",
                       "price": 250,
                       "bandColor": [
-                        "Natural",
-                        "Gold",
-                        "Slate"
+                        "Radiant Gold",
+                        "Natural"
                       ]
                     }
                   ]
-                }
-              ],
-              "appleCare": [
-                {
-                  "name": "AppleCare+",
-                  "price": 49,
-                  "billing": "annual"
                 }
               ]
             }
