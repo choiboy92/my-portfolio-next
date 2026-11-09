@@ -66,7 +66,7 @@ function fakeFetcher(tweak: Tweak = {}): Fetcher & { requested: string[] } {
           expect(q.get('option.watch_cases')).toBe('MJFN4MP/A')
           return alu42.response as T
         }
-        expect(q.get('option.watch_cases')).toBe('MJFW4MP/A')
+        expect(q.get('option.watch_cases')).toBe('MJFT4MP/A')
         const body = shifted(ti46, ALU_46_GPS - TI_46_CELL)
         return (tweak.selection46 ? tweak.selection46(body) : body) as T
       }

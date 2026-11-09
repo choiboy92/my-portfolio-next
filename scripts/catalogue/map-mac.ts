@@ -89,10 +89,30 @@ function standardFinish(b: Bootstrap): string | undefined {
   return b.mainDisplayValues[FINISH]?.variantOrder?.[0]
 }
 
+function rankIn(order: string[] | undefined, value: string | undefined): number {
+  const i = value === undefined ? -1 : (order ?? []).indexOf(value)
+  return i < 0 ? Infinity : i
+}
+
+function byRank(x: number, y: number): number {
+  return x === y ? 0 : x < y ? -1 : 1
+}
+
+function sortedProducts(b: Bootstrap, chipKey: string): Product[] {
+  const orderOf = (group: string) => b.mainDisplayValues[group]?.variantOrder
+  return [...b.products].sort(
+    (x, y) =>
+      byRank(rankIn(orderOf(SIZE), x.dimensions[SIZE]), rankIn(orderOf(SIZE), y.dimensions[SIZE])) ||
+      byRank(rankIn(orderOf(chipKey), x.dimensions[chipKey]), rankIn(orderOf(chipKey), y.dimensions[chipKey])) ||
+      byRank(rankIn(orderOf(COLOR), x.dimensions[COLOR]), rankIn(orderOf(COLOR), y.dimensions[COLOR])) ||
+      (x.priceKey < y.priceKey ? -1 : x.priceKey > y.priceKey ? 1 : 0),
+  )
+}
+
 function standardConfigs(b: Bootstrap, chipKey: string): StandardConfig[] {
   const finish = standardFinish(b)
   const groups = new Map<string, Product[]>()
-  for (const p of b.products) {
+  for (const p of sortedProducts(b, chipKey)) {
     const id = `${p.dimensions[SIZE] ?? ''}|${p.dimensions[chipKey]}`
     groups.set(id, [...(groups.get(id) ?? []), p])
   }
@@ -333,6 +353,14 @@ function amountOf(b: Bootstrap, product: Product): number | undefined {
   return typeof amount === 'number' || typeof amount === 'string' ? parsePounds(amount) : undefined
 }
 
+function representativePart(b: Bootstrap, cfg: StandardConfig): string | undefined {
+  const candidates = cfg.products
+    .filter(p => p.btrOrFdPartNumber && p.dimensions[FINISH] === cfg.rep.dimensions[FINISH])
+    .map(p => ({ part: p.btrOrFdPartNumber as string, price: amountOf(b, p) ?? Infinity }))
+    .sort((x, y) => byRank(x.price, y.price) || (x.part < y.part ? -1 : x.part > y.part ? 1 : 0))
+  return candidates[0]?.part
+}
+
 export function buildMacModels(bootstrap: unknown, deltas: MacDeltas, url: string, held: Record<string, string> = {}): MapResult {
   const b = readBootstrap(bootstrap, url)
   const chipKey = chipKeyOf(b, url)
@@ -433,7 +461,7 @@ export function buildMacModels(bootstrap: unknown, deltas: MacDeltas, url: strin
     }
 
     const spec: Spec = { name, price, appleCare: [] }
-    const partNumber = cfg.rep.btrOrFdPartNumber ?? cfg.products.find(p => p.btrOrFdPartNumber && p.dimensions[FINISH] === cfg.rep.dimensions[FINISH])?.btrOrFdPartNumber
+    const partNumber = representativePart(b, cfg)
     if (partNumber) spec.partNumber = partNumber
     if (includes.length > 0) spec.includes = includes
     const colors = colourLabels(b, cfg.products)

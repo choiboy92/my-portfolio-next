@@ -325,8 +325,11 @@ describe('buildMacModels: other families from the available update-config fixtur
       'storage-dimensionCapacity': { '256gb': 0, '512gb': 200 },
       'display-dimensionFinish': { glossy: 0, matte: 200 },
     }
+    const keys = macDeltaRequests(bootstrap, { updateConfigUrl: updateConfigUrlOf(pages.imac) }).map(r => r.key)
+    const standardKey = keys.find(k => k.endsWith('-12-12') && k !== 'blue-12-12-ethernet')
+    if (!standardKey) throw new Error('fixture changed')
     const deltas: MacDeltas = {
-      'orange-12-12': base,
+      [standardKey]: base,
       'blue-12-12-ethernet': { ...base, 'ethernet_adapter-ethernetPortCount': { '1': 0 } },
     }
     const specs = buildMacModels(bootstrap, deltas, pages.imac.url).models[0].model.specs
@@ -497,4 +500,18 @@ describe('mapMac on live Apple UK responses', () => {
     })
   })
 
+  it('is independent of the order Apple lists products in', async () => {
+    const bootstrap = structuredClone(bootstrapOf(mbp14Max40)) as Bootstrap
+    bootstrap.products.reverse()
+    const reversed: Page = {
+      url: mbp14Max40.url,
+      html: `<script>window.PRODUCT_SELECTION_BOOTSTRAP = { productSelectionData: ${JSON.stringify(bootstrap)} }</script><script>window.pageLevelData.productSelectionUrl = { updateConfigUrl: '${updateConfigUrlOf(mbp14Max40)}' }</script>`,
+    }
+    const a = mbpLive()
+    const b = mbpLive()
+    const resultA = await mapMac(mbp14Max40, a)
+    const resultB = await mapMac(reversed, b)
+    expect(b.requested).toEqual(a.requested)
+    expect(resultB.models.map(m => m.model)).toEqual(resultA.models.map(m => m.model))
+  })
 })

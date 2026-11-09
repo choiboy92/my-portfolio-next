@@ -198,7 +198,7 @@ function representativeCases(b: Bootstrap, rows: Row[]): Map<string, Row> {
   const out = new Map<string, Row>()
   for (const size of sortByOrder(b, SIZE, rows.map(r => r.size))) {
     const candidates = rows.filter(r => r.size === size)
-    out.set(size, candidates.reduce((best, r) => (r.price < best.price ? r : best)))
+    out.set(size, candidates.reduce((best, r) => (r.price < best.price || (r.price === best.price && r.product.part < best.product.part) ? r : best)))
   }
   return out
 }
