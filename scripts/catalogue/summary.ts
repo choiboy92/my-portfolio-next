@@ -77,6 +77,13 @@ function eyeballItems(spec: Spec): Item[] {
   return out
 }
 
+const UNVERIFIED_MAC_SCOPES = new Set(['memory', 'storage', 'charger', 'nanoTexture'])
+
+function newSpecItems(category: string, spec: Spec): Item[] {
+  const mac = category === 'MacBook' ? plainItems(spec).filter(item => UNVERIFIED_MAC_SCOPES.has(item.scope)) : []
+  return [...mac, ...eyeballItems(spec)]
+}
+
 const withoutPrice = <T extends { price: number }>(item: T) => ({ ...item, price: 0 })
 
 function stripPrices(spec: Spec) {
@@ -96,9 +103,9 @@ function otherFields(prev: Spec, next: Spec) {
 }
 
 function modelMap(c: Catalogue) {
-  const out = new Map<string, Model>()
+  const out = new Map<string, { category: string; model: Model }>()
   for (const [categoryKey, cat] of Object.entries(c.categories)) {
-    for (const [key, model] of Object.entries(cat.models)) out.set(`${categoryKey}/${key}`, model)
+    for (const [key, model] of Object.entries(cat.models)) out.set(`${categoryKey}/${key}`, { category: categoryKey, model })
   }
   return out
 }
@@ -130,10 +137,16 @@ export function summarizeChanges(previous: Catalogue, next: Catalogue, info: Inf
     if (prevCats.get(key) !== available) other.push(`- ${key}: appleCareAvailable changed`)
   }
 
-  for (const [key, model] of nextModels) {
-    const before = prevModels.get(key)
+  const addSpec = (category: string, model: Model, spec: Spec) => {
+    const label = `${model.displayName} / ${spec.name}`
+    added.push(`- ${label}`)
+    for (const e of diffItems([], newSpecItems(category, spec))) eyeball.push(`- ${label} / ${e.option}: ${money(e.old)} → ${money(e.next)}`)
+  }
+
+  for (const [key, { category, model }] of nextModels) {
+    const before = prevModels.get(key)?.model
     if (!before) {
-      for (const spec of model.specs) added.push(`- ${model.displayName} / ${spec.name}`)
+      for (const spec of model.specs) addSpec(category, model, spec)
       continue
     }
     const modelFields = (['displayName', 'colors'] as const).filter(f => !same(before[f], model[f]))
@@ -142,7 +155,7 @@ export function summarizeChanges(previous: Catalogue, next: Catalogue, info: Inf
     for (const spec of model.specs) {
       const prevSpec = beforeSpecs.get(spec.name)
       if (!prevSpec) {
-        added.push(`- ${model.displayName} / ${spec.name}`)
+        addSpec(category, model, spec)
         continue
       }
       const label = `${model.displayName} / ${spec.name}`
@@ -161,7 +174,7 @@ export function summarizeChanges(previous: Catalogue, next: Catalogue, info: Inf
     }
   }
 
-  for (const [key, model] of prevModels) {
+  for (const [key, { model }] of prevModels) {
     if (nextModels.has(key)) continue
     for (const spec of model.specs) removed.push(`- ${model.displayName} / ${spec.name}`)
   }

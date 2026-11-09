@@ -105,6 +105,46 @@ describe('summarizeChanges', () => {
     expect(nc).toContain('- Watch 11 / Aluminium Case / Apple Pencil Pro: £— → £129')
   })
 
+  it('lists the unverified prices of a new Mac model under Not cross-checked', () => {
+    const next = clone()
+    const mac = structuredClone(next.categories.MacBook.models['Book 16"'])
+    mac.displayName = 'Book 14"'
+    Object.assign(mac.specs[0], { nanoTexture: 150, appleCare: [{ name: 'AppleCare+ (Monthly)', price: 9.99, billing: 'monthly' }] })
+    next.categories.MacBook.models['Book 14"'] = mac
+    const md = summarizeChanges(testCatalogue, next, info)
+    expect(section(md, '## 🆕 New products')).toBe('- Book 14" / Chip A')
+    expect(section(md, '## 💷 Price changes')).toBe('None')
+    expect(section(md, NC)).toBe(
+      [
+        '- Book 14" / Chip A / 24GB: £— → £0',
+        '- Book 14" / Chip A / 36GB: £— → £200',
+        '- Book 14" / Chip A / 512GB: £— → £0',
+        '- Book 14" / Chip A / 1TB: £— → £200',
+        '- Book 14" / Chip A / 70W: £— → £0',
+        '- Book 14" / Chip A / 96W: £— → £20',
+        '- Book 14" / Chip A / nanoTexture: £— → £150',
+        '- Book 14" / Chip A / AppleCare+ (Monthly): £— → £9.99',
+      ].join('\n'),
+    )
+  })
+
+  it('lists the band, pencil, keyboard and AppleCare prices of a new spec under Not cross-checked', () => {
+    const next = clone()
+    const watch = next.categories['Apple Watch'].models['Watch 11']
+    watch.specs.push({ ...structuredClone(watch.specs[0]), name: 'Titanium Case' })
+    const pad = next.categories.iPad.models['Pad Pro']
+    pad.specs.push({ ...structuredClone(pad.specs[0]), name: '13-inch Pad Pro', magicKeyboard: 349, applePencil: [{ pencilType: 'Apple Pencil Pro', price: 129 }] })
+    const md = summarizeChanges(testCatalogue, next, info)
+    const nc = section(md, NC)
+    expect(nc).toContain('- Watch 11 / Titanium Case / Rubber / Solo Loop: £— → £0')
+    expect(nc).toContain('- Watch 11 / Titanium Case / Textile / Magnetic Link: £— → £50')
+    expect(nc).toContain('- Pad Pro / 13-inch Pad Pro / AppleCare+: £— → £149')
+    expect(nc).toContain('- Pad Pro / 13-inch Pad Pro / Apple Pencil Pro: £— → £129')
+    expect(nc).toContain('- Pad Pro / 13-inch Pad Pro / Magic Keyboard: £— → £349')
+    expect(nc).not.toContain('1TB')
+    expect(nc).not.toContain('nanoTexture')
+  })
+
   it('lists non-price changes tersely under Other changes', () => {
     const next = clone()
     next.categories.iPhone.models['Phone X'].colors = ['Silver', 'Blue']
