@@ -23,9 +23,12 @@ function canonical(value: unknown): unknown {
   return value
 }
 
+function normalise(c: Catalogue): Catalogue {
+  return parseCatalogue(roundToPence(parseCatalogue(c)))
+}
+
 export function serializeCatalogue(c: Catalogue): string {
-  const parsed = parseCatalogue(c)
-  const rounded = parseCatalogue(roundToPence(parsed))
+  const rounded = normalise(c)
   const ordered = {
     notice: rounded.notice,
     categories: Object.fromEntries(CATEGORY_ORDER.map(key => [key, rounded.categories[key]])),
@@ -34,5 +37,5 @@ export function serializeCatalogue(c: Catalogue): string {
 }
 
 export function catalogueEquals(a: Catalogue, b: Catalogue): boolean {
-  return JSON.stringify(canonical(a)) === JSON.stringify(canonical(b))
+  return JSON.stringify(canonical(normalise(a))) === JSON.stringify(canonical(normalise(b)))
 }

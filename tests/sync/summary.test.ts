@@ -116,4 +116,38 @@ describe('summarizeChanges', () => {
       '- Phone X: colors changed\n- Phone X / Phone X: partNumber changed\n- Watch 11 / Aluminium Case: bandOptions changed',
     )
   })
+
+  it('reports a change to one of two maps sharing an option key', () => {
+    const prev = clone()
+    const spec = prev.categories.MacBook.models['Book 16"'].specs[0]
+    spec.memoryOptions = { '24GB': 0, '128GB': 400 }
+    spec.storageOptions = { '512GB': 0, '128GB': 100 }
+    const next = structuredClone(prev)
+    next.categories.MacBook.models['Book 16"'].specs[0].memoryOptions!['128GB'] = 450
+    expect(section(summarizeChanges(prev, next, info), '## 💷 Price changes')).toBe(
+      '- Book 16" / Chip A / memory 128GB: £400 → £450',
+    )
+  })
+
+  it('reports a change in one category when another shares the model key', () => {
+    const prev = clone()
+    prev.categories.iPad.models['Phone X'] = structuredClone(prev.categories.iPhone.models['Phone X'])
+    const next = structuredClone(prev)
+    next.categories.iPad.models['Phone X'].specs[0].price = 1099
+    const md = summarizeChanges(prev, next, info)
+    expect(section(md, '## 💷 Price changes')).toBe('- Phone X / Phone X / base: £999 → £1,099')
+    expect(section(md, '## 🆕 New products')).toBe('None')
+  })
+
+  it('reports AppleCare partNumber, displayName and appleCareAvailable under Other changes', () => {
+    const next = clone()
+    next.categories.iPhone.models['Phone X'].specs[0].appleCare[0].partNumber = 'NEW'
+    next.categories.iPhone.models['Phone X'].displayName = 'Phone X2'
+    next.categories.iPad.appleCareAvailable = false
+    const md = summarizeChanges(testCatalogue, next, info)
+    expect(section(md, '## 👀 Not cross-checked — please eyeball')).toBe('None')
+    expect(section(md, '## 🔧 Other changes')).toBe(
+      '- iPad: appleCareAvailable changed\n- Phone X2: displayName changed\n- Phone X2 / Phone X: appleCare changed',
+    )
+  })
 })

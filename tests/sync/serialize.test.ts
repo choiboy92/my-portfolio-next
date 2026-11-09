@@ -81,4 +81,14 @@ describe('catalogueEquals', () => {
     b.categories.iPhone.models['Phone X'].specs[0].price = 1000
     expect(catalogueEquals(testCatalogue, b)).toBe(false)
   })
+
+  it('matches serialisation: rounding noise and price-map key order do not count', () => {
+    const a = clone()
+    const b = clone()
+    a.categories.iPhone.models['Phone X'].specs[0].price = 1199.0000001
+    b.categories.iPhone.models['Phone X'].specs[0].price = 1199
+    a.categories.iPhone.models['Phone X'].specs[0].storageOptions = { '1TB': 600, '256GB': 0 }
+    b.categories.iPhone.models['Phone X'].specs[0].storageOptions = { '256GB': 0, '1TB': 600 }
+    expect(catalogueEquals(a, b)).toBe(true)
+  })
 })
