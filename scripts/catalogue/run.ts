@@ -1,4 +1,4 @@
-import type { Catalogue, CategoryKey } from '@/lib/catalogue/schema'
+import type { Catalogue, Category, CategoryKey } from '@/lib/catalogue/schema'
 import { applyAppleCare, fetchAppleCare } from './applecare'
 import { discoverProductUrls, isBuyPage, LANDING_PAGES } from './discover'
 import type { Fetcher } from './http'
@@ -59,6 +59,21 @@ async function fetchBuyPages(fetcher: Fetcher, urls: Record<CategoryKey, string[
   return pages
 }
 
+export function carryOverColours(result: MapResult, previous: Category): MapResult {
+  const warnings = [...result.warnings]
+  const models = result.models.map(m => {
+    if (m.model.colors.length > 0) return m
+    const kept = Object.hasOwn(previous.models, m.key) ? previous.models[m.key].colors : []
+    if (kept.length === 0) {
+      warnings.push(`${m.key}: Apple publishes no colour and there are no last-merged colours to keep`)
+      return m
+    }
+    warnings.push(`${m.key}: Apple publishes no colour; kept the last-merged colours (${kept.join(', ')})`)
+    return { ...m, model: { ...m.model, colors: [...kept] } }
+  })
+  return { ...result, models, warnings }
+}
+
 async function mapEach(pages: Page[], map: (page: Page) => Promise<MapResult>): Promise<MapResult> {
   const results: MapResult[] = []
   for (const page of pages) results.push(await map(page))
@@ -75,7 +90,7 @@ export async function runSync(deps: SyncDeps): Promise<SyncResult> {
   const mapped: Record<CategoryKey, MapResult> = {
     iPhone: mapIPhone(pages.iPhone),
     iPad: mapIPad(pages.iPad, parseIPadAccessories(pages.iPad), previous.categories.iPad),
-    MacBook: await mapEach(pages.MacBook, page => mapMac(page, fetcher)),
+    MacBook: carryOverColours(await mapEach(pages.MacBook, page => mapMac(page, fetcher)), previous.categories.MacBook),
     'Apple Watch': await mapEach(pages['Apple Watch'], page => mapWatch(page, fetcher)),
   }
 

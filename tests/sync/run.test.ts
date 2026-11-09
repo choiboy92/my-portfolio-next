@@ -1,10 +1,11 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { parseCatalogue, type CategoryKey } from '@/lib/catalogue/schema'
+import { parseCatalogue, type Category, type CategoryKey } from '@/lib/catalogue/schema'
 import { LANDING_PAGES } from '@/scripts/catalogue/discover'
 import { extractKeyedJson, MissingDataError } from '@/scripts/catalogue/extract'
 import { FetchFailedError, type Fetcher } from '@/scripts/catalogue/http'
-import { runSync } from '@/scripts/catalogue/run'
+import { buildMacModels } from '@/scripts/catalogue/map-mac'
+import { carryOverColours, runSync } from '@/scripts/catalogue/run'
 import { testCatalogue } from '../fixtures/test-catalogue'
 
 const fx = (name: string) => readFileSync(`tests/fixtures/apple/${name}`, 'utf8')
@@ -150,5 +151,29 @@ describe('runSync', () => {
     const head = html.slice(0, html.indexOf('</head>'))
     pages.set(url, `${head}</head><body></body></html>`)
     await expect(runSync({ fetcher: fakeFetcher(pages), previous: testCatalogue, bootstrap: true, date: DATE })).rejects.toBeInstanceOf(MissingDataError)
+  })
+})
+
+describe('carryOverColours', () => {
+  const url = `${SHOP}/buy-mac/mac-mini`
+  const mini = () => buildMacModels(extractKeyedJson(fx('mac-mac-mini.html'), url, 'productSelectionData'), {}, url)
+  const previousWith = (colors: string[]): Category => ({
+    category: 'MacBook',
+    appleCareAvailable: true,
+    models: { 'Mac mini': { displayName: 'Mac mini', colors, specs: [] } },
+  })
+
+  it('keeps the last-merged colours when Apple publishes none for a model', () => {
+    const result = mini()
+    expect(result.models[0].model.colors).toEqual([])
+    const out = carryOverColours(result, previousWith(['Silver']))
+    expect(out.models[0].model.colors).toEqual(['Silver'])
+    expect(out.warnings).toContain('Mac mini: Apple publishes no colour; kept the last-merged colours (Silver)')
+  })
+
+  it('warns when there are no colours to carry over', () => {
+    const out = carryOverColours(mini(), previousWith([]))
+    expect(out.models[0].model.colors).toEqual([])
+    expect(out.warnings).toContain('Mac mini: Apple publishes no colour and there are no last-merged colours to keep')
   })
 })
