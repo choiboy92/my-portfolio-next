@@ -90,8 +90,10 @@ function materialLabel(b: Bootstrap, value: string): string {
   return text || MATERIAL_NAMES[value] || value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-function specNameOf(b: Bootstrap, material: string, name: string): string {
-  return material ? `${materialLabel(b, material)} Case` : name
+function specNameOf(b: Bootstrap, material: string, name: string, url: string): string {
+  if (material) return `${materialLabel(b, material)} Case`
+  const fromUrl = /-([a-z]+)-case(?:[/?#]|$)/.exec(new URL(url).pathname)?.[1]
+  return fromUrl ? `${materialLabel(b, fromUrl)} Case` : name
 }
 
 function colourLabel(b: Bootstrap, value: string): string {
@@ -193,7 +195,7 @@ function readSelection(response: unknown, url: string): Selection {
     if (!isRecord(raw)) continue
     const subs = Array.isArray(raw.subDimensionValue) ? raw.subDimensionValue.filter(isRecord) : []
     items[style] = {
-      name: plain(String(raw.sectionHeader ?? '')) || style,
+      name: plain(String(raw.sectionHeader ?? '').replace(/<div[\s\S]*?<\/div>/g, ' ')) || style,
       colours: subs.map(s => normaliseLabel(String(s.text ?? s.dimensionValue ?? ''))).filter(t => t.length > 0),
       colourValues: subs.map(s => s.dimensionValue).filter((v): v is string => typeof v === 'string'),
     }
@@ -375,7 +377,7 @@ export function buildWatchModels(bootstrap: unknown, bandPrices: unknown, url: s
   const specs: Spec[] = []
   const materials = sortByOrder(b, MATERIAL, rows.map(r => r.material))
   for (const material of materials) {
-    const specName = specNameOf(b, material, name)
+    const specName = specNameOf(b, material, name, url)
     const mine = rows.filter(r => r.material === material)
     for (const r of mine) {
       const id = `${material}|${r.size}|${r.connection}`

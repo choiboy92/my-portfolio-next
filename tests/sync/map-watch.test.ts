@@ -290,10 +290,11 @@ describe('mapWatch on live Apple UK pages', () => {
     expect(result.warnings).toEqual([])
     expect(result.models.map(m => m.key)).toEqual(['Apple Watch Ultra 4'])
     const [spec] = result.models[0].model.specs
-    expect(spec).toMatchObject({ name: 'Apple Watch Ultra 4', price: 749, sizeOptions: { '49mm': 0 } })
+    expect(spec).toMatchObject({ name: 'Titanium Case', price: 749, sizeOptions: { '49mm': 0 } })
+    expect(result.models[0].published.every(p => p.spec === 'Titanium Case')).toBe(true)
     expect(spec.connectivityOptions).toBeUndefined()
     expect(spec.bandOptions?.map(g => g.material)).toEqual(['Strap'])
-    expect(spec.bandOptions?.[0].style.length).toBe(4)
+    expect(spec.bandOptions?.[0].style.map(s => s.styleName)).toEqual(['Alpine Loop', 'Trail Loop', 'Ocean Band', 'Titanium Milanese Loop'])
     expect(spec.bandOptions?.[0].style.some(s => s.price > 0)).toBe(true)
   })
 
