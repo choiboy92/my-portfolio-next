@@ -3,10 +3,12 @@ const DEFAULT_USER_AGENT =
 
 export class FetchFailedError extends Error {
   url: string
-  constructor(url: string, reason: string) {
+  readonly status?: number
+  constructor(url: string, reason: string, status?: number) {
     super(`Request failed for ${url}: ${reason}`)
     this.name = 'FetchFailedError'
     this.url = url
+    this.status = status
   }
 }
 
@@ -35,6 +37,7 @@ export function createFetcher(opts: FetcherOptions = {}): Fetcher {
 
   async function text(url: string): Promise<string> {
     let lastReason = 'unknown error'
+    let lastStatus: number | undefined
     for (let attempt = 0; attempt <= retries; attempt++) {
       if (attempt > 0) await sleep(2000 * 2 ** (attempt - 1))
       else if (started) await sleep(delayMs)
@@ -49,13 +52,15 @@ export function createFetcher(opts: FetcherOptions = {}): Fetcher {
         })
         if (res.ok) return await res.text()
         lastReason = `HTTP ${res.status}`
-        if (res.status !== 429 && res.status < 500) throw new FetchFailedError(url, lastReason)
+        lastStatus = res.status
+        if (res.status !== 429 && res.status < 500) throw new FetchFailedError(url, lastReason, res.status)
       } catch (err) {
         if (err instanceof FetchFailedError) throw err
         lastReason = err instanceof Error ? err.message : String(err)
+        lastStatus = undefined
       }
     }
-    throw new FetchFailedError(url, `${lastReason} after ${retries + 1} attempts`)
+    throw new FetchFailedError(url, `${lastReason} after ${retries + 1} attempts`, lastStatus)
   }
 
   return {

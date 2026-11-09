@@ -56,6 +56,15 @@ describe('createFetcher', () => {
     expect(f.requestCount).toBe(1)
   })
 
+  it('records the HTTP status on a 404 and on exhausted 503 retries', async () => {
+    const missing = createFetcher({ fetch: fakeFetch([404]).impl, sleep: recorder().sleep })
+    const e404 = await missing.text('https://x.test/a').catch(e => e)
+    expect((e404 as FetchFailedError).status).toBe(404)
+    const down = createFetcher({ fetch: fakeFetch([503, 503, 503, 503, 503]).impl, sleep: recorder().sleep })
+    const e503 = await down.text('https://x.test/a').catch(e => e)
+    expect((e503 as FetchFailedError).status).toBe(503)
+  })
+
   it('sleeps at least delayMs between consecutive requests', async () => {
     const { impl } = fakeFetch([200])
     const { sleeps, sleep } = recorder()

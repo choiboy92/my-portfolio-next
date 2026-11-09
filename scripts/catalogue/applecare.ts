@@ -1,6 +1,6 @@
 import type { AppleCareTier } from '@/lib/catalogue/schema'
 import { extractKeyedJson, MissingDataError, normaliseLabel, parsePounds } from './extract'
-import type { Fetcher } from './http'
+import { FetchFailedError, type Fetcher } from './http'
 import type { MappedModel, Page } from './types'
 
 export type AppleCareRow = {
@@ -54,19 +54,30 @@ function billingOf(value: unknown): AppleCareTier['billing'] | undefined {
   return undefined
 }
 
-function tiersOf(plan: RawPlan): AppleCareTier[] {
+const money = (n: number) => (Number.isInteger(n) ? `£${n}` : `£${n.toFixed(2)}`)
+
+function tiersOf(plan: RawPlan, label: string, warnings: string[]): AppleCareTier[] {
   const header = typeof plan.additionalData?.tileHeader === 'string' ? plain(plan.additionalData.tileHeader) : ''
-  if (!header) return []
+  if (!header) {
+    warnings.push(`AppleCare+ ${label}: plan has no tile header; plan skipped`)
+    return []
+  }
   const tiers: AppleCareTier[] = []
   for (const detail of plan.moreOptions?.planDetails ?? []) {
+    const part = typeof detail.partNumber === 'string' ? detail.partNumber : undefined
     const billing = billingOf(detail.dimensionPaymentType?.value)
-    if (!billing || typeof detail.partNumber !== 'string') continue
-    if (typeof detail.rawPrice !== 'number' && typeof detail.rawPrice !== 'string') continue
+    const rawPrice = detail.rawPrice
+    const priceOk = typeof rawPrice === 'number' || (typeof rawPrice === 'string' && rawPrice.trim() !== '' && Number.isFinite(Number(rawPrice)))
+    if (!part || !billing || !priceOk) {
+      const why = !part ? 'no part number' : !billing ? `unrecognised billing "${String(detail.dimensionPaymentType?.value)}"` : 'non-numeric price'
+      warnings.push(`AppleCare+ ${part ?? label}: ${why}; plan detail skipped`)
+      continue
+    }
     tiers.push({
       name: `${header} (${billing === 'monthly' ? 'Monthly' : 'Annual'})`,
-      price: parsePounds(detail.rawPrice),
+      price: parsePounds(rawPrice),
       billing,
-      partNumber: detail.partNumber,
+      partNumber: part,
     })
   }
   const rank = (t: AppleCareTier) => (t.billing === 'monthly' ? 0 : 1)
@@ -78,7 +89,7 @@ function oneDescription(plan: RawPlan): string[] {
   return (plan.moreOptions?.planDetails ?? []).flatMap(d => {
     const billing = billingOf(d.dimensionPaymentType?.value)
     if (typeof d.partNumber !== 'string' || typeof d.rawPrice !== 'number') return []
-    return [`${header} ${d.partNumber} £${d.rawPrice}${billing === 'annual' ? '/yr' : '/mo'} (multi-device subscription, not a per-product plan)`]
+    return [`${header} ${d.partNumber} ${money(d.rawPrice)}${billing === 'annual' ? '/yr' : '/mo'} (multi-device subscription, not a per-product plan)`]
   })
 }
 
@@ -100,18 +111,42 @@ function readRows(page: Page, source: AppleCareSource, seenWuips: Set<string>): 
     }
     if (seenWuips.has(raw.compatibleWuip)) continue
     seenWuips.add(raw.compatibleWuip)
-    const tiers = plans.filter(p => p.appleCareType === 'acp' || p.appleCareType === 'acptl').flatMap(tiersOf)
+    const tiers = plans.filter(p => p.appleCareType === 'acp' || p.appleCareType === 'acptl').flatMap(p => tiersOf(p, typeof raw.familyType === 'string' ? plain(raw.familyType) : String(raw.compatibleWuip), source.warnings))
     const row: AppleCareRow = { wuip: raw.compatibleWuip, tiers }
     if (typeof raw.familyType === 'string') row.familyType = plain(raw.familyType)
     source.rows.push(row)
   }
 }
 
+function productNames(html: string): string[] {
+  const names: string[] = []
+  const ld = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g
+  let m: RegExpExecArray | null
+  while ((m = ld.exec(html))) {
+    try {
+      const data = JSON.parse(m[1]) as unknown
+      for (const item of (Array.isArray(data) ? data : [data]) as Record<string, unknown>[]) {
+        if (item?.['@type'] === 'Product' && typeof item.name === 'string') names.push(item.name)
+      }
+    } catch {
+      continue
+    }
+  }
+  const title = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1]
+  if (title) names.push(title)
+  const h1 = /<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(html)?.[1]
+  if (h1) names.push(h1.replace(/<[^>]*>/g, ' '))
+  return names
+}
+
 export function parseProductTitle(html: string): MacProduct | undefined {
-  const m = PRODUCT_TITLE.exec(html)
-  if (!m) return undefined
-  const chips = (m[3] ?? '').split('/').map(c => normaliseLabel(c)).filter(Boolean)
-  return { family: m[2], size: Number(m[1]), chips }
+  for (const name of productNames(html)) {
+    const m = PRODUCT_TITLE.exec(name)
+    if (!m) continue
+    const chips = (m[3] ?? '').split('/').map(c => normaliseLabel(c)).filter(Boolean)
+    return { family: m[2], size: Number(m[1]), chips }
+  }
+  return undefined
 }
 
 export async function fetchAppleCare(pages: Page[], fetcher: Fetcher): Promise<AppleCareSource> {
@@ -125,7 +160,16 @@ export async function fetchAppleCare(pages: Page[], fetcher: Fetcher): Promise<A
     for (const tier of row.tiers) if (tier.partNumber) parts.add(tier.partNumber)
   }
   for (const part of parts) {
-    const html = await fetcher.text(`${PRODUCT_URL}${part}`)
+    let html: string
+    try {
+      html = await fetcher.text(`${PRODUCT_URL}${part}`)
+    } catch (err) {
+      if (err instanceof FetchFailedError && (err.status === 404 || err.status === 410)) {
+        source.warnings.push(`AppleCare+ plan ${part}: product page not found — tier left unattributed`)
+        continue
+      }
+      throw err
+    }
     const product = parseProductTitle(html)
     if (product) source.products[part] = product
     else source.warnings.push(`AppleCare+ ${part}: product page title does not name a MacBook size; tier left unattributed`)

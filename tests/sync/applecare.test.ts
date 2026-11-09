@@ -35,7 +35,7 @@ const PRODUCT_PAGES: Record<string, string> = {
   'SD2W3ZM/A': titlePage(15, 'MacBook Air', 'M5'),
 }
 
-function fakeFetcher(pages: Record<string, string> = PRODUCT_PAGES): Fetcher & { requested: string[] } {
+function fakeFetcher(pages: Record<string, string> = PRODUCT_PAGES, failures: Record<string, number> = {}): Fetcher & { requested: string[] } {
   const requested: string[] = []
   return {
     requested,
@@ -43,6 +43,7 @@ function fakeFetcher(pages: Record<string, string> = PRODUCT_PAGES): Fetcher & {
       requested.push(url)
       const part = url.replace('https://www.apple.com/uk/shop/product/', '')
       const html = pages[part]
+      if (failures[part] !== undefined) throw new FetchFailedError(url, `HTTP ${failures[part]}`, failures[part])
       if (html === undefined) throw new FetchFailedError(url, 'not served')
       return html
     },
@@ -106,6 +107,50 @@ describe('fetchAppleCare', () => {
 
   it('treats a failed product page request as fatal', async () => {
     await expect(fetchAppleCare([mbpPage], fakeFetcher({}))).rejects.toBeInstanceOf(FetchFailedError)
+  })
+
+  it('leaves a part unattributed with a warning on a 404 and carries on', async () => {
+    const source = await fetchAppleCare([mbpPage], fakeFetcher(PRODUCT_PAGES, { 'SGLP3ZM/A': 404, 'SGL83ZM/A': 410 }))
+    expect(source.products['SD3X3ZM/A']).toBeDefined()
+    expect(source.warnings).toContain('AppleCare+ plan SGLP3ZM/A: product page not found — tier left unattributed')
+    expect(source.warnings).toContain('AppleCare+ plan SGL83ZM/A: product page not found — tier left unattributed')
+    const result = applyAppleCare([mbp14()], source)
+    expect(tiers(result.models[0], 'M5 Max 18-Core CPU 40-Core GPU')?.length).toBe(2)
+  })
+
+  it('leaves the specs empty when the page that would name their size is missing', async () => {
+    const source = await fetchAppleCare([mbaPage], fakeFetcher(PRODUCT_PAGES, { 'SD303ZM/A': 404, 'SD2V3ZM/A': 404 }))
+    const [a13] = applyAppleCare([mba13()], source).models
+    expect(a13.model.specs[0].appleCare).toEqual([])
+  })
+
+  it.each([403, 429, 500, 503])('keeps HTTP %i fatal', async status => {
+    await expect(fetchAppleCare([mbpPage], fakeFetcher(PRODUCT_PAGES, { 'SD423ZM/A': status }))).rejects.toBeInstanceOf(FetchFailedError)
+  })
+
+  it('takes the size from the page title, not a body mention of another size', () => {
+    const html = `<html><head><title>AppleCare+ for 16\u2011inch MacBook Pro (M5 Pro/M5 Max)</title></head><body>Also see AppleCare+ for 14-inch MacBook Pro (M5)</body></html>`
+    expect(parseProductTitle(html)).toEqual({ family: 'MacBook Pro', size: 16, chips: ['M5 Pro', 'M5 Max'] })
+  })
+
+  it('falls back to the first h1 and ignores a body-only mention', () => {
+    expect(parseProductTitle('<body><h1>AppleCare+ for 13-inch MacBook Air (M5)</h1></body>')).toEqual({ family: 'MacBook Air', size: 13, chips: ['M5'] })
+    expect(parseProductTitle('<title>Apple</title><body><p>AppleCare+ for 14-inch MacBook Pro (M5)</p></body>')).toBeUndefined()
+  })
+
+  it('warns instead of silently dropping a malformed plan detail', async () => {
+    const html = iphonePage.html
+      .replace('"partNumber":"SHNP3ZM/A"', '"partNumber":null')
+      .replace('"value":"annually"', '"value":"weekly"')
+    const source = await fetchAppleCare([{ url: iphonePage.url, html }], fakeFetcher())
+    expect(source.warnings.some(w => w.includes('iPhone 18 Pro') && w.includes('no part number'))).toBe(true)
+    expect(source.warnings.some(w => w.includes('unrecognised billing "weekly"'))).toBe(true)
+  })
+
+  it('prints AppleCare One prices with two decimals when not whole', async () => {
+    const html = iphonePage.html.replaceAll('"rawPrice":16.99', '"rawPrice":16.9')
+    const source = await fetchAppleCare([{ url: iphonePage.url, html }], fakeFetcher())
+    expect(source.unmapped[0]).toContain('£16.90/mo')
   })
 
   it('lists AppleCare One once however many pages carry it', async () => {
