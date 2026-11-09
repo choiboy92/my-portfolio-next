@@ -1,8 +1,8 @@
-import { appendFileSync, readFileSync, writeFileSync } from 'node:fs'
+import { appendFileSync, readFileSync } from 'node:fs'
 import { parseCatalogue } from '@/lib/catalogue/schema'
 import { createFetcher } from './catalogue/http'
+import { writeOutputs } from './catalogue/output'
 import { runSync } from './catalogue/run'
-import { serializeCatalogue } from './catalogue/serialize'
 
 type Args = { out: string; summary?: string; bootstrap: boolean }
 
@@ -27,13 +27,7 @@ async function main(): Promise<void> {
   const fetcher = createFetcher()
   const result = await runSync({ fetcher, previous, bootstrap: args.bootstrap, date: new Date().toISOString().slice(0, 10) })
 
-  if (result.changed) {
-    writeFileSync(args.out, serializeCatalogue(result.catalogue))
-    if (args.summary) writeFileSync(args.summary, result.summary)
-    else process.stdout.write(result.summary)
-  } else {
-    process.stdout.write('No changes\n')
-  }
+  writeOutputs(result, { out: args.out, summary: args.summary }, text => process.stdout.write(text))
 
   const githubOutput = process.env.GITHUB_OUTPUT
   if (githubOutput) appendFileSync(githubOutput, `changed=${result.changed}\n`)
