@@ -18,21 +18,18 @@ const mbaPage = page('mac-macbook-air.html', 'https://www.apple.com/uk/shop/buy-
 const imacPage = page('mac-imac.html', 'https://www.apple.com/uk/shop/buy-mac/imac')
 const miniPage = page('mac-mac-mini.html', 'https://www.apple.com/uk/shop/buy-mac/mac-mini')
 const studioPage = page('mac-mac-studio.html', 'https://www.apple.com/uk/shop/buy-mac/mac-studio')
+const proledPage = page('mac-macbook-pro-proled-xdr-trimmed.html', 'https://www.apple.com/uk/shop/buy-mac/macbook-pro-proled-xdr')
+const neoPage = page('mac-macbook-neo-applecare.html', 'https://www.apple.com/uk/shop/buy-mac/macbook-neo')
+const ultraPage = page('watch-apple-watch-ultra-applecare.html', 'https://www.apple.com/uk/shop/buy-watch/apple-watch-ultra')
+const sePage = page('watch-apple-watch-se-applecare.html', 'https://www.apple.com/uk/shop/buy-watch/apple-watch-se')
 
 const titlePage = (size: number, family: string, chips?: string) =>
   `<html><head><title>AppleCare+ for ${size}‑inch ${family}${chips ? ` (${chips})` : ''} - Apple (UK)</title></head></html>`
 
+const PLAN_PAGES = ['SD3X3', 'SD433', 'SD3Y3', 'SGLP3', 'SGL83', 'SGNA3', 'SGMV3', 'SGQ03', 'SGPG3', 'SD303', 'SD2V3', 'SD313', 'SD2W3']
 const PRODUCT_PAGES: Record<string, string> = {
   'SD423ZM/A': fx('applecare-product-sd3x3zm.html'),
-  'SD3X3ZM/A': fx('applecare-product-sd3x3zm.html'),
-  'SD433ZM/A': titlePage(16, 'MacBook Pro', 'M5 Pro/M5 Max'),
-  'SD3Y3ZM/A': titlePage(16, 'MacBook Pro', 'M5 Pro/M5 Max'),
-  'SGLP3ZM/A': '<html><head><title>AppleCare+ for Mac</title></head></html>',
-  'SGL83ZM/A': '<html><head><title>AppleCare+ for Mac</title></head></html>',
-  'SD303ZM/A': titlePage(13, 'MacBook Air', 'M5'),
-  'SD2V3ZM/A': titlePage(13, 'MacBook Air', 'M5'),
-  'SD313ZM/A': titlePage(15, 'MacBook Air', 'M5'),
-  'SD2W3ZM/A': titlePage(15, 'MacBook Air', 'M5'),
+  ...Object.fromEntries(PLAN_PAGES.map(p => [`${p}ZM/A`, fx(`applecare-product-${p.toLowerCase()}zm.html`)])),
 }
 
 function fakeFetcher(pages: Record<string, string> = PRODUCT_PAGES, failures: Record<string, number> = {}): Fetcher & { requested: string[] } {
@@ -57,18 +54,21 @@ function fakeFetcher(pages: Record<string, string> = PRODUCT_PAGES, failures: Re
 }
 
 const spec = (name: string): Spec => ({ name, price: 1000, appleCare: [] })
-const model = (category: MappedModel['category'], key: string, specs: string[]): MappedModel => ({
+const model = (category: MappedModel['category'], key: string, specs: string[], from?: Page): MappedModel => ({
   category,
   key,
   model: { displayName: key, colors: [], specs: specs.map(spec) },
   published: [],
+  page: from?.url,
 })
 
-const mbp14 = () => model('MacBook', 'MacBook Pro 14"', ['M5 Pro 15-Core CPU 16-Core GPU', 'M5 Max 18-Core CPU 40-Core GPU'])
-const mbp16 = () => model('MacBook', 'MacBook Pro 16"', ['M5 Max 18-Core CPU 40-Core GPU'])
-const mba13 = () => model('MacBook', 'MacBook Air 13"', ['10-Core CPU 8-Core GPU'])
-const mba15 = () => model('MacBook', 'MacBook Air 15"', ['10-Core CPU 10-Core GPU'])
-const watch = () => model('Apple Watch', 'Apple Watch Series 12', ['Aluminium Case', 'Titanium Case'])
+const mbp14 = () => model('MacBook', 'MacBook Pro 14"', ['M6 12-Core CPU 12-Core GPU', 'M5 Pro 15-Core CPU 16-Core GPU', 'M5 Max 18-Core CPU 40-Core GPU'], mbpPage)
+const mbp16 = () => model('MacBook', 'MacBook Pro 16"', ['M5 Pro 18-Core CPU 20-Core GPU', 'M5 Max 18-Core CPU 40-Core GPU'], mbpPage)
+const proled = (size: number) =>
+  model('MacBook', `MacBook Pro with PROLED XDR Display ${size}"`, ['M5 Pro 18-Core CPU 20-Core GPU', 'M5 Max 18-Core CPU 40-Core GPU'], proledPage)
+const mba13 = () => model('MacBook', 'MacBook Air 13"', ['M5 10-Core CPU 8-Core GPU'], mbaPage)
+const mba15 = () => model('MacBook', 'MacBook Air 15"', ['M5 10-Core CPU 10-Core GPU'], mbaPage)
+const watch = () => model('Apple Watch', 'Apple Watch Series 12', ['Aluminium Case', 'Titanium Case'], watchPage)
 
 const tiers = (m: MappedModel, specName: string) =>
   m.model.specs.find(s => s.name === specName)?.appleCare.map(t => [t.name, t.price, t.billing, t.partNumber])
@@ -93,16 +93,19 @@ describe('fetchAppleCare', () => {
 
   it('reads each MacBook plan product page once to learn its size', async () => {
     const fetcher = fakeFetcher()
-    const source = await fetchAppleCare([mbpPage, mbaPage], fetcher)
+    const source = await fetchAppleCare([mbpPage, mbaPage, proledPage], fetcher)
     expect([...fetcher.requested].sort()).toEqual(
       Object.keys(PRODUCT_PAGES)
         .map(p => `https://www.apple.com/uk/shop/product/${p}`)
         .sort(),
     )
     expect(source.products['SD3X3ZM/A']).toEqual({ family: 'MacBook Pro', size: 14, chips: ['M5', 'M5 Pro', 'M5 Max'] })
-    expect(source.products['SGLP3ZM/A']).toBeUndefined()
-    expect(source.warnings.join()).toContain('SGLP3ZM/A')
-    expect(source.warnings.join()).toContain('SGL83ZM/A')
+    expect(source.products['SD433ZM/A']).toEqual({ family: 'MacBook Pro', size: 16, chips: ['M5 Pro', 'M5 Max'] })
+    expect(source.products['SGLP3ZM/A']).toEqual({ family: 'MacBook Pro', size: 14, chips: ['M6'] })
+    expect(source.products['SGNA3ZM/A']).toEqual({ family: 'MacBook Pro with PROLED XDR', size: 14, chips: [] })
+    expect(source.products['SGQ03ZM/A']).toEqual({ family: 'MacBook Pro with PROLED XDR', size: 16, chips: [] })
+    expect(source.products['SD303ZM/A']).toEqual({ family: 'MacBook Air', size: 13, chips: ['M5'] })
+    expect(source.warnings).toEqual([])
   })
 
   it('treats a failed product page request as fatal', async () => {
@@ -163,6 +166,15 @@ describe('fetchAppleCare', () => {
     expect(parseProductTitle(fx('applecare-product-sd3x3zm.html'))).toEqual({ family: 'MacBook Pro', size: 14, chips: ['M5', 'M5 Pro', 'M5 Max'] })
     expect(parseProductTitle('<title>AppleCare+ for Mac</title>')).toBeUndefined()
   })
+
+  it('reads a product name whose words are joined by non-breaking spaces', () => {
+    expect(parseProductTitle(fx('applecare-product-sd433zm.html'))).toEqual({ family: 'MacBook Pro', size: 16, chips: ['M5 Pro', 'M5 Max'] })
+    expect(parseProductTitle('<title>AppleCare+ for 16\u2011inch MacBook\u00a0Pro (M5\u00a0Pro/M5\u00a0Max) - Apple (UK)</title>')).toEqual({
+      family: 'MacBook Pro',
+      size: 16,
+      chips: ['M5 Pro', 'M5 Max'],
+    })
+  })
 })
 
 describe('applyAppleCare', () => {
@@ -205,26 +217,51 @@ describe('applyAppleCare', () => {
     expect(tiers(m, 'Titanium Case')).toEqual(expected)
   })
 
-  it('attributes MacBook Pro tiers by the size named on Apple\'s product page', async () => {
+  it('attributes MacBook Pro tiers by the size and chip named on Apple\'s product pages', async () => {
     const source = await fetchAppleCare([mbpPage], fakeFetcher())
     const result = applyAppleCare([mbp14(), mbp16()], source)
     const [m14, m16] = result.models
+    expect(tiers(m14, 'M6 12-Core CPU 12-Core GPU')).toEqual([
+      ['AppleCare+ (Monthly)', 9.99, 'monthly', 'SGLP3ZM/A'],
+      ['AppleCare+ (Annual)', 99.99, 'annual', 'SGL83ZM/A'],
+    ])
     expect(tiers(m14, 'M5 Pro 15-Core CPU 16-Core GPU')).toEqual([
       ['AppleCare+ (Monthly)', 9.99, 'monthly', 'SD423ZM/A'],
       ['AppleCare+ (Annual)', 99.99, 'annual', 'SD3X3ZM/A'],
     ])
     expect(tiers(m14, 'M5 Max 18-Core CPU 40-Core GPU')).toEqual(tiers(m14, 'M5 Pro 15-Core CPU 16-Core GPU'))
-    expect(tiers(m16, 'M5 Max 18-Core CPU 40-Core GPU')).toEqual([
+    const sixteen = [
       ['AppleCare+ (Monthly)', 14.99, 'monthly', 'SD433ZM/A'],
       ['AppleCare+ (Annual)', 149.99, 'annual', 'SD3Y3ZM/A'],
-    ])
-    expect(result.warnings.join('\n')).toContain('SGLP3ZM/A')
-    expect(result.warnings.join('\n')).toContain('SGL83ZM/A')
+    ]
+    expect(tiers(m16, 'M5 Pro 18-Core CPU 20-Core GPU')).toEqual(sixteen)
+    expect(tiers(m16, 'M5 Max 18-Core CPU 40-Core GPU')).toEqual(sixteen)
+    expect(result.warnings).toEqual([])
+  })
+
+  it('attributes PROLED XDR tiers by size from their own page, never the standard MacBook Pro plans', async () => {
+    const source = await fetchAppleCare([mbpPage, proledPage], fakeFetcher())
+    const result = applyAppleCare([proled(14), proled(16), mbp14()], source)
+    const [p14, p16, m14] = result.models
+    for (const spec of p14.model.specs) {
+      expect(tiers(p14, spec.name)).toEqual([
+        ['AppleCare+ (Monthly)', 13.99, 'monthly', 'SGNA3ZM/A'],
+        ['AppleCare+ (Annual)', 139.99, 'annual', 'SGMV3ZM/A'],
+      ])
+    }
+    for (const spec of p16.model.specs) {
+      expect(tiers(p16, spec.name)).toEqual([
+        ['AppleCare+ (Monthly)', 15.99, 'monthly', 'SGQ03ZM/A'],
+        ['AppleCare+ (Annual)', 159.99, 'annual', 'SGPG3ZM/A'],
+      ])
+    }
+    expect(tiers(m14, 'M5 Pro 15-Core CPU 16-Core GPU')?.map(t => t[3])).toEqual(['SD423ZM/A', 'SD3X3ZM/A'])
+    expect(result.warnings).toEqual([])
   })
 
   it('does not attach a plan to a chip its product page does not list', async () => {
     const source = await fetchAppleCare([mbpPage], fakeFetcher())
-    const m14 = model('MacBook', 'MacBook Pro 14"', ['M6 Pro 15-Core CPU 16-Core GPU'])
+    const m14 = model('MacBook', 'MacBook Pro 14"', ['M6 Pro 15-Core CPU 16-Core GPU'], mbpPage)
     const result = applyAppleCare([m14], source)
     expect(result.models[0].model.specs[0].appleCare).toEqual([])
     expect(result.warnings).toContain(
@@ -232,10 +269,17 @@ describe('applyAppleCare', () => {
     )
   })
 
+  it('does not attribute a model to rows from another page', async () => {
+    const source = await fetchAppleCare([mbpPage], fakeFetcher())
+    const result = applyAppleCare([model('MacBook', 'MacBook Pro 14"', ['M5 Pro 15-Core CPU 16-Core GPU'], proledPage)], source)
+    expect(result.models[0].model.specs[0].appleCare).toEqual([])
+    expect(result.warnings).toEqual(['MacBook Pro 14" / M5 Pro 15-Core CPU 16-Core GPU: no AppleCare+ data from Apple; AppleCare+ left empty'])
+  })
+
   it('leaves a size empty and warns when several plans match it', async () => {
     const pages = { ...PRODUCT_PAGES, 'SGLP3ZM/A': titlePage(14, 'MacBook Pro', 'M5 Pro'), 'SGL83ZM/A': titlePage(14, 'MacBook Pro', 'M5 Pro') }
     const source = await fetchAppleCare([mbpPage], fakeFetcher(pages))
-    const result = applyAppleCare([mbp14()], source)
+    const result = applyAppleCare([model('MacBook', 'MacBook Pro 14"', ['M5 Pro 15-Core CPU 16-Core GPU', 'M5 Max 18-Core CPU 40-Core GPU'], mbpPage)], source)
     expect(tiers(result.models[0], 'M5 Pro 15-Core CPU 16-Core GPU')).toEqual([])
     expect(tiers(result.models[0], 'M5 Max 18-Core CPU 40-Core GPU')).toEqual([
       ['AppleCare+ (Monthly)', 9.99, 'monthly', 'SD423ZM/A'],
@@ -247,11 +291,11 @@ describe('applyAppleCare', () => {
   it('attributes MacBook Air 13 and 15 inch tiers only from the product pages', async () => {
     const source = await fetchAppleCare([mbaPage], fakeFetcher())
     const [a13, a15] = applyAppleCare([mba13(), mba15()], source).models
-    expect(tiers(a13, '10-Core CPU 8-Core GPU')).toEqual([
+    expect(tiers(a13, 'M5 10-Core CPU 8-Core GPU')).toEqual([
       ['AppleCare+ (Monthly)', 6.99, 'monthly', 'SD303ZM/A'],
       ['AppleCare+ (Annual)', 69.99, 'annual', 'SD2V3ZM/A'],
     ])
-    expect(tiers(a15, '10-Core CPU 10-Core GPU')).toEqual([
+    expect(tiers(a15, 'M5 10-Core CPU 10-Core GPU')).toEqual([
       ['AppleCare+ (Monthly)', 7.99, 'monthly', 'SD313ZM/A'],
       ['AppleCare+ (Annual)', 79.99, 'annual', 'SD2W3ZM/A'],
     ])
@@ -265,20 +309,45 @@ describe('applyAppleCare', () => {
     expect(result.warnings.filter(w => w.startsWith('MacBook Air'))).toHaveLength(2)
   })
 
-  it('maps iMac from its single plan row', async () => {
-    const source = await fetchAppleCare([imacPage], fakeFetcher())
-    const m = applyAppleCare([model('MacBook', 'iMac', ['12-Core CPU 12-Core GPU'])], source).models[0]
-    expect(tiers(m, '12-Core CPU 12-Core GPU')).toEqual([
+  it('maps an unsized Mac from the single plan row on its own page', async () => {
+    const source = await fetchAppleCare([imacPage, neoPage], fakeFetcher())
+    const [imac, neo] = applyAppleCare(
+      [model('MacBook', 'iMac', ['M6 12-Core CPU 12-Core GPU'], imacPage), model('MacBook', 'MacBook Neo', ['6-Core CPU 5-Core GPU'], neoPage)],
+      source,
+    ).models
+    expect(tiers(imac, 'M6 12-Core CPU 12-Core GPU')).toEqual([
       ['AppleCare+ (Monthly)', 6.49, 'monthly', 'SGJU3ZM/A'],
       ['AppleCare+ (Annual)', 64.99, 'annual', 'SGJY3ZM/A'],
     ])
+    expect(tiers(neo, '6-Core CPU 5-Core GPU')).toEqual([
+      ['AppleCare+ (Monthly)', 4.99, 'monthly', 'SD6P3ZM/A'],
+      ['AppleCare+ (Annual)', 49.99, 'annual', 'SD6M3ZM/A'],
+    ])
+  })
+
+  it('maps Apple Watch Ultra and SE from the plan row on their own page', async () => {
+    const source = await fetchAppleCare([watchPage, ultraPage, sePage], fakeFetcher())
+    const result = applyAppleCare(
+      [model('Apple Watch', 'Apple Watch Ultra 4', ['Titanium Case'], ultraPage), model('Apple Watch', 'Apple Watch SE 3', ['Aluminium Case'], sePage)],
+      source,
+    )
+    const [ultra, se] = result.models
+    expect(tiers(ultra, 'Titanium Case')).toEqual([
+      ['AppleCare+ with Theft and Loss (Monthly)', 5.99, 'monthly', 'SH403ZM/A'],
+      ['AppleCare+ with Theft and Loss (Annual)', 59.99, 'annual', 'SH3V3ZM/A'],
+    ])
+    expect(tiers(se, 'Aluminium Case')).toEqual([
+      ['AppleCare+ with Theft and Loss (Monthly)', 2.99, 'monthly', 'SXJR2ZM/A'],
+      ['AppleCare+ with Theft and Loss (Annual)', 29.99, 'annual', 'SXJV2ZM/A'],
+    ])
+    expect(result.warnings).toEqual([])
   })
 
   it('gives a model with no AppleCare data an empty list and a warning', async () => {
     const source = await fetchAppleCare([miniPage, studioPage, ipadPage], fakeFetcher())
     const models = [
-      model('MacBook', 'Mac mini', ['M5 Pro 15-Core CPU 16-Core GPU']),
-      model('MacBook', 'Mac Studio', ['M5 Ultra 30-Core CPU 64-Core GPU']),
+      model('MacBook', 'Mac mini', ['M5 Pro 15-Core CPU 16-Core GPU'], miniPage),
+      model('MacBook', 'Mac Studio', ['M5 Ultra 30-Core CPU 64-Core GPU'], studioPage),
       model('iPad', 'iPad Air', ['11-inch iPad Air']),
     ]
     const result = applyAppleCare(models, source)

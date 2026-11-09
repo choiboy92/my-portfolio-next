@@ -31,9 +31,6 @@ const LANDING_FILES: Record<CategoryKey, string> = {
   'Apple Watch': 'landing-buy-watch.html',
 }
 
-const titlePage = (size: number, family: string, chips: string) =>
-  `<html><head><title>AppleCare+ for ${size}‑inch ${family} (${chips}) - Apple (UK)</title></head></html>`
-
 function basePages(): Map<string, string> {
   const pages = new Map<string, string>()
   for (const [category, file] of Object.entries(LANDING_FILES)) pages.set(LANDING_PAGES[category as CategoryKey], fx(file))
@@ -41,8 +38,8 @@ function basePages(): Map<string, string> {
   pages.set(`${SHOP}/buy-ipad/ipad-pro`, fx('ipad-ipad-pro.html'))
   pages.set(`${SHOP}/buy-mac/macbook-air`, macBookAir15())
   pages.set(`${SHOP}/buy-watch/apple-watch`, fx('watch-apple-watch.html'))
-  pages.set(`${SHOP}/product/SD313ZM/A`, titlePage(15, 'MacBook Air', 'M5'))
-  pages.set(`${SHOP}/product/SD2W3ZM/A`, titlePage(15, 'MacBook Air', 'M5'))
+  pages.set(`${SHOP}/product/SD313ZM/A`, fx('applecare-product-sd313zm.html'))
+  pages.set(`${SHOP}/product/SD2W3ZM/A`, fx('applecare-product-sd2w3zm.html'))
   return pages
 }
 
@@ -131,6 +128,9 @@ describe('runSync', () => {
     expect(Object.keys(result.catalogue.categories.iPhone.models)).toEqual(['iPhone 18 Pro & Pro Max'])
     expect(Object.keys(result.catalogue.categories.iPad.models)).toContain('iPad Pro')
     expect(Object.keys(result.catalogue.categories.MacBook.models)).toEqual(['MacBook Air 15"'])
+    for (const spec of result.catalogue.categories.MacBook.models['MacBook Air 15"'].specs) {
+      expect(spec.appleCare.map(t => t.partNumber)).toEqual(['SD313ZM/A', 'SD2W3ZM/A'])
+    }
     expect(Object.keys(result.catalogue.categories['Apple Watch'].models)).toEqual(['Apple Watch Series 12'])
     expect(result.summary).toContain(`${SHOP}/buy-iphone/iphone-air: Apple did not serve a buy page (redirected away); skipped`)
     expect(result.summary).toContain(`- Requests: ${fetcher.requested.length}`)

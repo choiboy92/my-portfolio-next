@@ -4,7 +4,7 @@ import { makeCatalogueHelpers } from '@/lib/catalogue/helpers'
 import { CATALOGUE_NOTICE, parseCatalogue, type Category } from '@/lib/catalogue/schema'
 import { extractKeyedJson, MissingDataError } from '@/scripts/catalogue/extract'
 import { FetchFailedError, type Fetcher } from '@/scripts/catalogue/http'
-import { buildMacModels, macDeltaRequests, macOptionLabel, mapMac, readUpdateConfig, type MacDeltas } from '@/scripts/catalogue/map-mac'
+import { buildMacModels, macDeltaRequests, macOptionLabel, mapMac, productLineName, readUpdateConfig, type MacDeltas } from '@/scripts/catalogue/map-mac'
 import type { MappedModel, MapResult, Page } from '@/scripts/catalogue/types'
 
 type Saved = { requestUrl: string; response: unknown }
@@ -130,6 +130,26 @@ function editedFollowUp(edit: (body: UpdateBody['body']) => void): Saved {
   edit((copy.response as UpdateBody).body)
   return copy
 }
+
+describe('productLineName', () => {
+  it('uses the product name Apple gives the page', () => {
+    expect(productLineName(fx('mac-macbook-pro-proled-xdr-trimmed.html'), 'https://www.apple.com/uk/shop/buy-mac/macbook-pro-proled-xdr')).toBe(
+      'MacBook Pro with PROLED XDR Display',
+    )
+    expect(productLineName(fx('mac-mac-mini.html'), 'https://www.apple.com/uk/shop/buy-mac/mac-mini')).toBe('Mac mini')
+    expect(productLineName(fx('mac-macbook-pro.html'), 'https://www.apple.com/uk/shop/buy-mac/macbook-pro')).toBe('MacBook Pro')
+  })
+
+  it('falls back to the URL when the page names no product', () => {
+    expect(productLineName('<html></html>', 'https://www.apple.com/uk/shop/buy-mac/macbook-pro-proled-xdr')).toBe('MacBook Pro PROLED XDR')
+  })
+
+  it('keys a mapped model by that name and its size', () => {
+    const url = 'https://www.apple.com/uk/shop/buy-mac/macbook-pro'
+    const result = buildMacModels(extractKeyedJson(fx('mac-macbook-pro.html'), url, 'productSelectionData'), {}, url, {}, new Set(), 'MacBook Pro with PROLED XDR Display')
+    expect(result.models.map(m => m.key).sort()).toEqual(['MacBook Pro with PROLED XDR Display 14"', 'MacBook Pro with PROLED XDR Display 16"'])
+  })
+})
 
 describe('macOptionLabel', () => {
   it('normalises Apple option headers to catalogue labels', () => {

@@ -44,7 +44,7 @@ const KEYBOARD = 'keyboard-localizationCode'
 const MEMORY = 'memory-dimensionMemory'
 const STORAGE = 'storage-dimensionCapacity'
 
-const LINE_WORDS: Record<string, string> = { macbook: 'MacBook', imac: 'iMac', mac: 'Mac', mini: 'mini', xdr: 'XDR' }
+const LINE_WORDS: Record<string, string> = { macbook: 'MacBook', imac: 'iMac', mac: 'Mac', mini: 'mini', proled: 'PROLED', xdr: 'XDR' }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
@@ -268,6 +268,23 @@ function productLine(url: string): string {
     .join(' ')
 }
 
+export function productLineName(html: string, url: string): string {
+  const ld = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g
+  let m: RegExpExecArray | null
+  while ((m = ld.exec(html))) {
+    let data: unknown
+    try {
+      data = JSON.parse(m[1])
+    } catch {
+      continue
+    }
+    for (const item of Array.isArray(data) ? data : [data]) {
+      if (isRecord(item) && item['@type'] === 'Product' && typeof item.name === 'string' && item.name.trim()) return normaliseLabel(item.name)
+    }
+  }
+  return productLine(url)
+}
+
 function sizeLabel(b: Bootstrap, size: string | undefined): string | undefined {
   if (!size) return undefined
   const m = size.match(/^(\d+(?:\.\d+)?)inch$/)
@@ -367,10 +384,10 @@ export function buildMacModels(
   url: string,
   held: Record<string, string> = {},
   limited: Set<string> = new Set(),
+  line: string = productLine(url),
 ): MapResult {
   const b = readBootstrap(bootstrap, url)
   const chipKey = chipKeyOf(b, url)
-  const line = productLine(url)
   const finish = standardFinish(b)
   const dimensions = new Set(b.products.flatMap(p => Object.keys(p.dimensions)))
   const unmapped: string[] = []
@@ -600,5 +617,5 @@ export async function mapMac(page: Page, fetcher: Fetcher): Promise<MapResult> {
     if (reason) held[cfg.key] = reason
   }
 
-  return buildMacModels(bootstrap, deltas, page.url, held, limited)
+  return buildMacModels(bootstrap, deltas, page.url, held, limited, productLineName(page.html, page.url))
 }

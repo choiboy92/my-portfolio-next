@@ -15,6 +15,7 @@ export type MappedModel = {
   key: string
   model: Model
   published: PublishedPrice[]
+  page?: string
 }
 
 export type MapResult = {

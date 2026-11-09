@@ -78,7 +78,10 @@ export function carryOverColours(result: MapResult, previous: Category): MapResu
 
 async function mapEach(pages: Page[], map: (page: Page) => Promise<MapResult>): Promise<MapResult> {
   const results: MapResult[] = []
-  for (const page of pages) results.push(await map(page))
+  for (const page of pages) {
+    const result = await map(page)
+    results.push({ ...result, models: result.models.map(m => ({ ...m, page: page.url })) })
+  }
   return merge(results)
 }
 
