@@ -141,7 +141,7 @@ function readSkus(page: Page, parse: (name: string, part: string, price: number)
     if (sku) out.push(sku)
     else unmapped.push(name)
   }
-  return out
+  return out.sort((a, b) => (a.part < b.part ? -1 : a.part > b.part ? 1 : 0))
 }
 
 function groupBySpec(skus: Sku[]): Sku[][] {

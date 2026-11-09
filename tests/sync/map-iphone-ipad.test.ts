@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { makeCatalogueHelpers } from '@/lib/catalogue/helpers'
 import { CATALOGUE_NOTICE, parseCatalogue, type Category } from '@/lib/catalogue/schema'
-import { MissingDataError, normaliseLabel } from '@/scripts/catalogue/extract'
+import { extractAnalyticsProducts, MissingDataError, normaliseLabel } from '@/scripts/catalogue/extract'
 import { mapIPad, mapIPhone, parseIPadAccessories } from '@/scripts/catalogue/map-iphone-ipad'
 import type { MappedModel, Page } from '@/scripts/catalogue/types'
 
@@ -67,7 +67,7 @@ describe('mapIPhone', () => {
       expect(spec.colors).toEqual(['Black', 'Burgundy', 'Glacier', 'Silver'])
     }
     expect(model.specs[0].partNumber).toBe('MJRP4QN/A')
-    expect(model.specs[1].partNumber).toBe('MJXP4QN/A')
+    expect(model.specs[1].partNumber).toBe('MJXN4QN/A')
   })
 
   it('publishes every SKU and the helpers reproduce each price', () => {
@@ -230,6 +230,28 @@ describe('parseIPadAccessories', () => {
       'iPad Air:13inch': 299,
       iPad: 249,
     })
+  })
+})
+
+describe('independence from Apple product order', () => {
+  function reversedAnalytics(p: Page): Page {
+    const products = extractAnalyticsProducts(p.html, p.url)
+      .map(x => ({ sku: x.sku, partNumber: x.partNumber, name: x.name, price: { fullPrice: x.price } }))
+      .reverse()
+    return { url: p.url, html: `<script>window.reordered = { "products": ${JSON.stringify(products)} }</script>${p.html}` }
+  }
+
+  it('maps the iPhone page identically when Apple lists products in another order', () => {
+    const a = mapIPhone([iphonePage])
+    const b = mapIPhone([reversedAnalytics(iphonePage)])
+    expect(b.models.map(m => m.model)).toEqual(a.models.map(m => m.model))
+  })
+
+  it('maps the iPad page identically when Apple lists products in another order', () => {
+    const accessories = parseIPadAccessories([ipadProPage])
+    const a = mapIPad([ipadProPage], accessories, emptyPrevious)
+    const b = mapIPad([reversedAnalytics(ipadProPage)], accessories, emptyPrevious)
+    expect(b.models.map(m => m.model)).toEqual(a.models.map(m => m.model))
   })
 })
 
