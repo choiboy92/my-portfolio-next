@@ -8,7 +8,8 @@ import SideQuickNav from '@/components/projects/SideQuickNav'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { ExternalLink, Github } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
+import { GithubIcon } from '@/components/icons'
 
 const description = "Exploring machine learning techniques to classify ambient weather conditions using sensor instrument data"
 const role = "Independent Research Project"
@@ -139,7 +140,7 @@ export default function PresWeatherPage() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
                 >
-                  <Github className="w-4 h-4" />
+                  <GithubIcon className="w-4 h-4" />
                   View Code
                 </a>
                 <a 
