@@ -6,7 +6,7 @@ import { skuKey } from '@/lib/catalogue/helpers'
 import type { BasketItemFormData, OrderFormData } from '@/lib/validation-schema'
 
 const send = vi.hoisted(() => vi.fn())
-vi.mock('resend', () => ({ Resend: vi.fn(() => ({ emails: { send } })) }))
+vi.mock('resend', () => ({ Resend: vi.fn(function () { return { emails: { send } } }) }))
 
 vi.mock('@/lib/product-config', async () => {
   const { makeCatalogueHelpers, skuKey: key } = await import('@/lib/catalogue/helpers')
