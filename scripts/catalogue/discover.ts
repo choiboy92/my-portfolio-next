@@ -21,7 +21,8 @@ const BUY_PAGE_PATH = new RegExp(`^/uk/shop/buy-(${Object.values(BUY_SEGMENT).jo
 const EXCLUDED_SLUGS = new Set(['studio-display', 'studio-display-xdr'])
 
 function toPath(url: string): string {
-  return url.startsWith(ORIGIN) ? url.slice(ORIGIN.length) : url
+  const parsed = URL.parse(url, ORIGIN)
+  return parsed?.origin === ORIGIN ? parsed.pathname : ''
 }
 
 export function discoverProductUrls(category: CategoryKey, landing: Page): string[] {

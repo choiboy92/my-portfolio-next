@@ -63,6 +63,22 @@ describe('discoverProductUrls', () => {
     }
   })
 
+  it('keeps only links on the Apple origin', () => {
+    const html = [
+      'https://www.apple.com.evil.test/uk/shop/buy-iphone/fake',
+      'https://www.apple.com@evil.test/uk/shop/buy-iphone/fake',
+      'http://[bad/uk/shop/buy-iphone/fake',
+      '//www.apple.com/uk/shop/buy-iphone/iphone-18?colour=black',
+      '/uk/shop/buy-iphone/iphone-18e#top',
+    ]
+      .map((href) => `<a href="${href}">x</a>`)
+      .join('')
+    expect(discoverProductUrls('iPhone', { url: 'x', html })).toEqual([
+      `${A}/buy-iphone/iphone-18`,
+      `${A}/buy-iphone/iphone-18e`,
+    ])
+  })
+
   it('throws on an empty page', () => {
     expect(() =>
       discoverProductUrls('MacBook', { url: 'https://example.test/', html: '<html></html>' }),
