@@ -5,7 +5,8 @@ import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { ExternalLink, Github, FileText } from 'lucide-react'
+import { ExternalLink, FileText } from 'lucide-react'
+import { GithubIcon } from '@/components/icons'
 
 interface WorkItem {
   id: string
@@ -205,7 +206,7 @@ export default function CurrentWorkPage() {
                         className="p-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-all duration-300"
                         title="View on GitHub"
                       >
-                        <Github className="w-5 h-5" />
+                        <GithubIcon className="w-5 h-5" />
                       </a>
                     )}
                     {item.links.demo && (
