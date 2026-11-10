@@ -1,4 +1,4 @@
-import { roundToPence } from './util'
+import { isRecord, roundToPence } from './util'
 
 export class MissingDataError extends Error {
   constructor(url: string, blob: string) {
@@ -122,17 +122,39 @@ export function extractAnalyticsProducts(html: string, url: string): AnalyticsPr
   throw new MissingDataError(url, 'analytics products')
 }
 
-export function extractLdJsonOffers(html: string, url: string): { sku: string; price: number }[] {
-  const out: { sku: string; price: number }[] = []
-  for (const item of ldJsonObjects(html) as Record<string, unknown>[]) {
-    const raw = item?.offers
-    const offers = (Array.isArray(raw) ? raw : raw ? [raw] : []) as Record<string, unknown>[]
-    for (const o of offers) {
-      if (typeof o.sku === 'string' && o.price !== undefined) {
-        out.push({ sku: o.sku, price: parsePounds(o.price as string | number) })
-      }
-    }
+export function productName(html: string): string | undefined {
+  for (const item of ldJsonObjects(html)) {
+    if (isRecord(item) && item['@type'] === 'Product' && typeof item.name === 'string' && item.name.trim()) return normaliseLabel(item.name)
   }
-  if (out.length === 0) throw new MissingDataError(url, 'ld+json offers')
-  return out
+  return undefined
+}
+
+export type PriceTable = Record<string, { amount?: unknown }>
+
+export type DisplayGroup = Record<string, unknown> & { variantOrder?: string[] }
+
+export type ProductSelection<P> = {
+  data: Record<string, unknown>
+  products: P[]
+  display: Record<string, DisplayGroup> & { prices: PriceTable }
+}
+
+export function readProductSelection<P>(bootstrap: unknown, url: string, displayKey: string): ProductSelection<P> {
+  if (!isRecord(bootstrap) || !Array.isArray(bootstrap.products) || bootstrap.products.length === 0) {
+    throw new MissingDataError(url, 'productSelectionData.products')
+  }
+  const display = bootstrap[displayKey]
+  if (!isRecord(display) || !isRecord(display.prices)) throw new MissingDataError(url, `productSelectionData.${displayKey}.prices`)
+  return { data: bootstrap, products: bootstrap.products as P[], display: display as ProductSelection<P>['display'] }
+}
+
+export function amountOf(prices: Record<string, unknown>, key: string): number | undefined {
+  const entry = prices[key]
+  const amount = isRecord(entry) ? entry.amount : undefined
+  return typeof amount === 'number' || typeof amount === 'string' ? parsePounds(amount) : undefined
+}
+
+export function displayHeader(group: DisplayGroup | undefined, value: string): string | undefined {
+  const entry = group?.[value]
+  return isRecord(entry) && typeof entry.header === 'string' ? entry.header : undefined
 }

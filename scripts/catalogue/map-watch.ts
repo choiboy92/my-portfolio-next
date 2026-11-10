@@ -1,19 +1,22 @@
+import { formatPounds } from '@/lib/catalogue/format'
 import type { BandGroup, BandStyle, Model, Spec } from '@/lib/catalogue/schema'
-import { extractKeyedJson, extractWindowJson, ldJsonObjects, MissingDataError, normaliseLabel, parsePounds, stripHtml } from './extract'
+import {
+  amountOf,
+  displayHeader,
+  extractKeyedJson,
+  extractWindowJson,
+  MissingDataError,
+  normaliseLabel,
+  parsePounds,
+  productName,
+  readProductSelection,
+  stripHtml,
+  type DisplayGroup,
+  type PriceTable,
+} from './extract'
 import type { Fetcher } from './http'
 import type { MappedModel, MapResult, Page, PublishedPrice } from './types'
 import { compareStrings, isRecord, rankIn, unique, uniqueBy } from './util'
-
-export type WatchBandCall = {
-  casePriceKey: string
-  selection: unknown
-  sizes: Record<string, unknown>
-}
-
-export type WatchBandPrices = {
-  name: string
-  bySize: Record<string, WatchBandCall>
-}
 
 type Product = {
   part: string
@@ -21,14 +24,22 @@ type Product = {
   priceKey: string
 }
 
-type DisplayGroup = Record<string, unknown> & { variantOrder?: string[] }
-
 type Bootstrap = {
   products: Product[]
-  displayValues: Record<string, DisplayGroup> & { prices: Record<string, { amount?: unknown }> }
+  displayValues: Record<string, DisplayGroup> & { prices: PriceTable }
 }
 
 type Row = { product: Product; size: string; material: string; connection: string; price: number }
+
+type Selection = {
+  groups: { name: string; items: string[] }[]
+  items: Record<string, { name: string; colours: string[]; colourValues: string[] }>
+  prices: Record<string, number>
+}
+
+type BandCall = { casePrice: number; selection: Selection; sizes: Record<string, string[]> }
+
+type MaterialBands = Map<string, BandCall>
 
 type StyleRead = {
   name: string
@@ -37,6 +48,8 @@ type StyleRead = {
   colours: string[]
   sizes: string[]
 }
+
+type StyleReads = Map<string, { read: StyleRead[]; present: string[] }>
 
 const SIZE = 'watch_cases-dimensionCaseSize'
 const MATERIAL = 'watch_cases-dimensionCaseMaterial'
@@ -49,17 +62,12 @@ const LABEL_NOISE = [/<span[^>]*badge[^>]*>[\s\S]*?<\/span>/g, /<as-footnote[\s\
 const plain = (html: string) => stripHtml(html, LABEL_NOISE)
 
 function readBootstrap(bootstrap: unknown, url: string): Bootstrap {
-  if (!isRecord(bootstrap) || !Array.isArray(bootstrap.products) || bootstrap.products.length === 0) {
-    throw new MissingDataError(url, 'productSelectionData.products')
-  }
-  const dv = bootstrap.displayValues
-  if (!isRecord(dv) || !isRecord(dv.prices)) throw new MissingDataError(url, 'productSelectionData.displayValues.prices')
-  return { products: bootstrap.products as Product[], displayValues: dv as Bootstrap['displayValues'] }
+  const { products, display } = readProductSelection<Product>(bootstrap, url, 'displayValues')
+  return { products, displayValues: display }
 }
 
 function header(b: Bootstrap, group: string, value: string): string | undefined {
-  const entry = b.displayValues[group]?.[value]
-  return isRecord(entry) && typeof entry.header === 'string' ? entry.header : undefined
+  return displayHeader(b.displayValues[group], value)
 }
 
 function sizeLabel(b: Bootstrap, value: string): string {
@@ -98,11 +106,6 @@ function sortByOrder(b: Bootstrap, group: string, values: Iterable<string>): str
   return unique(values).sort((x, y) => rankIn(order, x) - rankIn(order, y))
 }
 
-function amountOf(b: Bootstrap, priceKey: string): number | undefined {
-  const amount = b.displayValues.prices[priceKey]?.amount
-  return typeof amount === 'number' || typeof amount === 'string' ? parsePounds(amount) : undefined
-}
-
 function readRows(b: Bootstrap, name: string, unmapped: string[], warnings: string[]): Row[] {
   const rows: Row[] = []
   const used = (key: string) => b.products.some(p => p.dimensions?.[key] !== undefined)
@@ -114,7 +117,7 @@ function readRows(b: Bootstrap, name: string, unmapped: string[], warnings: stri
       unmapped.push(`${name}: product ${product.part} has no ${missing.join(', ')}`)
       continue
     }
-    const price = amountOf(b, product.priceKey)
+    const price = amountOf(b.displayValues.prices, product.priceKey)
     if (price === undefined) {
       warnings.push(`${name}: no price for ${product.priceKey}`)
       continue
@@ -143,12 +146,6 @@ function readBandSizes(response: unknown, url: string): string[] {
   const options = body.options.filter(isRecord)
   if (options.length === 1 && options[0].key === 'onesize') return []
   return options.map(o => normaliseLabel(String(o.text ?? ''))).filter(t => t.length > 0)
-}
-
-type Selection = {
-  groups: { name: string; items: string[] }[]
-  items: Record<string, { name: string; colours: string[]; colourValues: string[] }>
-  prices: Record<string, number>
 }
 
 function ungroupedName(sectionHeader: unknown): string {
@@ -188,8 +185,9 @@ function readSelection(response: unknown, url: string): Selection {
     }
   }
   const prices: Record<string, number> = {}
-  for (const [style, raw] of Object.entries(body.itemPrices)) {
-    if (isRecord(raw) && (typeof raw.amount === 'number' || typeof raw.amount === 'string')) prices[style] = parsePounds(raw.amount)
+  for (const style of Object.keys(body.itemPrices)) {
+    const amount = amountOf(body.itemPrices, style)
+    if (amount !== undefined) prices[style] = amount
   }
   return { groups, items, prices }
 }
@@ -217,10 +215,9 @@ function representativeCases(b: Bootstrap, rows: Row[]): Map<string, Row> {
 }
 
 function pageName(html: string, url: string): string {
-  for (const item of ldJsonObjects(html)) {
-    if (isRecord(item) && typeof item.name === 'string' && item.name.trim()) return normaliseLabel(item.name)
-  }
-  throw new MissingDataError(url, 'product name')
+  const name = productName(html)
+  if (!name) throw new MissingDataError(url, 'product name')
+  return name
 }
 
 function sameList(a: string[], b: string[]): boolean {
@@ -257,26 +254,22 @@ function specPricing(b: Bootstrap, rows: Row[]): Pricing | undefined {
 
 function readStyles(
   b: Bootstrap,
-  bandPrices: WatchBandPrices,
+  calls: MaterialBands,
   caseSizes: string[],
+  name: string,
   unmapped: string[],
-  url: string,
-): { styles: Map<string, { read: StyleRead[]; present: string[] }>; groupOrder: string[]; held: string[] } {
+): { styles: StyleReads; groupOrder: string[]; held: string[] } {
   const held: string[] = []
-  const styles = new Map<string, { read: StyleRead[]; present: string[] }>()
+  const styles: StyleReads = new Map()
   const groupOrder: string[] = []
   for (const size of caseSizes) {
-    const call = bandPrices.bySize[size]
+    const label = sizeLabel(b, size)
+    const call = calls.get(size)
     if (!call) {
-      held.push(`no band data for ${size}`)
+      held.push(`no band data for ${label}`)
       continue
     }
-    const casePrice = amountOf(b, call.casePriceKey)
-    if (casePrice === undefined) {
-      held.push(`no case price for ${call.casePriceKey}`)
-      continue
-    }
-    const selection = readSelection(call.selection, `band-selection ${size} in ${url}`)
+    const { selection } = call
     const grouped = new Set(selection.groups.flatMap(g => g.items))
     for (const group of selection.groups) {
       if (!groupOrder.includes(group.name)) groupOrder.push(group.name)
@@ -284,43 +277,36 @@ function readStyles(
         const item = selection.items[style]
         const total = selection.prices[style]
         if (!item || total === undefined) {
-          held.push(`${size}: band style ${style} has no ${item ? 'price' : 'details'}`)
+          held.push(`${label}: band style ${style} has no ${item ? 'price' : 'details'}`)
           continue
         }
-        const surcharge = parsePounds(total - casePrice)
+        const surcharge = parsePounds(total - call.casePrice)
         if (surcharge < 0) {
-          held.push(`${size}: ${item.name} costs less than its case`)
+          held.push(`${label}: ${item.name} costs less than its case`)
           continue
         }
-        const sizesResponse = call.sizes[style]
-        let sizes: string[] = []
-        if (sizesResponse === undefined) held.push(`${size}: no band sizes for ${item.name}`)
-        else sizes = readBandSizes(sizesResponse, `band_sizes ${size} ${style} in ${url}`)
+        const sizes = call.sizes[style]
+        if (sizes === undefined) held.push(`${label}: no band sizes for ${item.name}`)
         const entry = styles.get(style) ?? { read: [], present: [] }
-        entry.read.push({ name: item.name, group: group.name, surcharge, colours: item.colours, sizes })
-        entry.present.push(size)
+        entry.read.push({ name: item.name, group: group.name, surcharge, colours: item.colours, sizes: sizes ?? [] })
+        entry.present.push(label)
         styles.set(style, entry)
       }
     }
     for (const [style, item] of Object.entries(selection.items)) {
-      if (!grouped.has(style)) unmapped.push(`${bandPrices.name}: band style ${item.name} is in no group`)
+      const text = `${name}: band style ${item.name} is in no group`
+      if (!grouped.has(style) && !unmapped.includes(text)) unmapped.push(text)
     }
   }
   return { styles, groupOrder, held }
 }
 
-function buildBandGroups(
-  styles: Map<string, { read: StyleRead[]; present: string[] }>,
-  groupOrder: string[],
-  caseSizes: string[],
-  name: string,
-  held: string[],
-): BandGroup[] {
+function buildBandGroups(styles: StyleReads, groupOrder: string[], caseCount: number, held: string[]): BandGroup[] {
   const groups = new Map<string, BandStyle[]>()
   for (const { read, present } of styles.values()) {
     const first = read[0]
     if (read.some(r => r.surcharge !== first.surcharge)) {
-      held.push(`${name}: ${first.name} surcharge differs by case size (${read.map(r => `£${r.surcharge}`).join(', ')})`)
+      held.push(`${first.name} surcharge differs by case size (${read.map(r => formatPounds(r.surcharge)).join(', ')})`)
       continue
     }
     const colours = unique(read.flatMap(r => r.colours))
@@ -332,28 +318,16 @@ function buildBandGroups(
       style.bandSizeOptions = unionSizes(lists)
       style.bandSizesByCase = Object.fromEntries(read.map((r, i) => [present[i], r.sizes]))
     }
-    if (present.length < caseSizes.length) style.caseSizes = present
+    if (present.length < caseCount) style.caseSizes = present
     groups.set(first.group, [...(groups.get(first.group) ?? []), style])
   }
   return groupOrder.filter(g => groups.has(g)).map(g => ({ material: g, style: groups.get(g) as BandStyle[] }))
 }
 
-export function buildWatchModels(bootstrap: unknown, bandPrices: unknown, url: string): MapResult {
-  const b = readBootstrap(bootstrap, url)
-  const data = bandPrices as WatchBandPrices
-  if (!isRecord(data) || typeof data.name !== 'string' || !isRecord(data.bySize)) throw new MissingDataError(url, 'band prices')
-  const name = data.name
-  const unmapped: string[] = []
-  const warnings: string[] = []
-  const rows = readRows(b, name, unmapped, warnings)
-  const caseSizes = sortByOrder(b, SIZE, rows.map(r => r.size))
-  const { styles, groupOrder, held } = readStyles(b, data, caseSizes, unmapped, url)
-  const bandOptions = buildBandGroups(styles, groupOrder, caseSizes, name, held)
-
+function buildWatchModels(b: Bootstrap, name: string, rows: Row[], bands: Map<string, MaterialBands>, url: string, unmapped: string[], warnings: string[]): MapResult {
   const published: PublishedPrice[] = []
   const specs: Spec[] = []
-  const materials = sortByOrder(b, MATERIAL, rows.map(r => r.material))
-  for (const material of materials) {
+  for (const material of sortByOrder(b, MATERIAL, rows.map(r => r.material))) {
     const specName = specNameOf(b, material, name, url)
     const mine = rows.filter(r => r.material === material)
     for (const r of uniqueBy(mine, r => `${r.size}|${r.connection}`)) {
@@ -366,7 +340,13 @@ export function buildWatchModels(bootstrap: unknown, bandPrices: unknown, url: s
         price: r.price,
       })
     }
-    if (held.length > 0) continue
+    const caseSizes = sortByOrder(b, SIZE, mine.map(r => r.size))
+    const { styles, groupOrder, held } = readStyles(b, bands.get(material) ?? new Map(), caseSizes, name, unmapped)
+    const bandOptions = buildBandGroups(styles, groupOrder, caseSizes.length, held)
+    if (held.length > 0) {
+      for (const reason of held) warnings.push(`${name} / ${specName}: ${reason}; spec held back`)
+      continue
+    }
     const pricing = specPricing(b, mine)
     if (!pricing) {
       warnings.push(`${name} / ${specName}: case prices are not additive over size and connectivity; spec held back`)
@@ -381,10 +361,9 @@ export function buildWatchModels(bootstrap: unknown, bandPrices: unknown, url: s
     }
     if (Object.keys(pricing.connectivityOptions).length > 0) spec.connectivityOptions = pricing.connectivityOptions
     if (colours.length > 0) spec.colors = colours
-    if (bandOptions.length > 0) spec.bandOptions = structuredClone(bandOptions)
+    if (bandOptions.length > 0) spec.bandOptions = bandOptions
     specs.push(spec)
   }
-  for (const reason of held) warnings.push(`${name}: ${reason}; specs held back`)
   if (specs.length === 0 && published.length === 0) {
     warnings.push(`${name}: nothing could be read; model skipped`)
     return { models: [], unmapped, warnings }
@@ -401,39 +380,45 @@ export function buildWatchModels(bootstrap: unknown, bandPrices: unknown, url: s
   return { models: [mapped], unmapped, warnings }
 }
 
+async function fetchBandCall(fetcher: Fetcher, urls: { bandSelection: string; bandSize: string }, row: Row): Promise<BandCall> {
+  const params = caseParams(row.product)
+  const selectionUrl = urls.bandSelection + params
+  const selection = readSelection(await fetcher.json(selectionUrl), selectionUrl)
+  const sizes: Record<string, string[]> = {}
+  for (const [style, item] of Object.entries(selection.items)) {
+    const colour = item.colourValues[0]
+    if (colour === undefined) continue
+    const sizeUrl = `${urls.bandSize}${params}&dm.watch_bands-dimensionBandStyle=${encodeURIComponent(style)}&dm.watch_bands-dimensionColor=${encodeURIComponent(colour)}`
+    sizes[style] = readBandSizes(await fetcher.json(sizeUrl), sizeUrl)
+  }
+  return { casePrice: row.price, selection, sizes }
+}
+
 export async function mapWatch(page: Page, fetcher: Fetcher): Promise<MapResult> {
   if (/\/buy-watch\/apple-watch-hermes/.test(page.url)) {
     return { models: [], unmapped: [], warnings: [`${page.url}: Apple Watch Hermès is not mapped (its product name and case dimensions do not identify it apart from the standard models); skipped`] }
   }
-  const bootstrap = extractKeyedJson(page.html, page.url, 'productSelectionData')
-  const b = readBootstrap(bootstrap, page.url)
+  const b = readBootstrap(extractKeyedJson(page.html, page.url, 'productSelectionData'), page.url)
   const name = pageName(page.html, page.url)
+  const unmapped: string[] = []
+  const warnings: string[] = []
+  const rows = readRows(b, name, unmapped, warnings)
+  const bands = new Map<string, MaterialBands>()
   let urls: { bandSelection: string; bandSize: string }
   try {
     urls = bandBase(page.html, page.url)
   } catch (err) {
     if (!(err instanceof MissingDataError)) throw err
-    const result = buildWatchModels(bootstrap, { name, bySize: {} }, page.url)
+    const result = buildWatchModels(b, name, rows, bands, page.url, unmapped, warnings)
     return { ...result, warnings: [...result.warnings, `${name}: ${err.message}`] }
   }
 
-  const rows = readRows(b, name, [], [])
-  const bySize: Record<string, WatchBandCall> = {}
-  for (const [size, row] of representativeCases(b, rows)) {
-    const params = caseParams(row.product)
-    const selectionUrl = urls.bandSelection + params
-    const selection = await fetcher.json(selectionUrl)
-    const read = readSelection(selection, selectionUrl)
-    const sizes: Record<string, unknown> = {}
-    for (const [style, item] of Object.entries(read.items)) {
-      const colour = item.colourValues[0]
-      if (colour === undefined) continue
-      const sizeUrl = `${urls.bandSize}${params}&dm.watch_bands-dimensionBandStyle=${encodeURIComponent(style)}&dm.watch_bands-dimensionColor=${encodeURIComponent(colour)}`
-      sizes[style] = await fetcher.json(sizeUrl)
+  for (const material of sortByOrder(b, MATERIAL, rows.map(r => r.material))) {
+    const calls: MaterialBands = new Map()
+    for (const [size, row] of representativeCases(b, rows.filter(r => r.material === material))) {
+      calls.set(size, await fetchBandCall(fetcher, urls, row))
     }
-    bySize[size] = { casePriceKey: row.product.priceKey, selection, sizes }
+    bands.set(material, calls)
   }
-
-  const result = buildWatchModels(bootstrap, { name, bySize }, page.url)
-  return result
+  return buildWatchModels(b, name, rows, bands, page.url, unmapped, warnings)
 }

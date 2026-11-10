@@ -76,13 +76,15 @@ jobs:
 
           branch_exists=false
           existing_blob=""
+          branch_parent=""
           if gh api "repos/$GH_REPO/git/ref/heads/$BRANCH" > /dev/null 2>&1; then
             branch_exists=true
             existing_blob=$(gh api "repos/$GH_REPO/contents/$FILE_PATH?ref=$BRANCH" --jq .sha 2>/dev/null || true)
+            branch_parent=$(gh api "repos/$GH_REPO/commits/$BRANCH" --jq '.parents[0].sha // empty' 2>/dev/null || true)
           fi
 
-          if [ "$existing_blob" = "$blob_sha" ]; then
-            echo "Branch $BRANCH already holds this catalogue; refreshing the PR body only."
+          if [ "$existing_blob" = "$blob_sha" ] && [ "$branch_parent" = "$main_sha" ]; then
+            echo "Branch $BRANCH already holds this catalogue on current main; refreshing the PR body only."
           else
             tree_sha=$(jq -n --arg base "$main_tree" --arg path "$FILE_PATH" --arg sha "$blob_sha" \
               '{base_tree: $base, tree: [{path: $path, mode: "100644", type: "blob", sha: $sha}]}' \
@@ -110,7 +112,7 @@ jobs:
           fi
 
       - name: Close stale rolling PR
-        if: always() && steps.sync.outputs.changed == 'false'
+        if: always() && steps.sync.outputs.changed == 'false' && steps.sync.outcome == 'success'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GH_REPO: ${{ github.repository }}

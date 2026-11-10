@@ -37,50 +37,45 @@ function withPhones(count: number): Catalogue {
 describe('selfCheck', () => {
   it('passes a model whose published prices match', () => {
     const result = selfCheck([phone(999)])
-    expect(result.passed).toHaveLength(1)
-    expect(result.failures).toEqual([])
+    expect(result).toEqual([])
   })
 
   it('reports mismatching prices', () => {
     const result = selfCheck([phone(999, 1099)])
-    expect(result.passed).toEqual([])
-    expect(result.failures).toEqual([{ category: 'iPhone', model: 'Phone X', spec: 'Phone X', label: '512GB', expected: 1399, actual: 1299 }])
+    expect(result).toEqual([{ category: 'iPhone', model: 'Phone X', spec: 'Phone X', label: '512GB', expected: 1399, actual: 1299 }])
   })
 
   it('fails a published config that references a missing spec', () => {
     const mapped = phone(999)
     mapped.published.push({ spec: 'Ghost', label: 'ghost', options: {}, price: 5 })
-    expect(selfCheck([mapped]).failures.map(f => f.spec)).toEqual(['Ghost'])
+    expect(selfCheck([mapped]).map(f => f.spec)).toEqual(['Ghost'])
   })
 
   it('fails a model with no specs and published configs', () => {
     const mapped = phone(999)
     mapped.model = { ...mapped.model, specs: [] }
     const result = selfCheck([mapped])
-    expect(result.passed).toEqual([])
-    expect(result.failures.length).toBeGreaterThan(0)
+    expect(result.length).toBeGreaterThan(0)
   })
 
   it('fails a model with specs but nothing published', () => {
     const mapped = phone(999)
     mapped.published = []
     const result = selfCheck([mapped])
-    expect(result.passed).toEqual([])
-    expect(result.failures.map(f => f.label)).toEqual(['Phone X / Phone X: no Apple-published price to verify'])
+    expect(result.map(f => f.label)).toEqual(['Phone X / Phone X: no Apple-published price to verify'])
   })
 
   it('fails a model where one spec has no published price', () => {
     const mapped = phone(999)
     mapped.model = { ...mapped.model, specs: [...mapped.model.specs, { ...mapped.model.specs[0], name: 'Phone Y' }] }
     const result = selfCheck([mapped])
-    expect(result.passed).toEqual([])
-    expect(result.failures.map(f => f.spec)).toEqual(['Phone Y'])
+    expect(result.map(f => f.spec)).toEqual(['Phone Y'])
   })
 
   it('compares in whole pence', () => {
     const mapped = phone(999.1)
     mapped.published = [{ spec: 'Phone X', label: 'sum', options: { storage: '512GB' }, price: 1299.1 }]
-    expect(selfCheck([mapped]).failures).toEqual([])
+    expect(selfCheck([mapped])).toEqual([])
   })
 
   it('lists every failure for a held-back model', () => {
@@ -95,8 +90,7 @@ describe('selfCheck', () => {
     mapped.model = { ...mapped.model, specs: [] }
     mapped.published = []
     const result = selfCheck([mapped])
-    expect(result.passed).toEqual([])
-    expect(result.failures).toHaveLength(1)
+    expect(result).toHaveLength(1)
   })
 })
 
@@ -138,6 +132,54 @@ describe('assembleCatalogue', () => {
     expect(model.specs[0].price).toBe(999)
     expect(warnings).toContain('⚠️ Phone X: 1 spec(s) held back — Y 512GB expected £1300, got £1399; shipped the rest')
     expect(warnings.some(w => w.includes('kept last-merged entry'))).toBe(false)
+  })
+
+  function withPhoneY(): Catalogue {
+    const copy = structuredClone(testCatalogue)
+    const model = copy.categories.iPhone.models['Phone X']
+    model.specs.push({ ...model.specs[0], name: 'Phone Y', price: 1049 })
+    return copy
+  }
+
+  it('keeps the last-merged entry of a failing spec of an existing model and reports it', () => {
+    const previous = withPhoneY()
+    const { catalogue, warnings, keptLastMerged } = assembleCatalogue(previous, resultsFor({ iPhone: [mixed(1300)] }), { bootstrap: false })
+    const model = catalogue.categories.iPhone.models['Phone X']
+    expect(model.specs.map(s => s.name)).toEqual(['Phone X', 'Phone Y'])
+    expect(model.specs[1]).toEqual(previous.categories.iPhone.models['Phone X'].specs[1])
+    expect(keptLastMerged).toEqual(['Phone X'])
+    expect(warnings).toContain(
+      '⚠️ Phone X: kept last-merged spec(s) Phone Y — Y 512GB expected £1300, got £1399 (last-merged data, not re-verified against Apple today)',
+    )
+    expect(warnings.some(w => w.includes('held back'))).toBe(false)
+  })
+
+  it('keeps the last-merged entry of a spec the mapper held for an existing model', () => {
+    const previous = withPhoneY()
+    const base = phone(999)
+    base.published.push({ spec: 'Phone Y', label: 'held Y', options: { storage: '512GB' }, price: 1349 })
+    const { catalogue, keptLastMerged } = assembleCatalogue(previous, resultsFor({ iPhone: [base] }), { bootstrap: false })
+    expect(catalogue.categories.iPhone.models['Phone X'].specs.map(s => s.name)).toEqual(['Phone X', 'Phone Y'])
+    expect(keptLastMerged).toEqual(['Phone X'])
+  })
+
+  it('drops a failing spec with no last-merged entry even when another failing spec is kept', () => {
+    const previous = withPhoneY()
+    const bad = mixed(1300)
+    bad.published.push({ spec: 'Phone Z', label: 'Z', options: {}, price: 5 })
+    const { catalogue, warnings, keptLastMerged } = assembleCatalogue(previous, resultsFor({ iPhone: [bad] }), { bootstrap: false })
+    expect(catalogue.categories.iPhone.models['Phone X'].specs.map(s => s.name)).toEqual(['Phone X', 'Phone Y'])
+    expect(keptLastMerged).toEqual(['Phone X'])
+    expect(warnings).toContain('⚠️ Phone X: 1 spec(s) held back — Z expected £5, got £0; shipped the rest')
+  })
+
+  it('drops a failing spec of a new model with a warning', () => {
+    const bad = mixed(1300)
+    bad.key = 'Phone New'
+    const { catalogue, warnings, keptLastMerged } = assembleCatalogue(withPhoneY(), resultsFor({ iPhone: [phone(999), bad] }), { bootstrap: false })
+    expect(catalogue.categories.iPhone.models['Phone New'].specs.map(s => s.name)).toEqual(['Phone X'])
+    expect(keptLastMerged).toEqual([])
+    expect(warnings).toContain('⚠️ Phone New: 1 spec(s) held back — Y 512GB expected £1300, got £1399; shipped the rest')
   })
 
   it('drops published prices of a spec the mapper held and ships the rest', () => {

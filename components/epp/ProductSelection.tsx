@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { formatAppleCarePrice } from '@/lib/catalogue/format'
+import { bandSizesFor } from '@/lib/catalogue/helpers'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { X, Smartphone, Laptop, Tablet, Watch } from 'lucide-react'
@@ -36,6 +37,14 @@ const CATEGORY_ICONS = {
   'MacBook': Laptop,
   'iPad': Tablet,
   'Apple Watch': Watch
+}
+
+export function AppleCareBillingNote() {
+  return (
+    <p className="text-xs text-portfolio-muted">
+      Apple bills AppleCare+ monthly or annually until cancelled. The price added is the first payment.
+    </p>
+  )
 }
 
 export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
@@ -623,11 +632,10 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                         (style: any) => style.styleName === watch('band.style')
                                       )
                                       
-                                      const bandSizes: string[] | undefined =
-                                        selectedStyleObj?.bandSizesByCase?.[watch('size') ?? ''] ?? selectedStyleObj?.bandSizeOptions
+                                      const bandSizes = selectedStyleObj ? bandSizesFor(selectedStyleObj, watch('size')) : []
 
                                       // Some bands don't have size options
-                                      if (!bandSizes || bandSizes.length === 0) {
+                                      if (bandSizes.length === 0) {
                                         return (
                                           <div className="text-sm text-portfolio-muted p-3 bg-portfolio-card rounded border border-portfolio-border">
                                             No size selection needed for this band style
@@ -733,24 +741,27 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
 
                       {/* AppleCare */}
                       {selectedModel && appleCareTiers.length === 1 && (
-                        <div className="flex items-center space-x-2">
-                          <Controller
-                            name="appleCare"
-                            control={control}
-                            render={({ field }) => (
-                              <Checkbox
-                                id="applecare"
-                                checked={!!field.value}
-                                onCheckedChange={(checked) => field.onChange(checked === true ? appleCareTiers[0].name : undefined)}
-                              />
-                            )}
-                          />
-                          <Label htmlFor="applecare" className="text-portfolio-text">
-                            Add AppleCare+ Protection
-                            <span className="text-portfolio-muted ml-2">
-                              (+{formatAppleCarePrice(appleCareTiers[0])})
-                            </span>
-                          </Label>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Controller
+                              name="appleCare"
+                              control={control}
+                              render={({ field }) => (
+                                <Checkbox
+                                  id="applecare"
+                                  checked={!!field.value}
+                                  onCheckedChange={(checked) => field.onChange(checked === true ? appleCareTiers[0].name : undefined)}
+                                />
+                              )}
+                            />
+                            <Label htmlFor="applecare" className="text-portfolio-text">
+                              Add AppleCare+ Protection
+                              <span className="text-portfolio-muted ml-2">
+                                (+{formatAppleCarePrice(appleCareTiers[0])})
+                              </span>
+                            </Label>
+                          </div>
+                          <AppleCareBillingNote />
                         </div>
                       )}
                       {selectedModel && appleCareTiers.length > 1 && (
@@ -778,9 +789,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                   </Label>
                                 </div>
                               ))}
-                              <p className="text-xs text-portfolio-muted">
-                                Apple bills AppleCare+ monthly or annually until cancelled. The price added is the first payment.
-                              </p>
+                              <AppleCareBillingNote />
                             </RadioGroup>
                           )}
                         />

@@ -1,13 +1,16 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
+  amountOf,
+  displayHeader,
   extractAnalyticsProducts,
   extractKeyedJson,
-  extractLdJsonOffers,
   extractWindowJson,
   MissingDataError,
   normaliseLabel,
   parsePounds,
+  productName,
+  readProductSelection,
 } from '@/scripts/catalogue/extract'
 
 const fx = (name: string) => readFileSync(`tests/fixtures/apple/${name}`, 'utf8')
@@ -42,21 +45,34 @@ describe('extractAnalyticsProducts', () => {
   })
 })
 
-describe('extractLdJsonOffers', () => {
-  it('returns sku and price for a list of plain offers', () => {
-    expect(extractLdJsonOffers(fx('mac-macbook-pro-14-config-m5max-18-32.html'), URL)).toEqual([
-      { sku: 'MGDU4B/A', price: 4099 },
-    ])
+describe('productName', () => {
+  it('reads the ld+json Product name and ignores other types', () => {
+    expect(productName(fx('watch-apple-watch.html'))).toBe('Apple Watch Series 12')
+    expect(productName('<script type="application/ld+json">{"@type":"BreadcrumbList","name":"Shop"}</script>')).toBeUndefined()
+  })
+})
+
+describe('readProductSelection', () => {
+  it('reads products and the named display values', () => {
+    const read = readProductSelection({ products: [{ part: 'A' }], displayValues: { prices: { k: { amount: 1 } } } }, URL, 'displayValues')
+    expect(read.products).toEqual([{ part: 'A' }])
+    expect(read.display.prices).toEqual({ k: { amount: 1 } })
   })
 
-  it('skips aggregate offers that have no sku', () => {
-    expect(() => extractLdJsonOffers(fx('iphone-iphone-18-pro.html'), URL)).toThrow(MissingDataError)
+  it('throws when products or prices are missing', () => {
+    expect(() => readProductSelection({ products: [] }, URL, 'displayValues')).toThrow(/productSelectionData\.products/)
+    expect(() => readProductSelection({ products: [{}] }, URL, 'mainDisplayValues')).toThrow(/productSelectionData\.mainDisplayValues\.prices/)
   })
+})
 
-  it('handles a single offer object', () => {
-    const html =
-      '<script type="application/ld+json">{"offers":{"@type":"Offer","sku":"A1","price":"£1,199.50"}}</script>'
-    expect(extractLdJsonOffers(html, URL)).toEqual([{ sku: 'A1', price: 1199.5 }])
+describe('amountOf and displayHeader', () => {
+  it('parses an amount and reads a raw header', () => {
+    expect(amountOf({ a: { amount: '£1,199.50' }, b: { amount: 5 }, c: {} }, 'a')).toBe(1199.5)
+    expect(amountOf({ b: { amount: 5 } }, 'b')).toBe(5)
+    expect(amountOf({ c: {} }, 'c')).toBeUndefined()
+    expect(amountOf({}, 'missing')).toBeUndefined()
+    expect(displayHeader({ x: { header: '<b>X</b>' } }, 'x')).toBe('<b>X</b>')
+    expect(displayHeader(undefined, 'x')).toBeUndefined()
   })
 })
 

@@ -46,6 +46,18 @@ test('schema rejects orderComments and enforces limits', () => {
 test('schema rejects a boolean appleCare', () => {
   expect(orderSchema.safeParse(validOrder({ basket: [{ ...validItem(), appleCare: true as unknown as string }] })).success).toBe(false)
 })
+test('accepts the legacy appleCare: false from an open old tab', async () => {
+  muteConsole()
+  const res = await submit(validOrder({ basket: [{ ...validItem(), appleCare: false as unknown as string }] }))
+  expect(res.status).toBe(200)
+  expect(sent().text).not.toContain('AppleCare+:')
+})
+test('rejects appleCare: true with 400', async () => {
+  muteConsole()
+  const res = await submit(validOrder({ basket: [{ ...validItem(), appleCare: true as unknown as string }] }))
+  expect(res.status).toBe(400)
+  expect(send).not.toHaveBeenCalled()
+})
 test('emails the chosen AppleCare+ tier', async () => {
   muteConsole()
   const item = cheapestItem('iPhone', (_, spec) => spec.appleCare.length > 0)

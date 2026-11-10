@@ -1,6 +1,6 @@
 import type { Model, Spec } from '@/lib/catalogue/schema'
 import type { SelectedOptions } from '@/lib/catalogue/helpers'
-import { extractKeyedJson, ldJsonObjects, MissingDataError, normaliseLabel, parsePounds, stripHtml } from './extract'
+import { amountOf, displayHeader, extractKeyedJson, MissingDataError, normaliseLabel, parsePounds, productName, readProductSelection, stripHtml, type DisplayGroup, type PriceTable } from './extract'
 import type { Fetcher } from './http'
 import type { MappedModel, MapResult, Page, PublishedPrice } from './types'
 import { compareStrings, isRecord, rankIn, unique } from './util'
@@ -19,12 +19,10 @@ type Product = {
   dimensions: Record<string, string>
 }
 
-type DisplayGroup = Record<string, unknown> & { variantOrder?: string[] }
-
 type Bootstrap = {
   mainSections: { formFieldName?: string; header?: string | null }[]
   products: Product[]
-  mainDisplayValues: Record<string, DisplayGroup> & { prices: Record<string, { amount?: unknown }> }
+  mainDisplayValues: Record<string, DisplayGroup> & { prices: PriceTable }
   configDisplayValues: Record<string, DisplayGroup>
 }
 
@@ -50,22 +48,17 @@ const LINE_WORDS: Record<string, string> = { macbook: 'MacBook', imac: 'iMac', m
 const HEADER_NOISE = [/<div[\s\S]*?<\/div>/g, /<as-footnote[\s\S]*?<\/as-footnote>/g]
 
 function header(group: DisplayGroup | undefined, value: string): string | undefined {
-  const entry = group?.[value]
-  if (isRecord(entry) && typeof entry.header === 'string') return stripHtml(entry.header, HEADER_NOISE)
-  return undefined
+  const raw = displayHeader(group, value)
+  return raw === undefined ? undefined : stripHtml(raw, HEADER_NOISE)
 }
 
 function readBootstrap(bootstrap: unknown, url: string): Bootstrap {
-  if (!isRecord(bootstrap) || !Array.isArray(bootstrap.products) || bootstrap.products.length === 0) {
-    throw new MissingDataError(url, 'productSelectionData.products')
-  }
-  const mdv = bootstrap.mainDisplayValues
-  if (!isRecord(mdv) || !isRecord(mdv.prices)) throw new MissingDataError(url, 'productSelectionData.mainDisplayValues.prices')
+  const { data, products, display } = readProductSelection<Product>(bootstrap, url, 'mainDisplayValues')
   return {
-    mainSections: Array.isArray(bootstrap.mainSections) ? (bootstrap.mainSections as Bootstrap['mainSections']) : [],
-    products: bootstrap.products as Product[],
-    mainDisplayValues: mdv as Bootstrap['mainDisplayValues'],
-    configDisplayValues: isRecord(bootstrap.configDisplayValues) ? (bootstrap.configDisplayValues as Bootstrap['configDisplayValues']) : {},
+    mainSections: Array.isArray(data.mainSections) ? (data.mainSections as Bootstrap['mainSections']) : [],
+    products,
+    mainDisplayValues: display,
+    configDisplayValues: isRecord(data.configDisplayValues) ? (data.configDisplayValues as Bootstrap['configDisplayValues']) : {},
   }
 }
 
@@ -250,10 +243,7 @@ function productLine(url: string): string {
 }
 
 export function productLineName(html: string, url: string): string {
-  for (const item of ldJsonObjects(html)) {
-    if (isRecord(item) && item['@type'] === 'Product' && typeof item.name === 'string' && item.name.trim()) return normaliseLabel(item.name)
-  }
-  return productLine(url)
+  return productName(html) ?? productLine(url)
 }
 
 function sizeLabel(b: Bootstrap, size: string | undefined): string | undefined {
@@ -335,15 +325,14 @@ function extraLabel(b: Bootstrap, extra: string, groups: OptionDeltas | undefine
 
 const money = (n: number) => (n < 0 ? `-£${-n}` : `+£${n}`)
 
-function amountOf(b: Bootstrap, product: Product): number | undefined {
-  const amount = b.mainDisplayValues.prices[product.priceKey]?.amount
-  return typeof amount === 'number' || typeof amount === 'string' ? parsePounds(amount) : undefined
+function priceOf(b: Bootstrap, product: Product): number | undefined {
+  return amountOf(b.mainDisplayValues.prices, product.priceKey)
 }
 
 function representativePart(b: Bootstrap, cfg: StandardConfig): string | undefined {
   const candidates = cfg.products
     .filter(p => p.btrOrFdPartNumber && p.dimensions[FINISH] === cfg.rep.dimensions[FINISH])
-    .map(p => ({ part: p.btrOrFdPartNumber as string, price: amountOf(b, p) ?? Infinity }))
+    .map(p => ({ part: p.btrOrFdPartNumber as string, price: priceOf(b, p) ?? Infinity }))
     .sort((x, y) => x.price - y.price || compareStrings(x.part, y.part))
   return candidates[0]?.part
 }
@@ -397,7 +386,7 @@ export function buildMacModels(
       else warnings.push(`${label}: cannot read a single display-finish upgrade from ${JSON.stringify(finishValues)}`)
     }
 
-    const price = amountOf(b, cfg.rep)
+    const price = priceOf(b, cfg.rep)
     const publishedOptions = (p: Product): SelectedOptions => {
       const options: SelectedOptions = {}
       if (memory?.base) options.memory = memory.base
@@ -407,7 +396,7 @@ export function buildMacModels(
       return options
     }
     for (const p of cfg.products) {
-      const amount = amountOf(b, p)
+      const amount = priceOf(b, p)
       if (amount === undefined) {
         warnings.push(`${label}: no price for standard configuration ${p.priceKey}`)
         continue

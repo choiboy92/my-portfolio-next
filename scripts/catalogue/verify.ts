@@ -1,6 +1,6 @@
 import { formatPounds } from '@/lib/catalogue/format'
 import { priceSpec } from '@/lib/catalogue/helpers'
-import { parseCatalogue, type Catalogue, type CategoryKey, type Model } from '@/lib/catalogue/schema'
+import { parseCatalogue, type Catalogue, type CategoryKey, type Model, type Spec } from '@/lib/catalogue/schema'
 import type { MapResult, MappedModel } from './types'
 import { toPence, unique } from './util'
 
@@ -43,15 +43,19 @@ function checkModel(mapped: MappedModel): SelfCheckFailure[] {
   return failures
 }
 
-export function selfCheck(mapped: MappedModel[]): { passed: MappedModel[]; failures: SelfCheckFailure[] } {
-  const passed: MappedModel[] = []
-  const failures: SelfCheckFailure[] = []
-  for (const model of mapped) {
-    const found = checkModel(model)
-    if (found.length === 0) passed.push(model)
-    else failures.push(...found)
-  }
-  return { passed, failures }
+export function selfCheck(mapped: MappedModel[]): SelfCheckFailure[] {
+  return mapped.flatMap(checkModel)
+}
+
+function describeFailures(list: SelfCheckFailure[]): string {
+  return list.map(f => (f.expected === 0 && f.actual === 0 ? f.label : `${f.label} expected ${formatPounds(f.expected)}, got ${formatPounds(f.actual)}`)).join('; ')
+}
+
+function withLastMergedSpecs(fresh: Spec[], failed: Set<string>, previous: Model | undefined): { specs: Spec[]; kept: Spec[] } {
+  const kept = previous ? previous.specs.filter(s => failed.has(s.name)) : []
+  const specs = fresh.flatMap(s => (failed.has(s.name) ? kept.filter(k => k.name === s.name) : [s]))
+  for (const k of kept) if (!specs.includes(k)) specs.push(k)
+  return { specs, kept }
 }
 
 export function assembleCatalogue(
@@ -75,7 +79,7 @@ export function assembleCatalogue(
     unmapped.push(...result.unmapped)
     warnings.push(...result.warnings)
 
-    const { failures } = selfCheck(result.models)
+    const failures = selfCheck(result.models)
     const failedKeys = new Set(failures.map(f => f.model))
     const models: Record<string, Model> = {}
 
@@ -85,18 +89,28 @@ export function assembleCatalogue(
         continue
       }
       const mine = failures.filter(f => f.model === mapped.key)
-      const describe = (list: SelfCheckFailure[]) =>
-        list.map(f => (f.expected === 0 && f.actual === 0 ? f.label : `${f.label} expected ${formatPounds(f.expected)}, got ${formatPounds(f.actual)}`)).join('; ')
       const failedSpecs = new Set(mine.map(f => f.spec))
+      const previousModel = Object.hasOwn(prevCategory.models, mapped.key) ? prevCategory.models[mapped.key] : undefined
       const passing = failedSpecs.has('') ? [] : mapped.model.specs.filter(spec => !failedSpecs.has(spec.name))
       if (passing.length > 0) {
-        models[mapped.key] = { ...mapped.model, specs: passing }
-        warnings.push(`⚠️ ${mapped.key}: ${failedSpecs.size} spec(s) held back — ${describe(mine)}; shipped the rest`)
+        const { specs, kept } = withLastMergedSpecs(mapped.model.specs, failedSpecs, previousModel)
+        const keptNames = new Set(kept.map(s => s.name))
+        const dropped = mine.filter(f => !keptNames.has(f.spec))
+        models[mapped.key] = { ...mapped.model, specs }
+        if (kept.length > 0) {
+          keptLastMerged.push(mapped.key)
+          warnings.push(
+            `⚠️ ${mapped.key}: kept last-merged spec(s) ${[...keptNames].join(', ')} — ${describeFailures(mine.filter(f => keptNames.has(f.spec)))} (last-merged data, not re-verified against Apple today)`,
+          )
+        }
+        if (dropped.length > 0) {
+          warnings.push(`⚠️ ${mapped.key}: ${new Set(dropped.map(f => f.spec)).size} spec(s) held back — ${describeFailures(dropped)}; shipped the rest`)
+        }
         continue
       }
-      const detail = describe(mine)
-      if (Object.hasOwn(prevCategory.models, mapped.key)) {
-        models[mapped.key] = prevCategory.models[mapped.key]
+      const detail = describeFailures(mine)
+      if (previousModel) {
+        models[mapped.key] = previousModel
         keptLastMerged.push(mapped.key)
         warnings.push(`⚠️ ${mapped.key}: kept last-merged entry — ${detail} (last-merged data, not re-verified against Apple today)`)
       } else {

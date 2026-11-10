@@ -28,7 +28,7 @@ export type SyncResult = {
 
 const CATEGORIES = Object.keys(LANDING_PAGES) as CategoryKey[]
 
-async function mapCategories<T>(fn: (category: CategoryKey) => T | Promise<T>): Promise<Record<CategoryKey, T>> {
+async function mapCategories<T>(fn: (category: CategoryKey) => Promise<T>): Promise<Record<CategoryKey, T>> {
   const out: Partial<Record<CategoryKey, T>> = {}
   for (const category of CATEGORIES) out[category] = await fn(category)
   return out as Record<CategoryKey, T>
@@ -102,7 +102,9 @@ export async function runSync(deps: SyncDeps): Promise<SyncResult> {
 
   const source = await fetchAppleCare(CATEGORIES.flatMap(c => pages[c]), fetcher)
   const appleCare = applyAppleCare(CATEGORIES.flatMap(c => mapped[c].models), source)
-  const results = await mapCategories(category => ({ ...mapped[category], models: appleCare.models.filter(m => m.category === category) }))
+  const results = Object.fromEntries(
+    CATEGORIES.map(category => [category, { ...mapped[category], models: appleCare.models.filter(m => m.category === category) }]),
+  ) as Record<CategoryKey, MapResult>
 
   const assembled = assembleCatalogue(previous, results, { bootstrap })
   const changed = !catalogueEquals(previous, assembled.catalogue)

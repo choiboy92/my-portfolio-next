@@ -259,6 +259,22 @@ describe('applyAppleCare', () => {
     expect(result.warnings).toEqual([])
   })
 
+  it('does not attach a standard MacBook Pro plan to the PROLED XDR Display line', async () => {
+    const pages = { ...PRODUCT_PAGES, 'SGNA3ZM/A': titlePage(14, 'MacBook Pro'), 'SGMV3ZM/A': titlePage(14, 'MacBook Pro') }
+    const source = await fetchAppleCare([proledPage], fakeFetcher(pages))
+    const [p14] = applyAppleCare([proled(14)], source).models
+    for (const spec of p14.model.specs) expect(spec.appleCare).toEqual([])
+  })
+
+  it('attributes rows to every page that lists the same device', async () => {
+    const copy = page('mac-macbook-pro.html', 'https://www.apple.com/uk/shop/buy-mac/macbook-pro-copy')
+    const source = await fetchAppleCare([mbpPage, copy], fakeFetcher())
+    const fromCopy = model('MacBook', 'MacBook Pro 14"', ['M5 Pro 15-Core CPU 16-Core GPU'], copy)
+    const [original, duplicate] = applyAppleCare([mbp14(), fromCopy], source).models
+    expect(tiers(duplicate, 'M5 Pro 15-Core CPU 16-Core GPU')).toEqual(tiers(original, 'M5 Pro 15-Core CPU 16-Core GPU'))
+    expect(tiers(duplicate, 'M5 Pro 15-Core CPU 16-Core GPU')?.map(t => t[3])).toEqual(['SD423ZM/A', 'SD3X3ZM/A'])
+  })
+
   it('does not attach a plan to a chip its product page does not list', async () => {
     const source = await fetchAppleCare([mbpPage], fakeFetcher())
     const m14 = model('MacBook', 'MacBook Pro 14"', ['M6 Pro 15-Core CPU 16-Core GPU'], mbpPage)

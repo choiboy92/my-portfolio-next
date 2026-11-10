@@ -18,12 +18,36 @@ const ti46 = saved('watch-apple-watch-bands-titanium-46mm-gpscell.json')
 const magneticLink42 = saved('watch-apple-watch-band-sizes-aluminum-42mm-gps-magneticlink.json')
 const link46 = saved('watch-apple-watch-band-sizes-titanium-46mm-gpscell-link.json')
 
-const ALU_46_GPS = 419
+const ALU_42_GPS = 369
 const TI_46_CELL = 699
 
-function shifted(file: Saved, delta: number): unknown {
-  const response = structuredClone(file.response) as { body: { itemPrices: Record<string, { amount: number }> } }
+type CaseSize = '42mm' | '46mm'
+
+const REPRESENTATIVE: Record<string, Record<CaseSize, [string, number]>> = {
+  aluminum: { '42mm': ['MJFN4MP/A', 369], '46mm': ['MJFT4MP/A', 419] },
+  titanium: { '42mm': ['MJJM4MP/A', 649], '46mm': ['MJJP4MP/A', 699] },
+  ceramic: { '42mm': ['MJJT4MP/A', 849], '46mm': ['MJJV4MP/A', 899] },
+}
+
+type SelectionBody = {
+  body: {
+    groups: { id: string; items: string[] }[]
+    items: Record<string, unknown>
+    itemPrices: Record<string, { amount: number }>
+  }
+}
+
+function shifted(file: Saved, delta: number): SelectionBody {
+  const response = structuredClone(file.response) as unknown as SelectionBody
   for (const price of Object.values(response.body.itemPrices)) price.amount += delta
+  return response
+}
+
+function withTitaniumOnlyStyle(response: SelectionBody, casePrice: number): SelectionBody {
+  const milanese = response.body.items.milanese as Record<string, unknown>
+  response.body.items.titaniummilanese = { ...milanese, sectionHeader: 'Titanium Milanese Loop' }
+  response.body.itemPrices.titaniummilanese = { amount: casePrice + 99 }
+  response.body.groups.find(g => g.id === 'stainless')?.items.push('titaniummilanese')
   return response
 }
 
@@ -45,7 +69,7 @@ function sizesBody(style: string, caseSize: '42mm' | '46mm'): unknown {
   return { head: { status: '200' }, body: { options, prices: {} } }
 }
 
-type Tweak = { selection46?: (body: unknown) => unknown; fail?: RegExp; emptySelection?: boolean }
+type Tweak = { selection46?: (body: unknown) => unknown; fail?: RegExp; emptySelection?: boolean; titaniumOnlyStyle?: boolean }
 
 function fakeFetcher(tweak: Tweak = {}): Fetcher & { requested: string[] } {
   const requested: string[] = []
@@ -58,17 +82,16 @@ function fakeFetcher(tweak: Tweak = {}): Fetcher & { requested: string[] } {
       requested.push(url)
       if (tweak.fail?.test(url)) throw new FetchFailedError(url, 'HTTP 500 after 5 attempts')
       const q = new URL(url).searchParams
-      const caseSize = q.get('dm.watch_cases-dimensionCaseSize') as '42mm' | '46mm'
+      const caseSize = q.get('dm.watch_cases-dimensionCaseSize') as CaseSize
+      const material = q.get('dm.watch_cases-dimensionCaseMaterial') ?? ''
       const style = q.get('dm.watch_bands-dimensionBandStyle')
       if (url.includes('/api/band-selection')) {
         if (tweak.emptySelection) return { head: { status: '200' }, body: {} } as T
-        if (caseSize === '42mm') {
-          expect(q.get('option.watch_cases')).toBe('MJFN4MP/A')
-          return alu42.response as T
-        }
-        expect(q.get('option.watch_cases')).toBe('MJFT4MP/A')
-        const body = shifted(ti46, ALU_46_GPS - TI_46_CELL)
-        return (tweak.selection46 ? tweak.selection46(body) : body) as T
+        const [part, casePrice] = REPRESENTATIVE[material][caseSize]
+        expect(q.get('option.watch_cases')).toBe(part)
+        let body = caseSize === '42mm' ? shifted(alu42, casePrice - ALU_42_GPS) : shifted(ti46, casePrice - TI_46_CELL)
+        if (tweak.titaniumOnlyStyle && material === 'titanium') body = withTitaniumOnlyStyle(body, casePrice)
+        return (caseSize === '46mm' && tweak.selection46 ? tweak.selection46(body) : body) as T
       }
       if (url.includes('/api/band_sizes')) {
         if (style === 'magneticlink' && caseSize === '42mm') return magneticLink42.response as T
@@ -176,17 +199,66 @@ describe('mapWatch', () => {
     expect(sport?.bandSizesByCase).toBeUndefined()
   })
 
-  it('fetches band data once per case size and sizes once per style and case size', async () => {
+  it('fetches band data once per material and case size, using that material\'s own cheapest case', async () => {
     const { fetcher } = await run()
     const selections = fetcher.requested.filter(u => u.includes('/api/band-selection'))
     const sizes = fetcher.requested.filter(u => u.includes('/api/band_sizes'))
-    expect(selections).toHaveLength(2)
-    expect(sizes).toHaveLength(10 + 9)
+    expect(selections).toHaveLength(6)
+    expect(sizes).toHaveLength(3 * (10 + 9))
+    const cases = selections.map(u => {
+      const q = new URL(u).searchParams
+      return [q.get('dm.watch_cases-dimensionCaseMaterial'), q.get('dm.watch_cases-dimensionCaseSize'), q.get('option.watch_cases')]
+    })
+    expect(cases).toEqual([
+      ['aluminum', '42mm', 'MJFN4MP/A'],
+      ['aluminum', '46mm', 'MJFT4MP/A'],
+      ['titanium', '42mm', 'MJJM4MP/A'],
+      ['titanium', '46mm', 'MJJP4MP/A'],
+      ['ceramic', '42mm', 'MJJT4MP/A'],
+      ['ceramic', '46mm', 'MJJV4MP/A'],
+    ])
     const q = new URL(selections[0]).searchParams
-    expect(q.get('dm.watch_cases-dimensionCaseMaterial')).toBe('aluminum')
     expect(q.get('dm.watch_cases-dimensionConnection')).toBe('gps')
     expect(q.get('dm.watch_cases-dimensionColor')).toBe('space_gray')
     expect(new URL(sizes[0]).searchParams.get('dm.watch_bands-dimensionColor')).toBe('burgundy')
+  })
+
+  it('gives a band style only to the material whose own band data lists it', async () => {
+    const { models, warnings } = await run({ titaniumOnlyStyle: true })
+    expect(warnings).toEqual([])
+    const names = (spec: string) => models[0].model.specs.find(s => s.name === spec)?.bandOptions?.find(g => g.material === 'Stainless Steel')?.style.map(s => s.styleName)
+    expect(names('Titanium Case')).toEqual(['Milanese Loop', 'Link Bracelet', 'Titanium Milanese Loop'])
+    expect(names('Aluminium Case')).toEqual(['Milanese Loop', 'Link Bracelet'])
+    expect(names('Ceramic Case')).toEqual(['Milanese Loop', 'Link Bracelet'])
+    expect(styleOf(models[0], 'Titanium Case', 'Stainless Steel', 'Titanium Milanese Loop')).toMatchObject({ price: 99, bandColor: ['Dark Bronze', 'Radiant Gold', 'Natural'] })
+  })
+
+  it('holds only the material whose surcharges disagree across its case sizes', async () => {
+    const { models, warnings } = await run({
+      selection46: body => {
+        const b = body as SelectionBody
+        if (b.body.itemPrices.link.amount === 949) b.body.itemPrices.link.amount += 10
+        return b
+      },
+    })
+    expect(models[0].model.specs.map(s => s.name)).toEqual(['Aluminium Case', 'Ceramic Case'])
+    expect(warnings.some(w => w.includes('Titanium Case') && w.includes('Link Bracelet surcharge differs by case size (£250, £260)'))).toBe(true)
+  })
+
+  it('keys case-specific band data by the case size label shown to employees', async () => {
+    const html = page.html.replace('"42mm":{"header":"42mm"}', '"42mm":{"header":"42 mm"}')
+    expect(html).not.toBe(page.html)
+    const { models } = await run({}, { url: page.url, html })
+    const alu = models[0].model.specs.find(s => s.name === 'Aluminium Case')
+    expect(Object.keys(alu?.sizeOptions ?? {})).toEqual(['42 mm', '46mm'])
+    expect(styleOf(models[0], 'Aluminium Case', 'Textile', 'Modern Buckle')?.caseSizes).toEqual(['42 mm'])
+    expect(Object.keys(styleOf(models[0], 'Aluminium Case', 'Rubber', 'Solo Loop')?.bandSizesByCase ?? {})).toEqual(['42 mm', '46mm'])
+    const { isOffered } = makeCatalogueHelpers(catalogueOf(models))
+    const item = (bandStyle: string, bandSize: string, color: string) =>
+      ({ category: 'Apple Watch', model: models[0].key, specs: 'Aluminium Case', color: 'Black', size: '42 mm', connectivity: 'GPS', band: { material: bandStyle === 'Solo Loop' ? 'Rubber' : 'Textile', style: bandStyle, color, size: bandSize } }) as never
+    expect(isOffered(item('Modern Buckle', 'Small', 'Camel'))).toBe(true)
+    expect(isOffered(item('Solo Loop', '9', 'Black'))).toBe(true)
+    expect(isOffered(item('Solo Loop', '12', 'Black'))).toBe(false)
   })
 
   it('reproduces every published case price and the Apple case + band totals', async () => {

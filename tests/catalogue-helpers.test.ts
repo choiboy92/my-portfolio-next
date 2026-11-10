@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
-import { makeCatalogueHelpers } from '@/lib/catalogue/helpers'
+import { bandSizesFor, makeCatalogueHelpers } from '@/lib/catalogue/helpers'
+import type { BandStyle } from '@/lib/catalogue/schema'
 import type { BasketItemFormData } from '@/lib/validation-schema'
 import { testCatalogue } from './fixtures/test-catalogue'
 
@@ -63,6 +64,17 @@ test('getAppleCareTiers returns the tiers in order', () => {
     'AppleCare+ with Theft and Loss (Annual)',
   ])
   expect(getAppleCareTiers('iPhone', 'Phone X')).toEqual([])
+})
+test('bandSizesFor gives the band sizes Apple offers for a case size', () => {
+  const plain: BandStyle = { styleName: 'Sport Band', price: 0, bandColor: ['Black'], bandSizeOptions: ['S/M', 'M/L'] }
+  const byCase: BandStyle = { styleName: 'Solo Loop', price: 0, bandColor: ['Black'], bandSizeOptions: ['5', '11'], bandSizesByCase: { '42mm': ['5'], '46mm': ['5', '11'] } }
+  expect(bandSizesFor(plain, '42mm')).toEqual(['S/M', 'M/L'])
+  expect(bandSizesFor(plain, undefined)).toEqual(['S/M', 'M/L'])
+  expect(bandSizesFor({ ...plain, bandSizeOptions: undefined }, '42mm')).toEqual([])
+  expect(bandSizesFor(byCase, '42mm')).toEqual(['5'])
+  expect(bandSizesFor(byCase, '46mm')).toEqual(['5', '11'])
+  expect(bandSizesFor(byCase, '49mm')).toEqual([])
+  expect(bandSizesFor(byCase, undefined)).toEqual([])
 })
 test('isOffered rejects unknown or unavailable AppleCare tiers', () => {
   expect(isOffered({ ...phone, appleCare: 'Gold Plan' })).toBe(false)

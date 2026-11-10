@@ -90,7 +90,8 @@ function oneDescription(plan: RawPlan): string[] {
   })
 }
 
-function readRows(page: Page, source: AppleCareSource, seenWuips: Set<string>): void {
+function readRows(page: Page, source: AppleCareSource): void {
+  const seenWuips = new Set<string>()
   let data: unknown
   try {
     data = extractKeyedJson(page.html, page.url, 'appleCareData')
@@ -139,8 +140,7 @@ export function parseProductTitle(html: string): MacProduct | undefined {
 
 export async function fetchAppleCare(pages: Page[], fetcher: Fetcher): Promise<AppleCareSource> {
   const source: AppleCareSource = { rows: [], products: {}, unmapped: [], warnings: [] }
-  const seen = new Set<string>()
-  for (const page of pages) readRows(page, source, seen)
+  for (const page of pages) readRows(page, source)
 
   const parts = new Set<string>()
   for (const row of source.rows) {
@@ -200,7 +200,7 @@ function resolveSized(line: string, size: number, specName: string, rows: AppleC
   const chip = chipOf(specName)
   const tiers = uniqueBy(rows.flatMap(r => r.tiers), tierId).filter(t => {
     const p = t.partNumber ? source.products[t.partNumber] : undefined
-    if (!p || p.size !== size || !line.startsWith(p.family)) return false
+    if (!p || p.size !== size || (line !== p.family && line !== `${p.family} Display`)) return false
     return !chip || p.chips.length === 0 || p.chips.includes(chip)
   })
   if (tiers.length === 0) return { reason: 'no AppleCare+ plan could be attributed to this size and chip' }

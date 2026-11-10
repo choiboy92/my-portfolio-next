@@ -1,5 +1,5 @@
 import type { BasketItemFormData } from '../validation-schema'
-import type { AppleCareTier, BandGroup, Catalogue, CategoryKey, Model, Pencil, PriceMap, Spec } from './schema'
+import type { AppleCareTier, BandGroup, BandStyle, Catalogue, CategoryKey, Model, Pencil, PriceMap, Spec } from './schema'
 
 export interface SelectedOptions {
   memory?: string
@@ -106,9 +106,10 @@ export function priceSpec(category: string, spec: Spec, selected: SelectedOption
   return total
 }
 
-function bandSizeOfferedForCase(byCase: Record<string, string[]>, caseSize: string | undefined, bandSize: string): boolean {
-  if (!caseSize || !Object.hasOwn(byCase, caseSize)) return false
-  return byCase[caseSize].includes(bandSize)
+export function bandSizesFor(style: BandStyle, caseSize: string | undefined): string[] {
+  const byCase = style.bandSizesByCase
+  if (!byCase) return style.bandSizeOptions ?? []
+  return caseSize && Object.hasOwn(byCase, caseSize) ? byCase[caseSize] : []
 }
 
 export function makeCatalogueHelpers(catalogue: Catalogue) {
@@ -203,8 +204,7 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
       (!item.band ||
         (!!bandStyle &&
           bandStyle.bandColor.includes(item.band.color) &&
-          offered(item.band.size, bandStyle.bandSizeOptions) &&
-          (!bandStyle.bandSizesByCase || !item.band.size || bandSizeOfferedForCase(bandStyle.bandSizesByCase, item.size, item.band.size)) &&
+          offered(item.band.size, bandSizesFor(bandStyle, item.size)) &&
           (!bandStyle.caseSizes || (!!item.size && bandStyle.caseSizes.includes(item.size)))))
     )
   }
