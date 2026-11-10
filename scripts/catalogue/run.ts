@@ -8,6 +8,7 @@ import { mapWatch } from './map-watch'
 import { catalogueEquals } from './serialize'
 import { summarizeChanges } from './summary'
 import type { MapResult, Page } from './types'
+import { unique } from './util'
 import { assembleCatalogue } from './verify'
 
 export type SyncDeps = {
@@ -27,6 +28,12 @@ export type SyncResult = {
 
 const CATEGORIES = Object.keys(LANDING_PAGES) as CategoryKey[]
 
+async function mapCategories<T>(fn: (category: CategoryKey) => T | Promise<T>): Promise<Record<CategoryKey, T>> {
+  const out: Partial<Record<CategoryKey, T>> = {}
+  for (const category of CATEGORIES) out[category] = await fn(category)
+  return out as Record<CategoryKey, T>
+}
+
 function merge(results: MapResult[]): MapResult {
   return {
     models: results.flatMap(r => r.models),
@@ -39,26 +46,20 @@ async function fetchPage(fetcher: Fetcher, url: string): Promise<Page> {
   return { url, html: await fetcher.text(url) }
 }
 
-async function discover(fetcher: Fetcher): Promise<Record<CategoryKey, string[]>> {
-  const urls = {} as Record<CategoryKey, string[]>
-  for (const category of CATEGORIES) {
-    const landing = await fetchPage(fetcher, LANDING_PAGES[category])
-    urls[category] = discoverProductUrls(category, landing)
-  }
-  return urls
+function discover(fetcher: Fetcher): Promise<Record<CategoryKey, string[]>> {
+  return mapCategories(async category => discoverProductUrls(category, await fetchPage(fetcher, LANDING_PAGES[category])))
 }
 
-async function fetchBuyPages(fetcher: Fetcher, urls: Record<CategoryKey, string[]>, warnings: string[]): Promise<Record<CategoryKey, Page[]>> {
-  const pages = {} as Record<CategoryKey, Page[]>
-  for (const category of CATEGORIES) {
-    pages[category] = []
+function fetchBuyPages(fetcher: Fetcher, urls: Record<CategoryKey, string[]>, warnings: string[]): Promise<Record<CategoryKey, Page[]>> {
+  return mapCategories(async category => {
+    const pages: Page[] = []
     for (const url of urls[category]) {
       const page = await fetchPage(fetcher, url)
-      if (isBuyPage(page)) pages[category].push(page)
+      if (isBuyPage(page)) pages.push(page)
       else warnings.push(`${url}: Apple did not serve a buy page (redirected away); skipped`)
     }
-  }
-  return pages
+    return pages
+  })
 }
 
 export function carryOverColours(result: MapResult, previous: Category): MapResult {
@@ -101,17 +102,14 @@ export async function runSync(deps: SyncDeps): Promise<SyncResult> {
 
   const source = await fetchAppleCare(CATEGORIES.flatMap(c => pages[c]), fetcher)
   const appleCare = applyAppleCare(CATEGORIES.flatMap(c => mapped[c].models), source)
-  const results = {} as Record<CategoryKey, MapResult>
-  for (const category of CATEGORIES) {
-    results[category] = { ...mapped[category], models: appleCare.models.filter(m => m.category === category) }
-  }
+  const results = await mapCategories(category => ({ ...mapped[category], models: appleCare.models.filter(m => m.category === category) }))
 
   const assembled = assembleCatalogue(previous, results, { bootstrap })
   const changed = !catalogueEquals(previous, assembled.catalogue)
-  const warnings = [...new Set([...discoveryWarnings, ...assembled.warnings, ...appleCare.warnings])]
+  const warnings = unique([...discoveryWarnings, ...assembled.warnings, ...appleCare.warnings])
   const summary = summarizeChanges(previous, assembled.catalogue, {
     warnings,
-    unmapped: [...new Set([...assembled.unmapped, ...appleCare.unmapped])],
+    unmapped: unique([...assembled.unmapped, ...appleCare.unmapped]),
     requestCount: fetcher.requestCount,
     date,
   })

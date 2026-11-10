@@ -7,7 +7,6 @@ export const testCatalogue: Catalogue = {
   categories: {
     iPhone: {
       category: 'iPhone',
-      appleCareAvailable: true,
       models: {
         'Phone X': {
           displayName: 'Phone X',
@@ -28,7 +27,6 @@ export const testCatalogue: Catalogue = {
     },
     iPad: {
       category: 'iPad',
-      appleCareAvailable: true,
       models: {
         'Pad Pro': {
           displayName: 'Pad Pro',
@@ -49,7 +47,6 @@ export const testCatalogue: Catalogue = {
     },
     MacBook: {
       category: 'MacBook',
-      appleCareAvailable: true,
       models: {
         'Book 16"': {
           displayName: 'Book 16"',
@@ -69,7 +66,6 @@ export const testCatalogue: Catalogue = {
     },
     'Apple Watch': {
       category: 'Apple Watch',
-      appleCareAvailable: true,
       models: {
         'Watch 11': {
           displayName: 'Watch 11',

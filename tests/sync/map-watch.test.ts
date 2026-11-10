@@ -90,8 +90,8 @@ async function run(tweak: Tweak = {}, p: Page = page) {
 }
 
 function catalogueOf(models: MappedModel[]) {
-  const category: Category = { category: 'Apple Watch', appleCareAvailable: true, models: Object.fromEntries(models.map(m => [m.key, m.model])) }
-  const empty = { category: 'x', appleCareAvailable: false, models: {} }
+  const category: Category = { category: 'Apple Watch', models: Object.fromEntries(models.map(m => [m.key, m.model])) }
+  const empty = { category: 'x', models: {} }
   return parseCatalogue({ notice: CATALOGUE_NOTICE, categories: { iPhone: empty, iPad: empty, MacBook: empty, 'Apple Watch': category } })
 }
 

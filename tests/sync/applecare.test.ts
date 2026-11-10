@@ -74,7 +74,7 @@ const tiers = (m: MappedModel, specName: string) =>
   m.model.specs.find(s => s.name === specName)?.appleCare.map(t => [t.name, t.price, t.billing, t.partNumber])
 
 const iphoneModels = () => mapIPhone([iphonePage]).models
-const ipadModels = () => mapIPad([ipadPage], parseIPadAccessories([ipadPage]), { category: 'iPad', appleCareAvailable: true, models: {} }).models
+const ipadModels = () => mapIPad([ipadPage], parseIPadAccessories([ipadPage]), { category: 'iPad', models: {} }).models
 
 describe('fetchAppleCare', () => {
   it('needs no extra requests for iPhone, iPad, Watch and iMac pages', async () => {

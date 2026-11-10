@@ -1,8 +1,9 @@
 import type { Model, Spec } from '@/lib/catalogue/schema'
 import type { SelectedOptions } from '@/lib/catalogue/helpers'
-import { extractKeyedJson, MissingDataError, normaliseLabel, parsePounds } from './extract'
+import { extractKeyedJson, ldJsonObjects, MissingDataError, normaliseLabel, parsePounds, stripHtml } from './extract'
 import type { Fetcher } from './http'
 import type { MappedModel, MapResult, Page, PublishedPrice } from './types'
+import { compareStrings, isRecord, rankIn, unique } from './util'
 
 export type MacDeltas = Record<string, Record<string, Record<string, number>>>
 
@@ -46,22 +47,11 @@ const STORAGE = 'storage-dimensionCapacity'
 
 const LINE_WORDS: Record<string, string> = { macbook: 'MacBook', imac: 'iMac', mac: 'Mac', mini: 'mini', proled: 'PROLED', xdr: 'XDR' }
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
-
-function plainText(html: string): string {
-  return normaliseLabel(
-    html
-      .replace(/<div[\s\S]*?<\/div>/g, ' ')
-      .replace(/<as-footnote[\s\S]*?<\/as-footnote>/g, ' ')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&'),
-  )
-}
+const HEADER_NOISE = [/<div[\s\S]*?<\/div>/g, /<as-footnote[\s\S]*?<\/as-footnote>/g]
 
 function header(group: DisplayGroup | undefined, value: string): string | undefined {
   const entry = group?.[value]
-  if (isRecord(entry) && typeof entry.header === 'string') return plainText(entry.header)
+  if (isRecord(entry) && typeof entry.header === 'string') return stripHtml(entry.header, HEADER_NOISE)
   return undefined
 }
 
@@ -89,23 +79,14 @@ function standardFinish(b: Bootstrap): string | undefined {
   return b.mainDisplayValues[FINISH]?.variantOrder?.[0]
 }
 
-function rankIn(order: string[] | undefined, value: string | undefined): number {
-  const i = value === undefined ? -1 : (order ?? []).indexOf(value)
-  return i < 0 ? Infinity : i
-}
-
-function byRank(x: number, y: number): number {
-  return x === y ? 0 : x < y ? -1 : 1
-}
-
 function sortedProducts(b: Bootstrap, chipKey: string): Product[] {
   const orderOf = (group: string) => b.mainDisplayValues[group]?.variantOrder
   return [...b.products].sort(
     (x, y) =>
-      byRank(rankIn(orderOf(SIZE), x.dimensions[SIZE]), rankIn(orderOf(SIZE), y.dimensions[SIZE])) ||
-      byRank(rankIn(orderOf(chipKey), x.dimensions[chipKey]), rankIn(orderOf(chipKey), y.dimensions[chipKey])) ||
-      byRank(rankIn(orderOf(COLOR), x.dimensions[COLOR]), rankIn(orderOf(COLOR), y.dimensions[COLOR])) ||
-      (x.priceKey < y.priceKey ? -1 : x.priceKey > y.priceKey ? 1 : 0),
+      rankIn(orderOf(SIZE), x.dimensions[SIZE]) - rankIn(orderOf(SIZE), y.dimensions[SIZE]) ||
+      rankIn(orderOf(chipKey), x.dimensions[chipKey]) - rankIn(orderOf(chipKey), y.dimensions[chipKey]) ||
+      rankIn(orderOf(COLOR), x.dimensions[COLOR]) - rankIn(orderOf(COLOR), y.dimensions[COLOR]) ||
+      compareStrings(x.priceKey, y.priceKey),
   )
 }
 
@@ -269,18 +250,8 @@ function productLine(url: string): string {
 }
 
 export function productLineName(html: string, url: string): string {
-  const ld = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g
-  let m: RegExpExecArray | null
-  while ((m = ld.exec(html))) {
-    let data: unknown
-    try {
-      data = JSON.parse(m[1])
-    } catch {
-      continue
-    }
-    for (const item of Array.isArray(data) ? data : [data]) {
-      if (isRecord(item) && item['@type'] === 'Product' && typeof item.name === 'string' && item.name.trim()) return normaliseLabel(item.name)
-    }
+  for (const item of ldJsonObjects(html)) {
+    if (isRecord(item) && item['@type'] === 'Product' && typeof item.name === 'string' && item.name.trim()) return normaliseLabel(item.name)
   }
   return productLine(url)
 }
@@ -300,7 +271,7 @@ function chipFamily(b: Bootstrap, product: Product, chipKey: string): string | u
     b.mainSections.find(s => s.formFieldName === chipKey)?.header ?? undefined,
   ]
   for (const c of candidates) {
-    const m = c && plainText(c).match(/^(.+?)\s+chip\b/i)
+    const m = c && stripHtml(c, HEADER_NOISE).match(/^(.+?)\s+chip\b/i)
     if (m) return m[1]
   }
   return undefined
@@ -320,9 +291,8 @@ function chipName(b: Bootstrap, product: Product, chipKey: string, warnings: str
 }
 
 function ordered(b: Bootstrap, group: string, values: Record<string, number>): [string, number][] {
-  const order = b.configDisplayValues[group]?.variantOrder ?? b.mainDisplayValues[group]?.variantOrder ?? []
-  const rank = (v: string) => (order.includes(v) ? order.indexOf(v) : order.length)
-  return Object.entries(values).sort((x, y) => x[1] - y[1] || rank(x[0]) - rank(y[0]))
+  const order = b.configDisplayValues[group]?.variantOrder ?? b.mainDisplayValues[group]?.variantOrder
+  return Object.entries(values).sort((x, y) => x[1] - y[1] || rankIn(order, x[0]) - rankIn(order, y[0]))
 }
 
 function baseValue(b: Bootstrap, group: string, values: Record<string, number>): string | undefined {
@@ -349,10 +319,10 @@ function findGroup(groups: OptionDeltas, prefix: string): string | undefined {
 }
 
 function colourLabels(b: Bootstrap, products: Product[]): string[] {
-  const values = new Set(products.map(p => p.dimensions[COLOR]).filter((c): c is string => !!c))
-  const order = b.mainDisplayValues[COLOR]?.variantOrder ?? []
-  return [...values]
-    .sort((x, y) => (order.indexOf(x) + 1 || Infinity) - (order.indexOf(y) + 1 || Infinity))
+  const values = unique(products.map(p => p.dimensions[COLOR]).filter((c): c is string => !!c))
+  const order = b.mainDisplayValues[COLOR]?.variantOrder
+  return values
+    .sort((x, y) => rankIn(order, x) - rankIn(order, y))
     .map(c => header(b.mainDisplayValues[COLOR], c) ?? c)
 }
 
@@ -374,7 +344,7 @@ function representativePart(b: Bootstrap, cfg: StandardConfig): string | undefin
   const candidates = cfg.products
     .filter(p => p.btrOrFdPartNumber && p.dimensions[FINISH] === cfg.rep.dimensions[FINISH])
     .map(p => ({ part: p.btrOrFdPartNumber as string, price: amountOf(b, p) ?? Infinity }))
-    .sort((x, y) => byRank(x.price, y.price) || (x.part < y.part ? -1 : x.part > y.part ? 1 : 0))
+    .sort((x, y) => x.price - y.price || compareStrings(x.part, y.part))
   return candidates[0]?.part
 }
 

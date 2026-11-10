@@ -36,7 +36,7 @@ export function skuKey(item: SkuSelection): string {
   return `${item.color}|${item.storage ?? ''}|${item.connectivity ?? ''}|${item.nanoTexture ? 'nano' : ''}`
 }
 
-function parseStorageSize(size: string): number {
+export function parseStorageSize(size: string): number {
   const match = size.match(/(\d+)(GB|TB)/i)
   if (!match) return 0
   const value = parseInt(match[1])
@@ -53,6 +53,57 @@ function filterAtLeast(options: PriceMap | undefined, minimum: string | undefine
   if (!minimum) return Object.keys(options)
   const minValue = parse(minimum)
   return Object.keys(options).filter(option => parse(option) >= minValue)
+}
+
+function iPadNanoTextureAvailable(spec: Spec, selectedStorage: string | undefined): boolean {
+  const minNano = spec.constraints?.minStorageForNanotexture
+  return typeof spec.nanoTexture === 'number' && (!minNano || (!!selectedStorage && parseStorageSize(selectedStorage) >= parseStorageSize(minNano)))
+}
+
+function findTier(spec: Spec | undefined, tierName: string | undefined): AppleCareTier | undefined {
+  return tierName ? spec?.appleCare.find(t => t.name === tierName) : undefined
+}
+
+export function priceSpec(category: string, spec: Spec, selected: SelectedOptions = {}): number {
+  const delta = (map: PriceMap | undefined, key: string | undefined) => (map && key ? (map[key] ?? 0) : 0)
+  let total = spec.price
+
+  if (category === 'MacBook') {
+    total += delta(spec.memoryOptions, selected.memory)
+    total += delta(spec.storageOptions, selected.storage)
+    total += delta(spec.chargerOptions, selected.charger)
+    if (selected.nanoTexture && spec.nanoTexture) total += spec.nanoTexture
+  }
+
+  if (category === 'iPhone') {
+    total += delta(spec.storageOptions, selected.storage)
+  }
+
+  if (category === 'iPad') {
+    total += delta(spec.storageOptions, selected.storage)
+    total += delta(spec.connectivityOptions, selected.connectivity)
+    if (selected.applePencil) {
+      const pencil = spec.applePencil?.find(p => p.pencilType === selected.applePencil)
+      if (pencil) total += pencil.price
+    }
+    if (selected.magicKeyboard && spec.magicKeyboard) total += spec.magicKeyboard
+    if (selected.nanoTexture && spec.nanoTexture && iPadNanoTextureAvailable(spec, selected.storage)) {
+      total += spec.nanoTexture
+    }
+  }
+
+  if (category === 'Apple Watch') {
+    total += delta(spec.sizeOptions, selected.size)
+    total += delta(spec.connectivityOptions, selected.connectivity)
+    if (selected.band) {
+      const style = spec.bandOptions?.find(g => g.material === selected.band?.material)?.style.find(s => s.styleName === selected.band?.style)
+      if (style) total += style.price
+    }
+  }
+
+  total += findTier(spec, selected.appleCare)?.price ?? 0
+
+  return total
 }
 
 function bandSizeOfferedForCase(byCase: Record<string, string[]>, caseSize: string | undefined, bandSize: string): boolean {
@@ -82,9 +133,8 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
     return getSpecConfiguration(category, modelName, specName)?.appleCare ?? []
   }
 
-  function appleCareTierPrice(category: string, modelName: string, specName: string | undefined, tierName: string | undefined): number {
-    if (!tierName) return 0
-    return getAppleCareTiers(category, modelName, specName).find(t => t.name === tierName)?.price ?? 0
+  function findAppleCareTier(category: string, modelName: string, specName: string | undefined, tierName: string | undefined): AppleCareTier | undefined {
+    return specName ? findTier(getSpecConfiguration(category, modelName, specName), tierName) : undefined
   }
 
   function getAvailableOptions(category: string, modelName: string, specName?: string, selectedStorage?: string): AvailableOptions | null {
@@ -116,9 +166,7 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
       result.connectivityOptions = Object.keys(spec.connectivityOptions ?? {})
       result.applePencilOptions = spec.applePencil ?? []
       result.magicKeyboardPrice = spec.magicKeyboard
-      const minNano = spec.constraints?.minStorageForNanotexture
-      result.nanoTextureAvailable =
-        typeof spec.nanoTexture === 'number' && (!minNano || (!!selectedStorage && parseStorageSize(selectedStorage) >= parseStorageSize(minNano)))
+      result.nanoTextureAvailable = iPadNanoTextureAvailable(spec, selectedStorage)
       result.nanoTexturePrice = spec.nanoTexture
     }
 
@@ -133,47 +181,7 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
 
   function calculatePrice(category: string, modelName: string, specName: string, selected: SelectedOptions = {}): number {
     const spec = getSpecConfiguration(category, modelName, specName)
-    if (!spec) return 0
-
-    const delta = (map: PriceMap | undefined, key: string | undefined) => (map && key ? (map[key] ?? 0) : 0)
-    let total = spec.price
-
-    if (category === 'MacBook') {
-      total += delta(spec.memoryOptions, selected.memory)
-      total += delta(spec.storageOptions, selected.storage)
-      total += delta(spec.chargerOptions, selected.charger)
-      if (selected.nanoTexture && spec.nanoTexture) total += spec.nanoTexture
-    }
-
-    if (category === 'iPhone') {
-      total += delta(spec.storageOptions, selected.storage)
-    }
-
-    if (category === 'iPad') {
-      total += delta(spec.storageOptions, selected.storage)
-      total += delta(spec.connectivityOptions, selected.connectivity)
-      if (selected.applePencil) {
-        const pencil = spec.applePencil?.find(p => p.pencilType === selected.applePencil)
-        if (pencil) total += pencil.price
-      }
-      if (selected.magicKeyboard && spec.magicKeyboard) total += spec.magicKeyboard
-      if (selected.nanoTexture && spec.nanoTexture && getAvailableOptions(category, modelName, specName, selected.storage)?.nanoTextureAvailable) {
-        total += spec.nanoTexture
-      }
-    }
-
-    if (category === 'Apple Watch') {
-      total += delta(spec.sizeOptions, selected.size)
-      total += delta(spec.connectivityOptions, selected.connectivity)
-      if (selected.band) {
-        const style = spec.bandOptions?.find(g => g.material === selected.band?.material)?.style.find(s => s.styleName === selected.band?.style)
-        if (style) total += style.price
-      }
-    }
-
-    total += appleCareTierPrice(category, modelName, specName, selected.appleCare)
-
-    return total
+    return spec ? priceSpec(category, spec, selected) : 0
   }
 
   function isOffered(item: BasketItemFormData): boolean {
@@ -202,19 +210,19 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
   }
 
   function priceBasketItem(item: BasketItemFormData): { estimatedPrice: number; discountValue: number } {
-    const estimatedPrice = calculatePrice(item.category, item.model, item.specs ?? '', {
-      memory: item.memory,
-      storage: item.storage,
-      charger: item.charger,
-      connectivity: item.connectivity,
-      size: item.size,
-      applePencil: item.applePencil,
-      magicKeyboard: item.magicKeyboard,
-      nanoTexture: item.nanoTexture,
-      appleCare: item.appleCare,
-      band: item.band,
-    })
-    const appleCare = appleCareTierPrice(item.category, item.model, item.specs, item.appleCare)
+    const appleCare = findAppleCareTier(item.category, item.model, item.specs, item.appleCare)?.price ?? 0
+    const estimatedPrice =
+      calculatePrice(item.category, item.model, item.specs ?? '', {
+        memory: item.memory,
+        storage: item.storage,
+        charger: item.charger,
+        connectivity: item.connectivity,
+        size: item.size,
+        applePencil: item.applePencil,
+        magicKeyboard: item.magicKeyboard,
+        nanoTexture: item.nanoTexture,
+        band: item.band,
+      }) + appleCare
     const discountValue = Math.round((estimatedPrice - appleCare) * 0.17 * 100) / 100
     return { estimatedPrice, discountValue }
   }
@@ -226,6 +234,7 @@ export function makeCatalogueHelpers(catalogue: Catalogue) {
     getAvailableOptions,
     calculatePrice,
     getAppleCareTiers,
+    findAppleCareTier,
     isOffered,
     priceBasketItem,
   }

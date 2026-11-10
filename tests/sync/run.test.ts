@@ -184,7 +184,6 @@ describe('carryOverColours', () => {
   const mini = () => buildMacModels(extractKeyedJson(fx('mac-mac-mini.html'), url, 'productSelectionData'), {}, url)
   const previousWith = (colors: string[]): Category => ({
     category: 'MacBook',
-    appleCareAvailable: true,
     models: { 'Mac mini': { displayName: 'Mac mini', colors, specs: [] } },
   })
 

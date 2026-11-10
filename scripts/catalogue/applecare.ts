@@ -1,7 +1,9 @@
+import { formatPounds } from '@/lib/catalogue/format'
 import type { AppleCareTier } from '@/lib/catalogue/schema'
-import { extractKeyedJson, MissingDataError, normaliseLabel, parsePounds } from './extract'
+import { extractKeyedJson, ldJsonObjects, MissingDataError, normaliseLabel, parsePounds, stripHtml } from './extract'
 import { FetchFailedError, type Fetcher } from './http'
 import type { MappedModel, Page } from './types'
+import { uniqueBy } from './util'
 
 export type AppleCareRow = {
   page: string
@@ -45,20 +47,14 @@ const PRODUCT_URL = 'https://www.apple.com/uk/shop/product/'
 const MAC_NOTEBOOK_WUIP = /^MACBOOK(PRO|AIR)_/
 const PRODUCT_TITLE = /^AppleCare\+ for (\d+)-inch (MacBook\b[^()]*?)(?: \(([^)]*)\))?(?: - Apple\b.*)?$/
 
-function plain(raw: string): string {
-  return normaliseLabel(raw.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' '))
-}
-
 function billingOf(value: unknown): AppleCareTier['billing'] | undefined {
   if (value === 'monthly') return 'monthly'
   if (value === 'annually') return 'annual'
   return undefined
 }
 
-const money = (n: number) => (Number.isInteger(n) ? `£${n}` : `£${n.toFixed(2)}`)
-
 function tiersOf(plan: RawPlan, label: string, warnings: string[]): AppleCareTier[] {
-  const header = typeof plan.additionalData?.tileHeader === 'string' ? plain(plan.additionalData.tileHeader) : ''
+  const header = typeof plan.additionalData?.tileHeader === 'string' ? stripHtml(plan.additionalData.tileHeader) : ''
   if (!header) {
     warnings.push(`AppleCare+ ${label}: plan has no tile header; plan skipped`)
     return []
@@ -86,11 +82,11 @@ function tiersOf(plan: RawPlan, label: string, warnings: string[]): AppleCareTie
 }
 
 function oneDescription(plan: RawPlan): string[] {
-  const header = typeof plan.additionalData?.tileHeader === 'string' ? plain(plan.additionalData.tileHeader) : 'AppleCare One'
+  const header = typeof plan.additionalData?.tileHeader === 'string' ? stripHtml(plan.additionalData.tileHeader) : 'AppleCare One'
   return (plan.moreOptions?.planDetails ?? []).flatMap(d => {
     const billing = billingOf(d.dimensionPaymentType?.value)
     if (typeof d.partNumber !== 'string' || typeof d.rawPrice !== 'number') return []
-    return [`${header} ${d.partNumber} ${money(d.rawPrice)}${billing === 'annual' ? '/yr' : '/mo'} (multi-device subscription, not a per-product plan)`]
+    return [`${header} ${d.partNumber} ${formatPounds(d.rawPrice)}${billing === 'annual' ? '/yr' : '/mo'} (multi-device subscription, not a per-product plan)`]
   })
 }
 
@@ -112,26 +108,17 @@ function readRows(page: Page, source: AppleCareSource, seenWuips: Set<string>): 
     }
     if (seenWuips.has(raw.compatibleWuip)) continue
     seenWuips.add(raw.compatibleWuip)
-    const tiers = plans.filter(p => p.appleCareType === 'acp' || p.appleCareType === 'acptl').flatMap(p => tiersOf(p, typeof raw.familyType === 'string' ? plain(raw.familyType) : String(raw.compatibleWuip), source.warnings))
+    const tiers = plans.filter(p => p.appleCareType === 'acp' || p.appleCareType === 'acptl').flatMap(p => tiersOf(p, typeof raw.familyType === 'string' ? stripHtml(raw.familyType) : String(raw.compatibleWuip), source.warnings))
     const row: AppleCareRow = { page: page.url, wuip: raw.compatibleWuip, tiers }
-    if (typeof raw.familyType === 'string') row.familyType = plain(raw.familyType)
+    if (typeof raw.familyType === 'string') row.familyType = stripHtml(raw.familyType)
     source.rows.push(row)
   }
 }
 
 function productNames(html: string): string[] {
   const names: string[] = []
-  const ld = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g
-  let m: RegExpExecArray | null
-  while ((m = ld.exec(html))) {
-    try {
-      const data = JSON.parse(m[1]) as unknown
-      for (const item of (Array.isArray(data) ? data : [data]) as Record<string, unknown>[]) {
-        if (item?.['@type'] === 'Product' && typeof item.name === 'string') names.push(item.name)
-      }
-    } catch {
-      continue
-    }
+  for (const item of ldJsonObjects(html) as Record<string, unknown>[]) {
+    if (item?.['@type'] === 'Product' && typeof item.name === 'string') names.push(item.name)
   }
   const title = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1]
   if (title) names.push(title)
@@ -183,15 +170,7 @@ function chipOf(specName: string): string | undefined {
   return chip && /^M\d/.test(chip) ? chip : undefined
 }
 
-function dedupe(tiers: AppleCareTier[]): AppleCareTier[] {
-  const seen = new Set<string>()
-  return tiers.filter(t => {
-    const id = t.partNumber ?? t.name
-    if (seen.has(id)) return false
-    seen.add(id)
-    return true
-  })
-}
+const tierId = (t: AppleCareTier) => t.partNumber ?? t.name
 
 function duplicateBilling(tiers: AppleCareTier[]): boolean {
   return new Set(tiers.map(t => t.billing)).size !== tiers.length
@@ -200,7 +179,7 @@ function duplicateBilling(tiers: AppleCareTier[]): boolean {
 type Resolved = { tiers: AppleCareTier[] } | { reason: string }
 
 function fromRow(rows: AppleCareRow[]): Resolved {
-  const tiers = dedupe(rows.flatMap(r => r.tiers))
+  const tiers = uniqueBy(rows.flatMap(r => r.tiers), tierId)
   if (tiers.length === 0) return { reason: 'no AppleCare+ data from Apple' }
   if (duplicateBilling(tiers)) return { reason: 'Apple lists more than one plan per billing period and nothing says which applies' }
   return { tiers }
@@ -219,7 +198,7 @@ function resolveWatch(m: MappedModel, source: AppleCareSource): Resolved {
 function resolveSized(line: string, size: number, specName: string, rows: AppleCareRow[], source: AppleCareSource): Resolved {
   if (rows.length === 0) return { reason: 'no AppleCare+ data from Apple' }
   const chip = chipOf(specName)
-  const tiers = dedupe(rows.flatMap(r => r.tiers)).filter(t => {
+  const tiers = uniqueBy(rows.flatMap(r => r.tiers), tierId).filter(t => {
     const p = t.partNumber ? source.products[t.partNumber] : undefined
     if (!p || p.size !== size || !line.startsWith(p.family)) return false
     return !chip || p.chips.length === 0 || p.chips.includes(chip)

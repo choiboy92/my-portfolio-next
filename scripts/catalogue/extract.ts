@@ -1,3 +1,5 @@
+import { roundToPence } from './util'
+
 export class MissingDataError extends Error {
   constructor(url: string, blob: string) {
     super(`Missing ${blob} in ${url}`)
@@ -67,11 +69,32 @@ export function extractKeyedJson(html: string, url: string, key: string): unknow
 export function parsePounds(value: string | number): number {
   const n = typeof value === 'number' ? value : Number(value.replace(/[£,\s]/g, ''))
   if (!Number.isFinite(n)) throw new Error(`Cannot parse price: ${String(value)}`)
-  return Math.round(n * 100) / 100
+  return roundToPence(n)
 }
 
 export function normaliseLabel(raw: string): string {
   return raw.replace(/[‐‑–]/g, '-').replace(/\s+/g, ' ').trim()
+}
+
+export function stripHtml(html: string, dropPatterns: RegExp[] = []): string {
+  const kept = dropPatterns.reduce((text, pattern) => text.replace(pattern, ' '), html)
+  return normaliseLabel(kept.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&'))
+}
+
+export function ldJsonObjects(html: string): unknown[] {
+  const re = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g
+  const out: unknown[] = []
+  let m: RegExpExecArray | null
+  while ((m = re.exec(html))) {
+    let data: unknown
+    try {
+      data = JSON.parse(m[1])
+    } catch {
+      continue
+    }
+    out.push(...(Array.isArray(data) ? data : [data]))
+  }
+  return out
 }
 
 type AnalyticsProduct = { sku: string; partNumber: string; name: string; price: number }
@@ -100,24 +123,13 @@ export function extractAnalyticsProducts(html: string, url: string): AnalyticsPr
 }
 
 export function extractLdJsonOffers(html: string, url: string): { sku: string; price: number }[] {
-  const re = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g
   const out: { sku: string; price: number }[] = []
-  let m: RegExpExecArray | null
-  while ((m = re.exec(html))) {
-    let data: unknown
-    try {
-      data = JSON.parse(m[1])
-    } catch {
-      continue
-    }
-    const items = (Array.isArray(data) ? data : [data]) as Record<string, unknown>[]
-    for (const item of items) {
-      const raw = item?.offers
-      const offers = (Array.isArray(raw) ? raw : raw ? [raw] : []) as Record<string, unknown>[]
-      for (const o of offers) {
-        if (typeof o.sku === 'string' && o.price !== undefined) {
-          out.push({ sku: o.sku, price: parsePounds(o.price as string | number) })
-        }
+  for (const item of ldJsonObjects(html) as Record<string, unknown>[]) {
+    const raw = item?.offers
+    const offers = (Array.isArray(raw) ? raw : raw ? [raw] : []) as Record<string, unknown>[]
+    for (const o of offers) {
+      if (typeof o.sku === 'string' && o.price !== undefined) {
+        out.push({ sku: o.sku, price: parsePounds(o.price as string | number) })
       }
     }
   }

@@ -90,14 +90,14 @@ function availableDeltas(p: Page): MacDeltas {
 const built = (p: Page) => buildMacModels(bootstrapOf(p), availableDeltas(p), p.url)
 
 function catalogueOf(models: MappedModel[]) {
-  const empty = (name: string): Category => ({ category: name, appleCareAvailable: true, models: {} })
+  const empty = (name: string): Category => ({ category: name, models: {} })
   const priced = models.filter(m => m.model.specs.length > 0)
   return parseCatalogue({
     notice: CATALOGUE_NOTICE,
     categories: {
       iPhone: empty('iPhone'),
       iPad: empty('iPad'),
-      MacBook: { category: 'MacBook', appleCareAvailable: true, models: Object.fromEntries(priced.map(m => [m.key, m.model])) },
+      MacBook: { category: 'MacBook', models: Object.fromEntries(priced.map(m => [m.key, m.model])) },
       'Apple Watch': empty('Apple Watch'),
     },
   })

@@ -1,12 +1,13 @@
 import { type Catalogue, type CategoryKey, parseCatalogue } from '@/lib/catalogue/schema'
+import { compareStrings, roundToPence } from './util'
 
 const CATEGORY_ORDER: CategoryKey[] = ['iPhone', 'iPad', 'MacBook', 'Apple Watch']
 
-function roundToPence(value: unknown): unknown {
-  if (typeof value === 'number') return Math.round(value * 100) / 100
-  if (Array.isArray(value)) return value.map(roundToPence)
+function roundPrices(value: unknown): unknown {
+  if (typeof value === 'number') return roundToPence(value)
+  if (Array.isArray(value)) return value.map(roundPrices)
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, roundToPence(v)]))
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, roundPrices(v)]))
   }
   return value
 }
@@ -16,15 +17,19 @@ function canonical(value: unknown): unknown {
   if (value && typeof value === 'object') {
     return Object.fromEntries(
       Object.entries(value)
-        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .sort(([a], [b]) => compareStrings(a, b))
         .map(([k, v]) => [k, canonical(v)]),
     )
   }
   return value
 }
 
+export function canonicalEquals(a: unknown, b: unknown): boolean {
+  return JSON.stringify(canonical(a)) === JSON.stringify(canonical(b))
+}
+
 function normalise(c: Catalogue): Catalogue {
-  return parseCatalogue(roundToPence(parseCatalogue(c)))
+  return parseCatalogue(roundPrices(c))
 }
 
 export function serializeCatalogue(c: Catalogue): string {
@@ -37,5 +42,5 @@ export function serializeCatalogue(c: Catalogue): string {
 }
 
 export function catalogueEquals(a: Catalogue, b: Catalogue): boolean {
-  return JSON.stringify(canonical(normalise(a))) === JSON.stringify(canonical(normalise(b)))
+  return canonicalEquals(normalise(a), normalise(b))
 }

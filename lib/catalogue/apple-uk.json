@@ -3,7 +3,6 @@
   "categories": {
     "iPhone": {
       "category": "iPhone",
-      "appleCareAvailable": true,
       "models": {
         "iPhone Duo": {
           "displayName": "iPhone Duo",
@@ -390,7 +389,6 @@
     },
     "iPad": {
       "category": "iPad",
-      "appleCareAvailable": true,
       "models": {
         "iPad Pro": {
           "displayName": "iPad Pro",
@@ -919,7 +917,6 @@
     },
     "MacBook": {
       "category": "Macbook",
-      "appleCareAvailable": true,
       "models": {
         "MacBook Air 13\"": {
           "displayName": "MacBook Air 13\"",
@@ -1993,7 +1990,6 @@
     },
     "Apple Watch": {
       "category": "Apple Watch",
-      "appleCareAvailable": true,
       "models": {
         "Apple Watch Series 12": {
           "displayName": "Apple Watch Series 12",

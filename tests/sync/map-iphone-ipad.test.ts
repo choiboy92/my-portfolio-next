@@ -17,12 +17,11 @@ const accessoryPages = [
   page('ipad-ipad-accessories.html', 'https://www.apple.com/uk/shop/buy-ipad/ipad'),
   page('ipad-ipad-mini-accessories.html', 'https://www.apple.com/uk/shop/buy-ipad/ipad-mini'),
 ]
-const emptyPrevious: Category = { category: 'iPad', appleCareAvailable: true, models: {} }
+const emptyPrevious: Category = { category: 'iPad', models: {} }
 
 function catalogueOf(iphone: MappedModel[], ipad: MappedModel[]) {
   const toCategory = (name: string, models: MappedModel[]): Category => ({
     category: name,
-    appleCareAvailable: true,
     models: Object.fromEntries(models.map(m => [m.key, m.model])),
   })
   return parseCatalogue({
@@ -170,7 +169,6 @@ describe('mapIPad', () => {
   it('keeps previous pencil types with refreshed prices when a page has no accessory slots', () => {
     const previous: Category = {
       category: 'iPad',
-      appleCareAvailable: true,
       models: {
         'iPad Pro': {
           ...model,

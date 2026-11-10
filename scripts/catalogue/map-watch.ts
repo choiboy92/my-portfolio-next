@@ -1,7 +1,8 @@
 import type { BandGroup, BandStyle, Model, Spec } from '@/lib/catalogue/schema'
-import { extractKeyedJson, extractWindowJson, MissingDataError, normaliseLabel, parsePounds } from './extract'
+import { extractKeyedJson, extractWindowJson, ldJsonObjects, MissingDataError, normaliseLabel, parsePounds, stripHtml } from './extract'
 import type { Fetcher } from './http'
 import type { MappedModel, MapResult, Page, PublishedPrice } from './types'
+import { compareStrings, isRecord, rankIn, unique, uniqueBy } from './util'
 
 export type WatchBandCall = {
   casePriceKey: string
@@ -43,18 +44,9 @@ const COLOR = 'watch_cases-dimensionColor'
 const CONNECTION = 'watch_cases-dimensionConnection'
 const KNOWN = new Set([SIZE, MATERIAL, COLOR, CONNECTION])
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+const LABEL_NOISE = [/<span[^>]*badge[^>]*>[\s\S]*?<\/span>/g, /<as-footnote[\s\S]*?<\/as-footnote>/g]
 
-function plain(html: string): string {
-  return normaliseLabel(
-    html
-      .replace(/<span[^>]*badge[^>]*>[\s\S]*?<\/span>/g, ' ')
-      .replace(/<as-footnote[\s\S]*?<\/as-footnote>/g, ' ')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&'),
-  )
-}
+const plain = (html: string) => stripHtml(html, LABEL_NOISE)
 
 function readBootstrap(bootstrap: unknown, url: string): Bootstrap {
   if (!isRecord(bootstrap) || !Array.isArray(bootstrap.products) || bootstrap.products.length === 0) {
@@ -101,14 +93,9 @@ function colourLabel(b: Bootstrap, value: string): string {
   return isRecord(entry) && typeof entry.text === 'string' ? normaliseLabel(entry.text) : value
 }
 
-function rank(order: string[] | undefined, value: string): number {
-  const i = (order ?? []).indexOf(value)
-  return i < 0 ? Infinity : i
-}
-
 function sortByOrder(b: Bootstrap, group: string, values: Iterable<string>): string[] {
   const order = b.displayValues[group]?.variantOrder
-  return [...new Set(values)].sort((x, y) => rank(order, x) - rank(order, y))
+  return unique(values).sort((x, y) => rankIn(order, x) - rankIn(order, y))
 }
 
 function amountOf(b: Bootstrap, priceKey: string): number | undefined {
@@ -174,7 +161,7 @@ function bySortOrder(items: Record<string, unknown>): string[] {
     const item = items[key]
     return isRecord(item) && typeof item.sortOrder === 'number' ? item.sortOrder : Infinity
   }
-  return Object.keys(items).sort((x, y) => order(x) - order(y) || (x < y ? -1 : x > y ? 1 : 0))
+  return Object.keys(items).sort((x, y) => order(x) - order(y) || compareStrings(x, y))
 }
 
 function readSelection(response: unknown, url: string): Selection {
@@ -195,7 +182,7 @@ function readSelection(response: unknown, url: string): Selection {
     if (!isRecord(raw)) continue
     const subs = Array.isArray(raw.subDimensionValue) ? raw.subDimensionValue.filter(isRecord) : []
     items[style] = {
-      name: plain(String(raw.sectionHeader ?? '').replace(/<div[\s\S]*?<\/div>/g, ' ')) || style,
+      name: stripHtml(String(raw.sectionHeader ?? ''), [/<div[\s\S]*?<\/div>/g, ...LABEL_NOISE]) || style,
       colours: subs.map(s => normaliseLabel(String(s.text ?? s.dimensionValue ?? ''))).filter(t => t.length > 0),
       colourValues: subs.map(s => s.dimensionValue).filter((v): v is string => typeof v === 'string'),
     }
@@ -230,17 +217,8 @@ function representativeCases(b: Bootstrap, rows: Row[]): Map<string, Row> {
 }
 
 function pageName(html: string, url: string): string {
-  const re = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(html))) {
-    try {
-      const data = JSON.parse(m[1])
-      for (const item of Array.isArray(data) ? data : [data]) {
-        if (isRecord(item) && typeof item.name === 'string' && item.name.trim()) return normaliseLabel(item.name)
-      }
-    } catch {
-      continue
-    }
+  for (const item of ldJsonObjects(html)) {
+    if (isRecord(item) && typeof item.name === 'string' && item.name.trim()) return normaliseLabel(item.name)
   }
   throw new MissingDataError(url, 'product name')
 }
@@ -345,7 +323,7 @@ function buildBandGroups(
       held.push(`${name}: ${first.name} surcharge differs by case size (${read.map(r => `£${r.surcharge}`).join(', ')})`)
       continue
     }
-    const colours = [...new Set(read.flatMap(r => r.colours))]
+    const colours = unique(read.flatMap(r => r.colours))
     const style: BandStyle = { styleName: first.name, price: first.surcharge, bandColor: colours }
     const lists = read.map(r => r.sizes)
     if (lists.every(l => sameList(l, lists[0]))) {
@@ -373,16 +351,12 @@ export function buildWatchModels(bootstrap: unknown, bandPrices: unknown, url: s
   const bandOptions = buildBandGroups(styles, groupOrder, caseSizes, name, held)
 
   const published: PublishedPrice[] = []
-  const seen = new Set<string>()
   const specs: Spec[] = []
   const materials = sortByOrder(b, MATERIAL, rows.map(r => r.material))
   for (const material of materials) {
     const specName = specNameOf(b, material, name, url)
     const mine = rows.filter(r => r.material === material)
-    for (const r of mine) {
-      const id = `${material}|${r.size}|${r.connection}`
-      if (seen.has(id)) continue
-      seen.add(id)
+    for (const r of uniqueBy(mine, r => `${r.size}|${r.connection}`)) {
       const size = sizeLabel(b, r.size)
       const connectivity = r.connection ? connectionLabel(b, r.connection) : undefined
       published.push({

@@ -1,4 +1,6 @@
 import type { Catalogue, Model, Spec } from '@/lib/catalogue/schema'
+import { canonicalEquals as same } from './serialize'
+import { unique } from './util'
 
 type Info = { warnings: string[]; unmapped: string[]; requestCount: number; date: string }
 
@@ -6,8 +8,6 @@ const OTHER_FIELDS = ['colors', 'partNumber', 'partNumbers', 'includes', 'constr
 
 const money = (n: number | undefined) =>
   n === undefined ? '£—' : `£${n.toLocaleString('en-GB', { maximumFractionDigits: 2 })}`
-
-const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
 type Item = { scope: string; key: string; value: number }
 type Entry = { option: string; old?: number; next?: number }
@@ -35,7 +35,7 @@ function indexItems(items: Item[]) {
 function diffItems(prev: Item[], next: Item[]): Entry[] {
   const a = indexItems(prev)
   const b = indexItems(next)
-  const ids = [...new Set([...a.keys(), ...b.keys()])]
+  const ids = unique([...a.keys(), ...b.keys()])
   const scopesByKey = new Map<string, Set<string>>()
   for (const item of [...a.values(), ...b.values()]) {
     const set = scopesByKey.get(item.key) ?? new Set<string>()
@@ -110,10 +110,6 @@ function modelMap(c: Catalogue) {
   return out
 }
 
-function categoryMap(c: Catalogue) {
-  return new Map(Object.entries(c.categories).map(([key, cat]) => [key, cat.appleCareAvailable]))
-}
-
 const list = (lines: string[]) => (lines.length ? lines.join('\n') : 'None')
 
 const WARNINGS_HEADING = '## ⚠️ Warnings'
@@ -131,11 +127,6 @@ export function summarizeChanges(previous: Catalogue, next: Catalogue, info: Inf
 
   const prevModels = modelMap(previous)
   const nextModels = modelMap(next)
-
-  const prevCats = categoryMap(previous)
-  for (const [key, available] of categoryMap(next)) {
-    if (prevCats.get(key) !== available) other.push(`- ${key}: appleCareAvailable changed`)
-  }
 
   const addSpec = (category: string, model: Model, spec: Spec) => {
     const label = `${model.displayName} / ${spec.name}`

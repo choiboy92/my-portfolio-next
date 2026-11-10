@@ -179,15 +179,12 @@ describe('summarizeChanges', () => {
     expect(section(md, '## 🆕 New products')).toBe('None')
   })
 
-  it('reports AppleCare partNumber, displayName and appleCareAvailable under Other changes', () => {
+  it('reports AppleCare partNumber and displayName under Other changes', () => {
     const next = clone()
     next.categories.iPhone.models['Phone X'].specs[0].appleCare[0].partNumber = 'NEW'
     next.categories.iPhone.models['Phone X'].displayName = 'Phone X2'
-    next.categories.iPad.appleCareAvailable = false
     const md = summarizeChanges(testCatalogue, next, info)
     expect(section(md, '## 👀 Not cross-checked — please eyeball')).toBe('None')
-    expect(section(md, '## 🔧 Other changes')).toBe(
-      '- iPad: appleCareAvailable changed\n- Phone X2: displayName changed\n- Phone X2 / Phone X: appleCare changed',
-    )
+    expect(section(md, '## 🔧 Other changes')).toBe('- Phone X2: displayName changed\n- Phone X2 / Phone X: appleCare changed')
   })
 })

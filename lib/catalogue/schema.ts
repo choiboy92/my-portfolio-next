@@ -69,7 +69,6 @@ const modelSchema = z.object({
 
 const categorySchema = z.object({
   category: z.string(),
-  appleCareAvailable: z.boolean(),
   models: z.record(z.string(), modelSchema),
 })
 
@@ -92,7 +91,7 @@ export type AppleCareTier = z.infer<typeof appleCareTierSchema>
 export type Pencil = z.infer<typeof pencilSchema>
 export type BandGroup = z.infer<typeof bandGroupSchema>
 export type BandStyle = z.infer<typeof bandStyleSchema>
-export type PriceMap = Record<string, number>
+export type PriceMap = z.infer<typeof priceMapSchema>
 
 export function parseCatalogue(data: unknown): Catalogue {
   return catalogueSchema.parse(data)

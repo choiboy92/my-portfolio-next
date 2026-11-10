@@ -7,7 +7,7 @@ import { escapeStrings } from '@/lib/escape-html'
 import { formatAppleCarePrice } from '@/lib/catalogue/format'
 import { skuKey } from '@/lib/catalogue/helpers'
 import type { AppleCareTier } from '@/lib/catalogue/schema'
-import { getAppleCareTiers, getSpecConfiguration, isOffered, priceBasketItem } from '@/lib/product-config'
+import { findAppleCareTier, getSpecConfiguration, isOffered, priceBasketItem } from '@/lib/product-config'
 import { OrderFormData, orderSchema } from '@/lib/validation-schema'
 
 // Generate order ID
@@ -28,7 +28,7 @@ function lookupSpecExtras(basket: OrderFormData['basket']): SpecExtras[] {
       : item.category === 'MacBook' && spec?.partNumber
         ? { label: 'Standard-config part number', value: spec.partNumber }
         : undefined
-    const appleCare = item.appleCare ? getAppleCareTiers(item.category, item.model, item.specs).find(t => t.name === item.appleCare) : undefined
+    const appleCare = findAppleCareTier(item.category, item.model, item.specs, item.appleCare)
     return { part, includes: spec?.includes ?? [], appleCare }
   })
 }

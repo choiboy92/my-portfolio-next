@@ -1,6 +1,8 @@
-import { makeCatalogueHelpers } from '@/lib/catalogue/helpers'
-import { CATALOGUE_NOTICE, parseCatalogue, type Catalogue, type CategoryKey, type Model } from '@/lib/catalogue/schema'
+import { formatPounds } from '@/lib/catalogue/format'
+import { priceSpec } from '@/lib/catalogue/helpers'
+import { parseCatalogue, type Catalogue, type CategoryKey, type Model } from '@/lib/catalogue/schema'
 import type { MapResult, MappedModel } from './types'
+import { toPence, unique } from './util'
 
 export class GuardError extends Error {
   constructor(message: string) {
@@ -20,31 +22,16 @@ export type SelfCheckFailure = {
 
 const MAX_REMOVED_SHARE = 0.3
 
-function oneModelCatalogue(mapped: MappedModel): Catalogue {
-  const empty = (category: string) => ({ category, appleCareAvailable: false, models: {} as Record<string, Model> })
-  return {
-    notice: CATALOGUE_NOTICE,
-    categories: {
-      iPhone: empty('iPhone'),
-      iPad: empty('iPad'),
-      MacBook: empty('MacBook'),
-      'Apple Watch': empty('Apple Watch'),
-      [mapped.category]: { category: mapped.category, appleCareAvailable: false, models: { [mapped.key]: mapped.model } },
-    },
-  }
-}
-
 function checkModel(mapped: MappedModel): SelfCheckFailure[] {
   const base = { category: mapped.category, model: mapped.key }
   if (mapped.model.specs.length === 0 && mapped.published.length === 0) {
     return [{ ...base, spec: '', label: 'no specs and nothing published', expected: 0, actual: 0 }]
   }
-  const { calculatePrice } = makeCatalogueHelpers(oneModelCatalogue(mapped))
   const failures: SelfCheckFailure[] = []
   for (const published of mapped.published) {
-    const known = mapped.model.specs.some(spec => spec.name === published.spec)
-    const actual = known ? calculatePrice(mapped.category, mapped.key, published.spec, published.options) : 0
-    if (!known || Math.round(actual * 100) !== Math.round(published.price * 100)) {
+    const spec = mapped.model.specs.find(s => s.name === published.spec)
+    const actual = spec ? priceSpec(mapped.category, spec, published.options) : 0
+    if (!spec || toPence(actual) !== toPence(published.price)) {
       failures.push({ ...base, spec: published.spec, label: published.label, expected: published.price, actual })
     }
   }
@@ -65,14 +52,6 @@ export function selfCheck(mapped: MappedModel[]): { passed: MappedModel[]; failu
     else failures.push(...found)
   }
   return { passed, failures }
-}
-
-function pounds(value: number): string {
-  return `£${value}`
-}
-
-function dedupe(values: string[]): string[] {
-  return [...new Set(values)]
 }
 
 export function assembleCatalogue(
@@ -107,7 +86,7 @@ export function assembleCatalogue(
       }
       const mine = failures.filter(f => f.model === mapped.key)
       const describe = (list: SelfCheckFailure[]) =>
-        list.map(f => (f.expected === 0 && f.actual === 0 ? f.label : `${f.label} expected ${pounds(f.expected)}, got ${pounds(f.actual)}`)).join('; ')
+        list.map(f => (f.expected === 0 && f.actual === 0 ? f.label : `${f.label} expected ${formatPounds(f.expected)}, got ${formatPounds(f.actual)}`)).join('; ')
       const failedSpecs = new Set(mine.map(f => f.spec))
       const passing = failedSpecs.has('') ? [] : mapped.model.specs.filter(spec => !failedSpecs.has(spec.name))
       if (passing.length > 0) {
@@ -138,5 +117,5 @@ export function assembleCatalogue(
   }
 
   const catalogue = parseCatalogue({ notice: previous.notice, categories })
-  return { catalogue, warnings: dedupe(warnings), unmapped: dedupe(unmapped), keptLastMerged: dedupe(keptLastMerged) }
+  return { catalogue, warnings: unique(warnings), unmapped: unique(unmapped), keptLastMerged: unique(keptLastMerged) }
 }
