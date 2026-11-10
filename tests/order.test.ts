@@ -8,7 +8,7 @@ import { AUTH_COOKIE } from '@/lib/auth'
 import { macbookItem as macbook, validItem, validOrder, watchItem as watch } from './fixtures/order'
 
 const send = vi.hoisted(() => vi.fn())
-vi.mock('resend', () => ({ Resend: vi.fn(() => ({ emails: { send } })) }))
+vi.mock('resend', () => ({ Resend: vi.fn(function () { return { emails: { send } } }) }))
 
 const SECRET = '0123456789abcdef0123456789abcdef'
 
