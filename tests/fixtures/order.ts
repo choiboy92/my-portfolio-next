@@ -1,19 +1,37 @@
+import { PRODUCT_CONFIGURATIONS, getAvailableOptions } from '@/lib/product-config'
+import type { CategoryKey, Spec } from '@/lib/catalogue/schema'
 import type { BasketItemFormData, OrderFormData } from '@/lib/validation-schema'
 
-export function validItem(overrides: Partial<BasketItemFormData> = {}): BasketItemFormData {
-  return {
-    category: 'iPhone',
-    model: 'iPhone 17 Pro & Pro Max',
-    specs: 'iPhone 17 Pro',
-    color: 'Silver',
-    storage: '512GB',
-    appleCare: false,
-    ...overrides,
+export function cheapestItem(category: CategoryKey, pick: (model: string, spec: Spec) => boolean = () => true): BasketItemFormData {
+  for (const [model, config] of Object.entries(PRODUCT_CONFIGURATIONS[category].models)) {
+    const spec = config.specs.find(s => pick(model, s))
+    if (!spec) continue
+    const offered = getAvailableOptions(category, model, spec.name)
+    const group = spec.bandOptions?.[0]
+    const style = group?.style[0]
+    return {
+      category,
+      model,
+      specs: spec.name,
+      color: (spec.colors ?? config.colors)[0],
+      storage: offered?.storageOptions?.[0],
+      memory: offered?.memoryOptions?.[0],
+      charger: offered?.chargerOptions?.[0],
+      connectivity: offered?.connectivityOptions?.[0],
+      size: offered?.sizeOptions?.[0],
+      band: group && style ? { material: group.material, style: style.styleName, color: style.bandColor[0], size: style.bandSizeOptions?.[0] } : undefined,
+      appleCare: undefined,
+    }
   }
+  throw new Error(`No ${category} model matches`)
 }
 
-export const macbookItem = validItem({ category: 'MacBook', model: 'MacBook Pro 16"', specs: 'M4 Pro 14-Core CPU 20-Core GPU 24GB Unified Memory', color: 'Space Black', memory: '36GB', storage: '1TB', charger: '96W' })
-export const watchItem = validItem({ category: 'Apple Watch', model: 'Apple Watch Series 11', specs: 'Aluminium Case', color: 'Space Grey', storage: undefined, size: '46mm', connectivity: 'GPS + Cellular', band: { material: 'Rubber', style: 'Solo Loop', color: 'Black', size: '5' } })
+export function validItem(overrides: Partial<BasketItemFormData> = {}): BasketItemFormData {
+  return { ...cheapestItem('iPhone'), ...overrides }
+}
+
+export const macbookItem = cheapestItem('MacBook')
+export const watchItem = cheapestItem('Apple Watch')
 
 export function validOrder(overrides: Partial<OrderFormData> = {}): OrderFormData {
   return {

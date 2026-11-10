@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { formatAppleCarePrice } from '@/lib/catalogue/format'
+import { bandSizesFor } from '@/lib/catalogue/helpers'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { X, Smartphone, Laptop, Tablet, Watch } from 'lucide-react'
@@ -34,6 +37,14 @@ const CATEGORY_ICONS = {
   'MacBook': Laptop,
   'iPad': Tablet,
   'Apple Watch': Watch
+}
+
+export function AppleCareBillingNote() {
+  return (
+    <p className="text-xs text-portfolio-muted">
+      Apple bills AppleCare+ monthly or annually until cancelled. The price added is the first payment.
+    </p>
+  )
 }
 
 export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
@@ -63,7 +74,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     magicKeyboard: false,
     nanoTexture: false,
     band: undefined,
-    appleCare: false,
+    appleCare: undefined,
     tradeIn: {
       hasTradeIn: false,
       serialNumber: '',
@@ -87,6 +98,9 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
   const availableOptions = selectedModel 
     ? getAvailableOptions(selectedCategory as ProductCategoryKey, selectedModel, selectedSpecs, selectedStorage)
     : null
+
+  const appleCareTiers = availableOptions?.appleCareTiers ?? []
+  const selectedAppleCareTier = appleCareTiers.find(t => t.name === selectedAppleCare)
 
   const { estimatedPrice, discountValue } = selectedSpecs
     ? priceBasketItem(watch())
@@ -128,7 +142,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
     setValue('magicKeyboard', false)
     setValue('nanoTexture', false)
     setValue('band', undefined)
-    setValue('appleCare', false)
+    setValue('appleCare', undefined)
     setValue('tradeIn', {
       hasTradeIn: false,
       serialNumber: '',
@@ -207,7 +221,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                               setValue('applePencil', '')
                               setValue('magicKeyboard', false)
                               setValue('nanoTexture', false)
-                              setValue('appleCare', false)
+                              setValue('appleCare', undefined)
                             }} value={field.value}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select model" />
@@ -217,11 +231,6 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                   <SelectItem key={model.key} value={model.key}>
                                     <div className="flex flex-col">
                                       <span>{model.config.displayName}</span>
-                                      {model.config.category && (
-                                        <span className="text-xs text-muted-foreground">
-                                          {model.config.category}
-                                        </span>
-                                      )}
                                     </div>
                                   </SelectItem>
                                 ))}
@@ -254,6 +263,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                 setValue('applePencil', '')
                                 setValue('magicKeyboard', false)
                                 setValue('nanoTexture', false)
+                                setValue('appleCare', undefined)
                               }} value={field.value}>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select configuration" />
@@ -322,7 +332,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select memory" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.memoryOptions.map((memory: string) => (
+                                      {availableOptions.memoryOptions!.map((memory: string) => (
                                         <SelectItem key={memory} value={memory}>
                                           {memory}
                                         </SelectItem>
@@ -349,7 +359,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select storage" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.storageOptions.map((storage: string) => (
+                                      {availableOptions.storageOptions!.map((storage: string) => (
                                         <SelectItem key={storage} value={storage}>
                                           {storage}
                                         </SelectItem>
@@ -374,7 +384,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select charger" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.chargerOptions.map((charger: string) => (
+                                      {availableOptions.chargerOptions!.map((charger: string) => (
                                         <SelectItem key={charger} value={charger}>
                                           {charger}
                                         </SelectItem>
@@ -399,7 +409,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select connectivity" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.connectivityOptions.map((conn: string) => (
+                                      {availableOptions.connectivityOptions!.map((conn: string) => (
                                         <SelectItem key={conn} value={conn}>
                                           {conn}
                                         </SelectItem>
@@ -419,12 +429,19 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                 name="size"
                                 control={control}
                                 render={({ field }) => (
-                                  <Select onValueChange={field.onChange} value={field.value}>
+                                  <Select onValueChange={(value) => {
+                                    field.onChange(value)
+                                    if (watch('band.material')) {
+                                      setValue('band.style', '')
+                                      setValue('band.color', '')
+                                      setValue('band.size', '')
+                                    }
+                                  }} value={field.value}>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Select size" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.sizeOptions.map((size: string) => (
+                                      {availableOptions.sizeOptions!.map((size: string) => (
                                         <SelectItem key={size} value={size}>
                                           {size}
                                         </SelectItem>
@@ -449,7 +466,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                       <SelectValue placeholder="Select Apple Pencil" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {availableOptions.applePencilOptions.map((pencil: Pencil) => (
+                                      {availableOptions.applePencilOptions!.map((pencil: Pencil) => (
                                         <SelectItem key={pencil.pencilType} value={pencil.pencilType}>
                                           {pencil.pencilType} (+{'\u00A3'}{pencil.price})
                                         </SelectItem>
@@ -488,7 +505,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                         <SelectValue placeholder="Select band material" />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        {availableOptions.bandOptions.map((bandGroup: any, groupIndex: number) => (
+                                        {availableOptions.bandOptions!.map((bandGroup: any, groupIndex: number) => (
                                           <SelectItem 
                                             key={bandGroup.material || `material-${groupIndex}`} 
                                             value={bandGroup.material || `material-${groupIndex}`}
@@ -511,7 +528,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                     name="band.style"
                                     control={control}
                                     render={({ field }) => {
-                                      const selectedMaterialGroup = availableOptions.bandOptions.find(
+                                      const selectedMaterialGroup = availableOptions.bandOptions!.find(
                                         (group: any) => group.material === watch('band.material')
                                       )
                                       
@@ -526,7 +543,9 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                             <SelectValue placeholder="Select band style" />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            {selectedMaterialGroup?.style.map((style: any, styleIndex: number) => (
+                                            {selectedMaterialGroup?.style
+                                              .filter((style: any) => !style.caseSizes || style.caseSizes.includes(watch('size')))
+                                              .map((style: any, styleIndex: number) => (
                                               <SelectItem 
                                                 key={style.styleName || `style-${styleIndex}`} 
                                                 value={style.styleName || `style-${styleIndex}`}
@@ -557,7 +576,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                     name="band.color"
                                     control={control}
                                     render={({ field }) => {
-                                      const selectedMaterialGroup = availableOptions.bandOptions.find(
+                                      const selectedMaterialGroup = availableOptions.bandOptions!.find(
                                         (group: any) => group.material === watch('band.material')
                                       )
                                       const selectedStyleObj = selectedMaterialGroup?.style.find(
@@ -606,15 +625,17 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                     name="band.size"
                                     control={control}
                                     render={({ field }) => {
-                                      const selectedMaterialGroup = availableOptions.bandOptions.find(
+                                      const selectedMaterialGroup = availableOptions.bandOptions!.find(
                                         (group: any) => group.material === watch('band.material')
                                       )
                                       const selectedStyleObj = selectedMaterialGroup?.style.find(
                                         (style: any) => style.styleName === watch('band.style')
                                       )
                                       
+                                      const bandSizes = selectedStyleObj ? bandSizesFor(selectedStyleObj, watch('size')) : []
+
                                       // Some bands don't have size options
-                                      if (!selectedStyleObj?.bandSizeOptions || selectedStyleObj.bandSizeOptions.length === 0) {
+                                      if (bandSizes.length === 0) {
                                         return (
                                           <div className="text-sm text-portfolio-muted p-3 bg-portfolio-card rounded border border-portfolio-border">
                                             No size selection needed for this band style
@@ -628,7 +649,7 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                             <SelectValue placeholder="Select band size" />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            {selectedStyleObj.bandSizeOptions.map((size: string, sizeIndex: number) => (
+                                            {bandSizes.map((size: string, sizeIndex: number) => (
                                               <SelectItem key={size || `size-${sizeIndex}`} value={size}>
                                                 <div className="flex items-center justify-between w-full">
                                                   <span>{size}</span>
@@ -719,26 +740,59 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                       )}
 
                       {/* AppleCare */}
-                      {selectedModel && availableOptions?.appleCarePrice && (
-                        <div className="flex items-center space-x-2">
-                          <Controller
-                            name="appleCare"
-                            control={control}
-                            render={({ field }) => (
-                              <Checkbox
-                                id="applecare"
-                                checked={field.value}
-                                onCheckedChange={(checked) => field.onChange(checked === true)}
-                              />
-                            )}
-                          />
-                          <Label htmlFor="applecare" className="text-portfolio-text">
-                            Add AppleCare+ Protection
-                            <span className="text-portfolio-muted ml-2">
-                              (+{'\u00A3'}{availableOptions.appleCarePrice})
-                            </span>
-                          </Label>
+                      {selectedModel && appleCareTiers.length === 1 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Controller
+                              name="appleCare"
+                              control={control}
+                              render={({ field }) => (
+                                <Checkbox
+                                  id="applecare"
+                                  checked={!!field.value}
+                                  onCheckedChange={(checked) => field.onChange(checked === true ? appleCareTiers[0].name : undefined)}
+                                />
+                              )}
+                            />
+                            <Label htmlFor="applecare" className="text-portfolio-text">
+                              Add AppleCare+ Protection
+                              <span className="text-portfolio-muted ml-2">
+                                (+{formatAppleCarePrice(appleCareTiers[0])})
+                              </span>
+                            </Label>
+                          </div>
+                          <AppleCareBillingNote />
                         </div>
+                      )}
+                      {selectedModel && appleCareTiers.length > 1 && (
+                        <Controller
+                          name="appleCare"
+                          control={control}
+                          render={({ field }) => (
+                            <RadioGroup
+                              value={field.value ?? 'none'}
+                              onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
+                              aria-label="AppleCare+"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="none" id="applecare-none" />
+                                <Label htmlFor="applecare-none" className="text-portfolio-text">No AppleCare+</Label>
+                              </div>
+                              {appleCareTiers.map((tier, index) => (
+                                <div key={tier.name} className="flex items-center space-x-2">
+                                  <RadioGroupItem value={tier.name} id={`applecare-${index}`} />
+                                  <Label htmlFor={`applecare-${index}`} className="text-portfolio-text">
+                                    {tier.name}
+                                    <span className="text-portfolio-muted ml-2">
+                                      (+{formatAppleCarePrice(tier)})
+                                    </span>
+                                  </Label>
+                                </div>
+                              ))}
+                              <AppleCareBillingNote />
+                            </RadioGroup>
+                          )}
+                        />
                       )}
 
                       {/* Trade-in */}
@@ -825,11 +879,11 @@ export function ProductSelector({ onAdd, onCancel }: ProductSelectorProps) {
                                 </div>
                               </div>
                               <div className="space-y-2 text-sm">
-                                {selectedAppleCare && (
+                                {selectedAppleCareTier && (
                                   <div className="flex justify-between">
-                                    <span className="text-portfolio-muted">AppleCare+</span>
+                                    <span className="text-portfolio-muted">{selectedAppleCareTier.name}</span>
                                     <span className="text-portfolio-text">
-                                      +{'\u00A3'}{availableOptions.appleCarePrice}
+                                      +{formatAppleCarePrice(selectedAppleCareTier)}
                                     </span>
                                   </div>
                                 )}

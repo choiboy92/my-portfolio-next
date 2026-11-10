@@ -73,7 +73,7 @@ export function BasketForm() {
       band: item.band || undefined,
       estimatedPrice: item.estimatedPrice || 0,
       discountValue: item.discountValue || 0,
-      appleCare: item.appleCare || false,
+      appleCare: item.appleCare || undefined,
       tradeIn: item.tradeIn || undefined
     }
     

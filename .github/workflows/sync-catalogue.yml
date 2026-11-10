@@ -1,0 +1,125 @@
+name: Sync Apple UK catalogue
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: Bootstrap the catalogue from scratch
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-catalogue
+  cancel-in-progress: false
+
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CATALOGUE_APP_ID }}
+          private-key: ${{ secrets.CATALOGUE_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - id: sync
+        name: Sync catalogue
+        env:
+          BOOTSTRAP: ${{ inputs.bootstrap }}
+          SUMMARY_PATH: ${{ runner.temp }}/summary.md
+        run: |
+          set -euo pipefail
+          args=(--summary "$SUMMARY_PATH")
+          if [ "$BOOTSTRAP" = "true" ]; then
+            args+=(--bootstrap)
+          fi
+          npm run sync:catalogue -- "${args[@]}"
+
+      - name: Publish rolling PR
+        if: always() && steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          SUMMARY_PATH: ${{ runner.temp }}/summary.md
+          BRANCH: catalogue/apple-uk-sync
+          FILE_PATH: lib/catalogue/apple-uk.json
+        run: |
+          set -euo pipefail
+
+          main_sha=$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq .object.sha)
+          main_tree=$(gh api "repos/$GH_REPO/git/commits/$main_sha" --jq .tree.sha)
+
+          blob_sha=$(base64 < "$FILE_PATH" | tr -d '\n' \
+            | jq -Rs '{content: ., encoding: "base64"}' \
+            | gh api -X POST "repos/$GH_REPO/git/blobs" --input - --jq .sha)
+
+          branch_exists=false
+          existing_blob=""
+          branch_parent=""
+          if gh api "repos/$GH_REPO/git/ref/heads/$BRANCH" > /dev/null 2>&1; then
+            branch_exists=true
+            existing_blob=$(gh api "repos/$GH_REPO/contents/$FILE_PATH?ref=$BRANCH" --jq .sha 2>/dev/null || true)
+            branch_parent=$(gh api "repos/$GH_REPO/commits/$BRANCH" --jq '.parents[0].sha // empty' 2>/dev/null || true)
+          fi
+
+          if [ "$existing_blob" = "$blob_sha" ] && [ "$branch_parent" = "$main_sha" ]; then
+            echo "Branch $BRANCH already holds this catalogue on current main; refreshing the PR body only."
+          else
+            tree_sha=$(jq -n --arg base "$main_tree" --arg path "$FILE_PATH" --arg sha "$blob_sha" \
+              '{base_tree: $base, tree: [{path: $path, mode: "100644", type: "blob", sha: $sha}]}' \
+              | gh api -X POST "repos/$GH_REPO/git/trees" --input - --jq .sha)
+
+            commit_sha=$(jq -n --arg tree "$tree_sha" --arg parent "$main_sha" \
+              '{message: "chore: sync Apple UK catalogue", tree: $tree, parents: [$parent]}' \
+              | gh api -X POST "repos/$GH_REPO/git/commits" --input - --jq .sha)
+
+            if [ "$branch_exists" = "true" ]; then
+              jq -n --arg sha "$commit_sha" '{sha: $sha, force: true}' \
+                | gh api -X PATCH "repos/$GH_REPO/git/refs/heads/$BRANCH" --input - > /dev/null
+            else
+              jq -n --arg ref "refs/heads/$BRANCH" --arg sha "$commit_sha" '{ref: $ref, sha: $sha}' \
+                | gh api -X POST "repos/$GH_REPO/git/refs" --input - > /dev/null
+            fi
+          fi
+
+          pr_number=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$pr_number" ]; then
+            gh pr edit "$pr_number" --body-file "$SUMMARY_PATH"
+          else
+            gh pr create --base main --head "$BRANCH" \
+              --title "Apple UK catalogue update" --body-file "$SUMMARY_PATH"
+          fi
+
+      - name: Close stale rolling PR
+        if: always() && steps.sync.outputs.changed == 'false' && steps.sync.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: catalogue/apple-uk-sync
+        run: |
+          set -euo pipefail
+          pr_number=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$pr_number" ]; then
+            gh pr close "$pr_number" --comment "Apple UK data now matches main; closing." --delete-branch
+          fi

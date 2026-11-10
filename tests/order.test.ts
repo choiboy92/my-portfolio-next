@@ -5,7 +5,8 @@ import { POST } from '@/app/api/epp/order/route'
 import { escapeStrings } from '@/lib/escape-html'
 import { orderSchema } from '@/lib/validation-schema'
 import { AUTH_COOKIE } from '@/lib/auth'
-import { macbookItem as macbook, validItem, validOrder, watchItem as watch } from './fixtures/order'
+import { PRODUCT_CONFIGURATIONS, priceBasketItem } from '@/lib/product-config'
+import { cheapestItem, macbookItem as macbook, validItem, validOrder, watchItem as watch } from './fixtures/order'
 
 const send = vi.hoisted(() => vi.fn())
 vi.mock('resend', () => ({ Resend: vi.fn(function () { return { emails: { send } } }) }))
@@ -42,6 +43,43 @@ test('schema rejects orderComments and enforces limits', () => {
   expect(orderSchema.safeParse(validOrder({ additionalComments: 'x'.repeat(1001) })).success).toBe(false)
   expect(orderSchema.safeParse(validOrder({ basket: [validItem({ estimatedPrice: -1 })] })).success).toBe(false)
 })
+test('schema rejects a boolean appleCare', () => {
+  expect(orderSchema.safeParse(validOrder({ basket: [{ ...validItem(), appleCare: true as unknown as string }] })).success).toBe(false)
+})
+test('accepts the legacy appleCare: false from an open old tab', async () => {
+  muteConsole()
+  const res = await submit(validOrder({ basket: [{ ...validItem(), appleCare: false as unknown as string }] }))
+  expect(res.status).toBe(200)
+  expect(sent().text).not.toContain('AppleCare+:')
+})
+test('rejects appleCare: true with 400', async () => {
+  muteConsole()
+  const res = await submit(validOrder({ basket: [{ ...validItem(), appleCare: true as unknown as string }] }))
+  expect(res.status).toBe(400)
+  expect(send).not.toHaveBeenCalled()
+})
+test('emails the chosen AppleCare+ tier', async () => {
+  muteConsole()
+  const item = cheapestItem('iPhone', (_, spec) => spec.appleCare.length > 0)
+  const model = PRODUCT_CONFIGURATIONS.iPhone.models[item.model]
+  const tier = model.specs.find(s => s.name === item.specs)!.appleCare[0]
+  const price = Number.isInteger(tier.price) ? `${tier.price}` : tier.price.toFixed(2)
+  const res = await submit(validOrder({ basket: [{ ...item, appleCare: tier.name }] }))
+  expect(res.status).toBe(200)
+  expect(sent().text).toContain(`AppleCare+: ${tier.name} (£${price}/${tier.billing === 'monthly' ? 'month' : 'year'}, not discounted`)
+  expect(sent().html).toContain(tier.name)
+  expect(sent().html).toContain(`Apple part ${tier.partNumber}`)
+})
+test('emails the Mac standard-config part number from the catalogue', async () => {
+  muteConsole()
+  const item = cheapestItem('MacBook', (_, s) => !!s.partNumber)
+  const spec = PRODUCT_CONFIGURATIONS.MacBook.models[item.model].specs.find(s => s.name === item.specs)!
+  const res = await submit(validOrder({ basket: [{ ...item, partNumber: 'FORGED' } as typeof item] }))
+  expect(res.status).toBe(200)
+  expect(sent().text).toContain(`Standard-config part number: ${spec.partNumber}`)
+  expect(sent().html).toMatch(new RegExp(`<strong>Standard-config part number:</strong> <span[^>]*>${spec.partNumber}</span>`))
+  expect(sent().text).not.toContain('FORGED')
+})
 test('schema requires confirmation', () => {
   expect(orderSchema.safeParse(validOrder({ checkCompleted: false })).success).toBe(false)
 })
@@ -54,16 +92,17 @@ test('overwrites client prices', async () => {
   muteConsole()
   const res = await submit(validOrder({ basket: [validItem({ estimatedPrice: 1, discountValue: 999999 })] }))
   expect(res.status).toBe(200)
-  expect(sent().html).toContain('£1,299')
-  expect(sent().html).toContain('£220.83')
+  const { estimatedPrice, discountValue } = priceBasketItem(validItem())
+  expect(sent().html).toContain(`£${estimatedPrice.toLocaleString()}`)
+  expect(sent().html).toContain(`£${discountValue.toLocaleString()}`)
   expect(sent().html).not.toContain('999,999')
 })
 test('delivers comments and every option', async () => {
   muteConsole()
   await submit(validOrder({ basket: [macbook] }))
   expect(sent().text).toContain('Please engrave')
-  expect(sent().text).toContain('Memory: 36GB')
-  expect(sent().text).toContain('Charger: 96W')
+  expect(sent().text).toContain(`Memory: ${macbook.memory}`)
+  expect(sent().text).toContain(`Charger: ${macbook.charger}`)
 })
 test('escapes user input in the html body', async () => {
   muteConsole()
@@ -78,8 +117,8 @@ test('escapes user input in the html body', async () => {
 test('shows band size, not style', async () => {
   muteConsole()
   await submit(validOrder({ basket: [watch] }))
-  expect(sent().html).toContain('Size: 5')
-  expect(sent().html).not.toContain('Size: Solo Loop')
+  expect(sent().html).toContain(`Size: ${watch.band!.size}`)
+  expect(sent().html).not.toContain(`Size: ${watch.band!.style}`)
 })
 test('rejects unknown products', async () => {
   const res = await submit(validOrder({ basket: [validItem({ model: 'iPhone 99' })] }))
@@ -88,19 +127,18 @@ test('rejects unknown products', async () => {
   expect(send).not.toHaveBeenCalled()
 })
 test('rejects prototype-key category and model as unknown products', async () => {
-  for (const item of [validItem({ model: 'constructor' }), validItem({ category: 'constructor' }), validItem({ category: 'toString', appleCare: true })]) {
+  for (const item of [validItem({ model: 'constructor' }), validItem({ category: 'constructor' }), validItem({ category: 'toString', appleCare: 'AppleCare+' })]) {
     const res = await submit(validOrder({ basket: [item] }))
     expect(res.status).toBe(400)
   }
   expect(send).not.toHaveBeenCalled()
 })
 test('rejects options the configuration does not offer', async () => {
-  const titanium = { ...watch, specs: 'Titanium Case', color: 'Natural' }
   for (const item of [
-    validItem({ storage: '4TB' }),
+    validItem({ storage: 'NOPE' }),
     validItem({ color: 'Hot Pink' }),
     { ...macbook, memory: '8GB' },
-    { ...titanium, connectivity: 'GPS' },
+    { ...watch, connectivity: 'NOPE' },
     { ...watch, band: { ...watch.band!, color: 'Tartan' } },
   ]) {
     const res = await submit(validOrder({ basket: [item] }))

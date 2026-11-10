@@ -52,7 +52,7 @@ export function BasketItem({ item, onRemove }: BasketItemProps) {
               {item.appleCare && (
                 <Badge className="bg-blue-600 text-white">
                   <Shield className="w-3 h-3 mr-1" />
-                  AppleCare+
+                  {item.appleCare}
                 </Badge>
               )}
               {item.tradeIn?.hasTradeIn && (
